@@ -1,0 +1,144 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createServer } from 'node:http';
+import type { Server, IncomingMessage } from 'node:http';
+import type { AddressInfo } from 'node:net';
+
+import { createMemoryProvider } from '@agentdocstore/provider-memory';
+import type { Provider } from '@agentdocstore/core';
+
+import { createHttpHandler } from './handler.js';
+
+/**
+ * `/mcp` reaches the same provider as the REST API, so its identity handling is
+ * a security boundary, not a convenience. These tests pin the three properties
+ * that matter: no identity means no access, identity is re-resolved per request,
+ * and a session id is not a credential.
+ */
+
+let provider: Provider;
+let server: Server;
+let base: string;
+
+/** Mount the handler with the given viewer resolution and return its base URL. */
+async function mount(
+  getViewer: (req: IncomingMessage) => string | null | Promise<string | null>,
+): Promise<void> {
+  const handler = createHttpHandler({ provider, getViewer });
+  server = createServer((req, res) => {
+    handler(req, res).catch(() => {
+      if (!res.headersSent) res.writeHead(500).end();
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const { port } = server.address() as AddressInfo;
+  base = `http://127.0.0.1:${port}`;
+}
+
+const INITIALIZE = {
+  jsonrpc: '2.0',
+  id: 1,
+  method: 'initialize',
+  params: {
+    protocolVersion: '2024-11-05',
+    capabilities: {},
+    clientInfo: { name: 'test-client', version: '1.0.0' },
+  },
+};
+
+function post(body: unknown, headers: Record<string, string> = {}): Promise<Response> {
+  return fetch(base, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      accept: 'application/json, text/event-stream',
+      ...headers,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+beforeEach(() => {
+  provider = createMemoryProvider();
+});
+
+afterEach(async () => {
+  if (server !== undefined) {
+    await new Promise<void>((resolve) => server.close(() => resolve()));
+  }
+  await provider.close();
+});
+
+describe('MCP over HTTP — authentication', () => {
+  it('refuses a request with no resolvable identity (401), not a synthetic user', async () => {
+    await mount(() => null);
+    const res = await post(INITIALIZE);
+    expect(res.status).toBe(401);
+    const body = (await res.json()) as { error: { code: number; message: string } };
+    expect(body.error.code).toBe(-32001);
+    expect(body.error.message).toMatch(/Unauthenticated/);
+  });
+
+  it('treats a thrown identity error as 401, not 500', async () => {
+    await mount(() => {
+      throw new Error('Missing or empty identity header');
+    });
+    const res = await post(INITIALIZE);
+    expect(res.status).toBe(401);
+  });
+
+  it('refuses a blank identity', async () => {
+    await mount(() => '   ');
+    expect((await post(INITIALIZE)).status).toBe(401);
+  });
+
+  it('accepts a resolved identity and completes the handshake', async () => {
+    await mount((req) => (req.headers['x-user'] as string | undefined) ?? null);
+    const res = await post(INITIALIZE, { 'x-user': 'alice' });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('mcp-session-id')).toBeTruthy();
+  });
+
+  it('re-resolves identity on EVERY request, so a revoked credential stops working', async () => {
+    let allow = true;
+    await mount(() => (allow ? 'alice' : null));
+
+    const first = await post(INITIALIZE, {});
+    expect(first.status).toBe(200);
+    const sessionId = first.headers.get('mcp-session-id')!;
+
+    // Credential revoked between calls; the established session must not carry
+    // the caller through on the strength of the earlier check.
+    allow = false;
+    const second = await post(
+      { jsonrpc: '2.0', id: 2, method: 'tools/list' },
+      { 'mcp-session-id': sessionId },
+    );
+    expect(second.status).toBe(401);
+  });
+
+  it('refuses a session id presented by a DIFFERENT identity (403)', async () => {
+    await mount((req) => (req.headers['x-user'] as string | undefined) ?? null);
+
+    const opened = await post(INITIALIZE, { 'x-user': 'alice' });
+    expect(opened.status).toBe(200);
+    const sessionId = opened.headers.get('mcp-session-id')!;
+
+    // Bob leaks/guesses Alice's session id. Without the binding he would act as
+    // Alice and reach her PRIVATE documents.
+    const hijack = await post(
+      { jsonrpc: '2.0', id: 2, method: 'tools/list' },
+      { 'x-user': 'bob', 'mcp-session-id': sessionId },
+    );
+    expect(hijack.status).toBe(403);
+    const body = (await hijack.json()) as { error: { code: number; message: string } };
+    expect(body.error.code).toBe(-32003);
+    expect(body.error.message).toMatch(/different identity/);
+
+    // Alice's own session still works.
+    const ok = await post(
+      { jsonrpc: '2.0', id: 3, method: 'tools/list' },
+      { 'x-user': 'alice', 'mcp-session-id': sessionId },
+    );
+    expect(ok.status).toBe(200);
+  });
+});

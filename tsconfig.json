@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/provider-fs" },
+    { "path": "packages/provider-memory" },
+    { "path": "packages/provider-tests" },
+    { "path": "packages/server" },
+    { "path": "packages/mcp" },
+    { "path": "packages/web" },
+    { "path": "packages/cli" }
+  ]
+}

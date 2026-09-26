@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an improvement to AgentDocStore
+title: '[Feature]: '
+labels: [enhancement, triage]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem should this solve? Describe the use case, not only the proposed UI or API.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: What should happen, including offline and multi-user behavior where relevant?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: invariants
+    attributes:
+      label: Project invariants
+      options:
+        - label: The feature can preserve offline-by-default behavior.
+          required: true
+        - label: The feature does not require telemetry or external browser assets.
+          required: true

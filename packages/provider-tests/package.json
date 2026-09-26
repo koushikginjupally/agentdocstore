@@ -1,0 +1,60 @@
+{
+  "name": "@agentdocstore/provider-tests",
+  "version": "0.1.0",
+  "description": "Reusable conformance suite for AgentDocStore storage providers. Run it against your own Provider implementation to prove SPI compliance.",
+  "homepage": "https://github.com/koushikginjupally/agentdocstore/tree/main/packages/provider-tests#readme",
+  "bugs": {
+    "url": "https://github.com/koushikginjupally/agentdocstore/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koushikginjupally/agentdocstore.git",
+    "directory": "packages/provider-tests"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map",
+    "!dist/self-check.*"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "agentdocstore",
+    "conformance",
+    "contract-tests",
+    "storage-provider"
+  ],
+  "scripts": {
+    "clean": "node ../../scripts/clean.mjs packages/provider-tests",
+    "prebuild": "npm run clean",
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agentdocstore/core": "^0.1.0"
+  },
+  "peerDependencies": {
+    "vitest": ">=2.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^5.0.0"
+  }
+}

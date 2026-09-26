@@ -1,0 +1,28 @@
+{
+  "name": "@agentdocstore/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "node build.mjs --production",
+    "build:dev": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "esbuild": "^0.28.0",
+    "marked": "^14.1.0",
+    "dompurify": "^3.1.7",
+    "highlight.js": "^11.10.0",
+    "mermaid": "^11.3.0"
+  }
+}

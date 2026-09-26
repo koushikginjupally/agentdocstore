@@ -1,0 +1,200 @@
+/** Edit doc page: update content, title, language, visibility. */
+import { api, ApiError, CredentialScanError } from '../api.js';
+import { navigate, href } from '../router.js';
+import { buildTitle } from '../constants.js';
+import { LANGUAGES } from '../dom.js';
+import { showToast } from '../toast.js';
+import { showRedactionModal } from '../redaction-modal.js';
+
+export async function renderEditPage(id: string, container: HTMLElement): Promise<void> {
+  container.innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+
+  try {
+    const doc = await api.getDocument(id);
+    document.title = buildTitle(`Editing: ${doc.title}`);
+
+    container.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    const heading = document.createElement('h2');
+    heading.className = 'panel-title';
+    heading.textContent = 'Edit Document';
+    card.appendChild(heading);
+
+    // Title
+    const titleGroup = document.createElement('div');
+    titleGroup.className = 'form-group';
+    const titleLabel = document.createElement('label');
+    titleLabel.setAttribute('for', 'edit-title');
+    titleLabel.textContent = 'Title';
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.id = 'edit-title';
+    titleInput.value = doc.title;
+    titleGroup.appendChild(titleLabel);
+    titleGroup.appendChild(titleInput);
+    card.appendChild(titleGroup);
+
+    // Language + Visibility row
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'flex-row gap-16';
+    rowDiv.style.flexWrap = 'wrap';
+
+    const langGroup = document.createElement('div');
+    langGroup.className = 'form-group';
+    langGroup.style.flex = '1';
+    langGroup.style.minWidth = '150px';
+    const langLabel = document.createElement('label');
+    langLabel.setAttribute('for', 'edit-language');
+    langLabel.textContent = 'Language';
+    const langSelect = document.createElement('select');
+    langSelect.id = 'edit-language';
+    for (const lang of LANGUAGES) {
+      const opt = document.createElement('option');
+      opt.value = lang;
+      opt.textContent = lang;
+      if (lang === doc.language) opt.selected = true;
+      langSelect.appendChild(opt);
+    }
+    langGroup.appendChild(langLabel);
+    langGroup.appendChild(langSelect);
+
+    const visGroup = document.createElement('div');
+    visGroup.className = 'form-group';
+    visGroup.style.flex = '1';
+    visGroup.style.minWidth = '150px';
+    const visLabel = document.createElement('label');
+    visLabel.setAttribute('for', 'edit-visibility');
+    visLabel.textContent = 'Visibility';
+    const visSelect = document.createElement('select');
+    visSelect.id = 'edit-visibility';
+    for (const v of ['PUBLIC', 'PRIVATE']) {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      if (v === doc.visibility) opt.selected = true;
+      visSelect.appendChild(opt);
+    }
+    visGroup.appendChild(visLabel);
+    visGroup.appendChild(visSelect);
+
+    rowDiv.appendChild(langGroup);
+    rowDiv.appendChild(visGroup);
+    card.appendChild(rowDiv);
+
+    // Content
+    const contentGroup = document.createElement('div');
+    contentGroup.className = 'form-group';
+    const contentLabel = document.createElement('label');
+    contentLabel.setAttribute('for', 'edit-content');
+    contentLabel.textContent = 'Content';
+    const contentArea = document.createElement('textarea');
+    contentArea.id = 'edit-content';
+    contentArea.value = doc.content;
+    contentArea.rows = 20;
+    contentGroup.appendChild(contentLabel);
+    contentGroup.appendChild(contentArea);
+    card.appendChild(contentGroup);
+
+    // Edit message
+    const msgGroup = document.createElement('div');
+    msgGroup.className = 'form-group';
+    const msgLabel = document.createElement('label');
+    msgLabel.setAttribute('for', 'edit-message');
+    msgLabel.textContent = 'Edit Message (optional)';
+    const msgInput = document.createElement('input');
+    msgInput.type = 'text';
+    msgInput.id = 'edit-message';
+    msgInput.placeholder = 'Describe your changes...';
+    msgGroup.appendChild(msgLabel);
+    msgGroup.appendChild(msgInput);
+    card.appendChild(msgGroup);
+
+    // Buttons
+    const btnRow = document.createElement('div');
+    btnRow.className = 'flex-row';
+
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'btn btn-primary';
+    saveBtn.textContent = 'Save Changes';
+
+    const cancelBtn = document.createElement('a');
+    cancelBtn.className = 'btn';
+    cancelBtn.href = href(`/d/${id}`);
+    cancelBtn.textContent = 'Cancel';
+
+    saveBtn.addEventListener(
+      'click',
+      () => void handleSave(id, titleInput, langSelect, visSelect, contentArea, msgInput, saveBtn),
+    );
+
+    btnRow.appendChild(saveBtn);
+    btnRow.appendChild(cancelBtn);
+    card.appendChild(btnRow);
+
+    container.appendChild(card);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      document.title = buildTitle('Not Found');
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🔍</div>
+          <div>Document not found</div>
+          <a href="${href('/')}" class="btn mt-16">Go Home</a>
+        </div>
+      `;
+    } else {
+      showToast(
+        `Failed to load doc: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        'error',
+      );
+      container.innerHTML =
+        '<div class="empty-state"><div class="icon">❌</div><div>Failed to load doc</div></div>';
+    }
+  }
+}
+
+async function handleSave(
+  id: string,
+  titleInput: HTMLInputElement,
+  langSelect: HTMLSelectElement,
+  visSelect: HTMLSelectElement,
+  contentArea: HTMLTextAreaElement,
+  msgInput: HTMLInputElement,
+  saveBtn: HTMLButtonElement,
+): Promise<void> {
+  saveBtn.disabled = true;
+
+  const input: Record<string, string | undefined> = {};
+  input.title = titleInput.value.trim();
+  input.language = langSelect.value;
+  input.visibility = visSelect.value;
+  input.content = contentArea.value;
+  const editMsg = msgInput.value.trim();
+  if (editMsg) input.editMessage = editMsg;
+
+  try {
+    await api.updateDocument(id, input);
+    navigate(`/d/${id}`);
+    showToast('Document updated!', 'success');
+  } catch (err) {
+    if (err instanceof CredentialScanError) {
+      const choice = await showRedactionModal(err.detected);
+      if (choice) {
+        try {
+          await api.updateDocument(id, { ...input, redactionPolicy: choice.policy });
+          navigate(`/d/${id}`);
+          showToast('Document updated!', 'success');
+        } catch (err2) {
+          showToast(`Failed: ${err2 instanceof Error ? err2.message : 'Unknown error'}`, 'error');
+        }
+      }
+    } else {
+      showToast(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
+    }
+  } finally {
+    saveBtn.disabled = false;
+  }
+}

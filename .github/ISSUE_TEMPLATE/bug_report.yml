@@ -1,0 +1,64 @@
+name: Bug report
+description: Report reproducible behavior that is not working as intended
+title: '[Bug]: '
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. For security problems, stop here and use the private process in SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release, commit, or container tag
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options: [Web UI, REST API, MCP stdio, MCP HTTP, CLI, Provider SPI, Docker, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Include what you expected and what actually happened.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Minimal commands or steps, with secrets removed.
+      placeholder: |
+        1. Start with ...
+        2. Send ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node version, provider, auth mode, and offline/networked mode.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Redact tokens, credentials, user content, and private paths.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: This report does not contain credentials or private content.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

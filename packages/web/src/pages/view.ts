@@ -1,0 +1,146 @@
+/** View doc page: renders content, version badge, copy buttons, comment panel. */
+import { api, ApiError } from '../api.js';
+import { href, navigate } from '../router.js';
+import { buildTitle } from '../constants.js';
+import { renderContent } from '../render.js';
+import { formatDate, copyToClipboard, onClick } from '../dom.js';
+import { showToast } from '../toast.js';
+import { renderCommentPanel } from '../comments.js';
+
+export async function renderViewPage(id: string, container: HTMLElement): Promise<void> {
+  container.innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
+
+  try {
+    const doc = await api.getDocument(id);
+    document.title = buildTitle(doc.title);
+
+    container.innerHTML = '';
+
+    // Header area
+    const header = document.createElement('div');
+    header.className = 'flex-between mb-16';
+    header.style.flexWrap = 'wrap';
+    header.style.gap = '12px';
+
+    const left = document.createElement('div');
+    const h1 = document.createElement('h1');
+    h1.style.fontSize = '1.5rem';
+    h1.style.fontWeight = '600';
+    h1.textContent = doc.title;
+    left.appendChild(h1);
+
+    const metaDiv = document.createElement('div');
+    metaDiv.className = 'flex-row mt-8';
+    metaDiv.style.flexWrap = 'wrap';
+    metaDiv.style.gap = '8px';
+
+    const visBadge = document.createElement('span');
+    visBadge.className = `visibility-badge ${doc.visibility.toLowerCase()}`;
+    visBadge.textContent = doc.visibility;
+
+    const langBadge = document.createElement('span');
+    langBadge.className = 'text-muted text-sm';
+    langBadge.textContent = doc.language;
+
+    const versionBadge = document.createElement('span');
+    versionBadge.className = 'version-badge';
+    versionBadge.textContent = `v${doc.latestVersion}`;
+
+    const dateBadge = document.createElement('span');
+    dateBadge.className = 'text-muted text-sm';
+    dateBadge.textContent = formatDate(doc.updatedAt);
+
+    const authorBadge = document.createElement('span');
+    authorBadge.className = 'text-muted text-sm';
+    authorBadge.textContent = `by ${doc.createdBy}`;
+
+    metaDiv.appendChild(visBadge);
+    metaDiv.appendChild(langBadge);
+    metaDiv.appendChild(versionBadge);
+    metaDiv.appendChild(dateBadge);
+    metaDiv.appendChild(authorBadge);
+    left.appendChild(metaDiv);
+
+    // Action buttons
+    const actions = document.createElement('div');
+    actions.className = 'flex-row';
+
+    const copyLinkBtn = document.createElement('button');
+    copyLinkBtn.className = 'btn btn-sm';
+    copyLinkBtn.textContent = '🔗 Copy Link';
+    onClick(copyLinkBtn, 'Copy link', async () => {
+      const url = `${window.location.origin}${href(`/d/${id}`).replace('#', '#')}`;
+      const ok = await copyToClipboard(url);
+      showToast(ok ? 'Link copied!' : 'Failed to copy', ok ? 'success' : 'error');
+    });
+
+    const copyRawBtn = document.createElement('button');
+    copyRawBtn.className = 'btn btn-sm';
+    copyRawBtn.textContent = '📋 Copy Raw';
+    onClick(copyRawBtn, 'Copy raw content', async () => {
+      const ok = await copyToClipboard(doc.content);
+      showToast(ok ? 'Content copied!' : 'Failed to copy', ok ? 'success' : 'error');
+    });
+
+    const editBtn = document.createElement('a');
+    editBtn.className = 'btn btn-sm';
+    editBtn.href = href(`/d/${id}/edit`);
+    editBtn.textContent = '✏️ Edit';
+
+    const versionsBtn = document.createElement('a');
+    versionsBtn.className = 'btn btn-sm';
+    versionsBtn.href = href(`/d/${id}/versions`);
+    versionsBtn.textContent = '📜 Versions';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-sm btn-danger';
+    deleteBtn.textContent = '🗑️ Delete';
+    onClick(deleteBtn, 'Delete doc', async () => {
+      if (!confirm('Delete this doc permanently?')) return;
+      try {
+        await api.deleteDocument(id);
+        navigate('/');
+        showToast('Document deleted', 'success');
+      } catch (err) {
+        showToast(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
+      }
+    });
+
+    actions.appendChild(copyLinkBtn);
+    actions.appendChild(copyRawBtn);
+    actions.appendChild(editBtn);
+    actions.appendChild(versionsBtn);
+    actions.appendChild(deleteBtn);
+
+    header.appendChild(left);
+    header.appendChild(actions);
+    container.appendChild(header);
+
+    // Content rendering
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'card';
+    container.appendChild(contentDiv);
+    await renderContent(doc.language, doc.content, contentDiv);
+
+    // Comment panel
+    renderCommentPanel(id, container);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      document.title = buildTitle('Not Found');
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🔍</div>
+          <div>Document not found</div>
+          <a href="${href('/')}" class="btn mt-16">Go Home</a>
+        </div>
+      `;
+    } else {
+      showToast(
+        `Failed to load doc: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        'error',
+      );
+      container.innerHTML =
+        '<div class="empty-state"><div class="icon">❌</div><div>Failed to load doc</div></div>';
+    }
+  }
+}

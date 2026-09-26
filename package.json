@@ -1,0 +1,51 @@
+{
+  "name": "agentdocstore",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Offline-first, self-hostable artifact sharing with a web UI, REST API, and MCP server.",
+  "keywords": [
+    "artifact-sharing",
+    "mcp",
+    "offline-first",
+    "agent-documents",
+    "self-hosted"
+  ],
+  "homepage": "https://github.com/koushikginjupally/agentdocstore#readme",
+  "bugs": {
+    "url": "https://github.com/koushikginjupally/agentdocstore/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koushikginjupally/agentdocstore.git"
+  },
+  "license": "Apache-2.0",
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "build": "npm run clean && tsc -b && node scripts/finalize-build.mjs && npm run build --workspace @agentdocstore/web",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "docs:check": "node scripts/check-docs.mjs",
+    "lint": "eslint . && prettier --check .",
+    "lint:fix": "eslint . --fix && prettier --write .",
+    "verify": "bash scripts/verify.sh"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.0.0",
+    "eslint": "^10.11.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.9.9",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.70.1",
+    "vitest": "^5.0.0"
+  }
+}

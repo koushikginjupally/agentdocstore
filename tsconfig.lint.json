@@ -1,0 +1,38 @@
+{
+  // Lint-only TypeScript project.
+  //
+  // The per-package tsconfigs deliberately `exclude` `**/*.test.ts`, because
+  // `tsc -b` is a *build* and tests must not land in `dist/`. Type-aware ESLint
+  // rules, however, need every file they lint to belong to some project — so
+  // this config exists purely to give the linter a type graph that covers test
+  // files and root-level config files too.
+  //
+  // It is a union, not a faithful copy: `lib` carries both DOM (for `web`) and
+  // ES2022, and `types` carries node. That is fine here because `tsc -b`
+  // remains the authority on types — `web` still compiles with `types: []`, so
+  // a stray `process` reference in frontend code is caught by the build even
+  // though this config would tolerate it. Nothing is emitted from here.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    // Resolve workspace imports to source rather than to built `dist/`, so
+    // linting works on a clean checkout before the first build.
+    "baseUrl": ".",
+    "paths": {
+      "@agentdocstore/core": ["packages/core/src/index.ts"],
+      "@agentdocstore/provider-tests": ["packages/provider-tests/src/index.ts"],
+      "@agentdocstore/provider-memory": ["packages/provider-memory/src/index.ts"],
+      "@agentdocstore/provider-fs": ["packages/provider-fs/src/index.ts"],
+      "@agentdocstore/server": ["packages/server/src/index.ts"],
+      "@agentdocstore/mcp": ["packages/mcp/src/index.ts"],
+      "@agentdocstore/web": ["packages/web/src/index.ts"]
+    }
+  },
+  "include": ["packages/*/src/**/*.ts", "*.ts"]
+}

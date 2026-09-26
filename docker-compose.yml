@@ -1,0 +1,11 @@
+services:
+  agentdocstore:
+    build: .
+    ports:
+      - '8787:8787'
+    volumes:
+      - agentdocstore-data:/data
+    restart: unless-stopped
+
+volumes:
+  agentdocstore-data:

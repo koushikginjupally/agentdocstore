@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.git
+.github
+*.tsbuildinfo
+*.log
+.agentdocstore
+.env
+.env.*
+tokens.json
+.forbidden-terms
+VERIFICATION.md
+.DS_Store

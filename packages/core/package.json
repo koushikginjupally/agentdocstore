@@ -1,0 +1,58 @@
+{
+  "name": "@agentdocstore/core",
+  "version": "0.1.0",
+  "description": "AgentDocStore core: domain model, storage provider SPI, authorization, credential scanner and diff engine.",
+  "homepage": "https://github.com/koushikginjupally/agentdocstore/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/koushikginjupally/agentdocstore/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koushikginjupally/agentdocstore.git",
+    "directory": "packages/core"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "agentdocstore",
+    "documents",
+    "storage-provider",
+    "spi"
+  ],
+  "scripts": {
+    "clean": "node ../../scripts/clean.mjs packages/core",
+    "prebuild": "npm run clean",
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "minisearch": "^7.1.0",
+    "nanoid": "^5.0.7",
+    "diff": "^9.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "vitest": "^5.0.0"
+  }
+}
