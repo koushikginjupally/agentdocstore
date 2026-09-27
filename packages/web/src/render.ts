@@ -8,21 +8,39 @@ import hljs from 'highlight.js';
 import mermaid from 'mermaid';
 import { getRendererType } from './renderers.js';
 import { HTML_IFRAME_SANDBOX } from './constants.js';
+import { THEME_CHANGE_EVENT, currentTheme } from './theme.js';
+import type { Theme } from './theme.js';
 
 // Syntax colours are theme variables in styles.ts (the page loads no other
 // stylesheet, so a bundled highlight.js theme would never apply).
 
-// Initialize mermaid with strict security
-let mermaidInitialized = false;
-function ensureMermaid(): void {
-  if (mermaidInitialized) return;
-  mermaidInitialized = true;
+// Mermaid bakes its colours into the SVG, so it is configured from the page's
+// theme before every draw, and drawn diagrams are redrawn when the theme
+// changes. Strict security either way.
+let mermaidTheme: Theme | null = null;
+function configureMermaid(): void {
+  const theme = currentTheme();
+  if (mermaidTheme === theme) return;
+  mermaidTheme = theme;
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: 'strict',
-    theme: 'dark',
+    theme: theme === 'light' ? 'default' : 'dark',
   });
 }
+
+/** Diagrams on the page and their source, for redrawing after a theme change. */
+const drawnDiagrams = new Map<HTMLElement, string>();
+
+document.addEventListener(THEME_CHANGE_EVENT, () => {
+  for (const [target, source] of drawnDiagrams) {
+    if (!target.isConnected) {
+      drawnDiagrams.delete(target);
+      continue;
+    }
+    void drawMermaid(target, source);
+  }
+});
 
 // Configure marked for safe rendering
 marked.setOptions({
@@ -134,11 +152,19 @@ function followInDocumentLink(event: MouseEvent): void {
 }
 
 async function renderMermaid(content: string, container: HTMLElement): Promise<void> {
-  ensureMermaid();
   container.innerHTML = '<div class="mermaid-container"><div class="mermaid-render"></div></div>';
   const target = container.querySelector('.mermaid-render') as HTMLElement;
+  drawnDiagrams.set(target, content);
+  await drawMermaid(target, content);
+}
+
+let diagramCount = 0;
+
+async function drawMermaid(target: HTMLElement, content: string): Promise<void> {
+  configureMermaid();
   try {
-    const id = `mermaid-${Date.now()}`;
+    diagramCount += 1;
+    const id = `mermaid-${Date.now()}-${diagramCount}`;
     const { svg } = await mermaid.render(id, content);
     target.innerHTML = svg;
   } catch (err) {

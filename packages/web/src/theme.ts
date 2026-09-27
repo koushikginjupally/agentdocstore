@@ -18,6 +18,9 @@ export function getStoredTheme(): Theme {
   return 'dark';
 }
 
+/** Dispatched on `document` after the theme changes; `detail` is the new theme. */
+export const THEME_CHANGE_EVENT = 'agentdocstore:themechange';
+
 export function setTheme(theme: Theme): void {
   try {
     localStorage.setItem(STORAGE_KEY, theme);
@@ -25,6 +28,13 @@ export function setTheme(theme: Theme): void {
     // ignore
   }
   document.documentElement.setAttribute('data-theme', theme);
+  // Content drawn with theme colours baked in (Mermaid diagrams) redraws on this.
+  document.dispatchEvent(new CustomEvent<Theme>(THEME_CHANGE_EVENT, { detail: theme }));
+}
+
+/** The theme applied to the page right now. */
+export function currentTheme(): Theme {
+  return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
 }
 
 export function toggleTheme(): Theme {
