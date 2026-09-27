@@ -65,9 +65,11 @@ export async function renderContent(
 
 async function renderMarkdown(content: string, container: HTMLElement): Promise<void> {
   const raw = await marked.parse(content);
+  // No ADD_TAGS: iframes stay stripped, as docs/SECURITY.md states, so a
+  // document cannot embed another site (a fake sign-in page, a tracker) inside
+  // AgentDocStore. HTML documents have their own sandboxed renderer.
   const clean = DOMPurify.sanitize(raw, {
     USE_PROFILES: { html: true },
-    ADD_TAGS: ['iframe'],
     ADD_ATTR: ['target', 'rel'],
   });
   container.innerHTML = `<div class="markdown-body">${clean}</div>`;

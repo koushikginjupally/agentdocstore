@@ -22,6 +22,11 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- Markdown documents can no longer embed `<iframe>` elements. The sanitizer
+  was configured to keep them, although docs/SECURITY.md says they are
+  stripped, so a PUBLIC document could show another site (for example a fake
+  sign-in page) inside AgentDocStore to anyone who opened it. Use the `html`
+  language, which renders in a sandbox, for embedded HTML.
 - `PUT /api/documents/:id` no longer applies title, language, expiry or
   visibility when its content change hits a version conflict (409, another
   save landed first). The metadata was written before the new version, so a
