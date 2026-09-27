@@ -142,3 +142,45 @@ describe('MCP over HTTP — authentication', () => {
     expect(ok.status).toBe(200);
   });
 });
+
+describe('MCP over HTTP — sessions it does not know', () => {
+  // A 404 tells a client its session is gone and it must initialize again
+  // (MCP streamable HTTP transport); anything else leaves it stuck.
+  const expectSessionNotFound = async (res: Response): Promise<void> => {
+    expect(res.status).toBe(404);
+    const body = (await res.json()) as { error: { code: number; message: string } };
+    expect(body.error.code).toBe(-32001);
+    expect(body.error.message).toMatch(/Session not found/);
+  };
+
+  it('answers 404 for a session id it never issued, for example after a restart', async () => {
+    await mount(() => 'alice');
+    await expectSessionNotFound(
+      await post(
+        { jsonrpc: '2.0', id: 2, method: 'tools/list' },
+        { 'mcp-session-id': 'issued-by-an-earlier-run' },
+      ),
+    );
+  });
+
+  it('answers 404 once the session has been closed', async () => {
+    await mount(() => 'alice');
+    const opened = await post(INITIALIZE);
+    const sessionId = opened.headers.get('mcp-session-id')!;
+    const closed = await fetch(base, {
+      method: 'DELETE',
+      headers: { 'mcp-session-id': sessionId },
+    });
+    expect(closed.status).toBe(200);
+    await expectSessionNotFound(
+      await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, { 'mcp-session-id': sessionId }),
+    );
+  });
+
+  it('still lets the client start again with a new session', async () => {
+    await mount(() => 'alice');
+    const res = await post(INITIALIZE);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('mcp-session-id')).toBeTruthy();
+  });
+});

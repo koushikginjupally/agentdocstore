@@ -46,9 +46,12 @@ consequences worth knowing:
 | No resolvable identity (missing header, bad token, blank user) | `401`, JSON-RPC `-32001`  |
 | `mcp-session-id` presented by a _different_ identity           | `403`, JSON-RPC `-32003`  |
 | Credential stops being valid mid-session                       | `401` on the next request |
+| `mcp-session-id` the server does not hold (restarted, closed)  | `404`, JSON-RPC `-32001`  |
 
 Identity is re-resolved on **every** request, not cached for the session, and a
-session id is not a credential. There is no anonymous fallback user.
+session id is not a credential. There is no anonymous fallback user. Sessions
+live in the server's memory, so a restart ends them; the `404` tells a client
+to initialize a new one.
 
 ## Client registration
 

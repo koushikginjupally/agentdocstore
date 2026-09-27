@@ -92,6 +92,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- MCP over HTTP answers `404 Session not found` to a request whose
+  `mcp-session-id` it does not hold, for example after the server restarted
+  or the session was closed, so the client starts a new session. It answered
+  `400 Server not initialized`, which clients do not recover from.
 - The home page's search box is now a search landmark, so screen reader
   users can jump straight to it instead of tabbing through the create form.
 - Every page of the web UI now has one main heading (`h1`), and its headings

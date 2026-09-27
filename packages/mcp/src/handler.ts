@@ -147,6 +147,13 @@ export function createHttpHandler(opts: HttpHandlerOptions): McpHttpHandler {
           return;
         }
         transport = sessions.get(sessionId)!;
+      } else if (stateful && sessionId !== undefined) {
+        // An id this server never issued or has already closed (a restart, a
+        // DELETE). 404 is how the transport tells a client its session is gone
+        // and it must initialize again; a fresh, uninitialized server would
+        // answer 400 "Server not initialized" and leave the client stuck.
+        sendError(res, 404, -32001, 'Session not found');
+        return;
       } else {
         // A new session (or a stateless call): wire a fresh MCP server bound to
         // this caller. Tool handlers read the viewer through the closure, so
