@@ -8,18 +8,29 @@ import { formatDate, copyToClipboard, onClick } from '../dom.js';
 import { showToast } from '../toast.js';
 import { renderCommentPanel } from '../comments.js';
 
-export async function renderViewPage(id: string, container: HTMLElement): Promise<void> {
+/**
+ * Render a document. With `version`, show that version's content: when it is
+ * not the latest, the page is read-only — no Edit or Delete (they act on the
+ * whole document) and no comments (they belong to the document, not to one
+ * old version) — and says so, with a link to the latest version.
+ */
+export async function renderViewPage(
+  id: string,
+  container: HTMLElement,
+  version?: number,
+): Promise<void> {
   container.innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
 
   // Asked once per page and shared with the comment panel.
   const viewerLookup = resolveViewer();
 
   try {
-    const [doc, viewer] = await Promise.all([api.getDocument(id), viewerLookup]);
-    document.title = buildTitle(doc.title);
+    const [doc, viewer] = await Promise.all([api.getDocument(id, version), viewerLookup]);
+    const isOldVersion = version !== undefined && version < doc.latestVersion;
+    document.title = buildTitle(isOldVersion ? `${doc.title} (v${version})` : doc.title);
     // Edit and Delete are owner-only on the server (core canWrite/canDelete),
     // so only the owner is offered them. An unknown viewer sees neither.
-    const isOwner = viewer !== null && viewer !== '' && viewer === doc.createdBy;
+    const isOwner = !isOldVersion && viewer !== null && viewer !== '' && viewer === doc.createdBy;
 
     container.innerHTML = '';
 
@@ -51,7 +62,7 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
 
     const versionBadge = document.createElement('span');
     versionBadge.className = 'version-badge';
-    versionBadge.textContent = `v${doc.latestVersion}`;
+    versionBadge.textContent = `v${isOldVersion ? version : doc.latestVersion}`;
 
     const dateBadge = document.createElement('span');
     dateBadge.className = 'text-muted text-sm';
@@ -64,7 +75,9 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
     metaDiv.appendChild(visBadge);
     metaDiv.appendChild(langBadge);
     metaDiv.appendChild(versionBadge);
-    metaDiv.appendChild(dateBadge);
+    // The document's last-updated time belongs to the latest version; beside
+    // an old version it would read as that version's date.
+    if (!isOldVersion) metaDiv.appendChild(dateBadge);
     metaDiv.appendChild(authorBadge);
     left.appendChild(metaDiv);
 
@@ -79,7 +92,8 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
     copyLinkBtn.className = 'btn btn-sm';
     copyLinkBtn.innerHTML = iconLabelHtml('link', 'Copy Link');
     onClick(copyLinkBtn, 'Copy link', async () => {
-      const url = `${window.location.origin}${href(`/d/${id}`).replace('#', '#')}`;
+      const path = isOldVersion ? `/d/${id}/v/${version}` : `/d/${id}`;
+      const url = `${window.location.origin}${href(path)}`;
       const ok = await copyToClipboard(url);
       showToast(ok ? 'Link copied!' : 'Failed to copy', ok ? 'success' : 'error');
     });
@@ -126,6 +140,20 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
     header.appendChild(actions);
     container.appendChild(header);
 
+    if (isOldVersion) {
+      const notice = document.createElement('div');
+      notice.className = 'version-notice mb-16';
+      notice.setAttribute('role', 'note');
+      const text = document.createElement('span');
+      text.textContent = `You are viewing version ${version} of ${doc.latestVersion}. `;
+      const latestLink = document.createElement('a');
+      latestLink.href = href(`/d/${id}`);
+      latestLink.textContent = 'View the latest version';
+      notice.appendChild(text);
+      notice.appendChild(latestLink);
+      container.appendChild(notice);
+    }
+
     // Content rendering
     const contentDiv = document.createElement('div');
     contentDiv.className = 'card';
@@ -133,17 +161,27 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
     await renderContent(doc.language, doc.content, contentDiv);
 
     // Comment panel
-    renderCommentPanel(id, container, doc.createdBy, viewerLookup);
+    if (!isOldVersion) renderCommentPanel(id, container, doc.createdBy, viewerLookup);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       document.title = buildTitle('Not Found');
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="icon">${ICON_SEARCH}</div>
-          <div>Document not found</div>
-          <a href="${href('/')}" class="btn mt-16">Go Home</a>
-        </div>
-      `;
+      // A missing version of a document that may still exist: point at the
+      // document itself rather than only at home. Built with DOM nodes, not
+      // markup, because `id` comes straight from the address bar.
+      const [message, backHref, backLabel] =
+        version !== undefined
+          ? ['Version not found', href(`/d/${id}`), 'Go to the document']
+          : ['Document not found', href('/'), 'Go Home'];
+      container.innerHTML = `<div class="empty-state"><div class="icon">${ICON_SEARCH}</div></div>`;
+      const state = container.querySelector('.empty-state')!;
+      const text = document.createElement('div');
+      text.textContent = message;
+      const back = document.createElement('a');
+      back.className = 'btn mt-16';
+      back.href = backHref;
+      back.textContent = backLabel;
+      state.appendChild(text);
+      state.appendChild(back);
     } else {
       showToast(
         `Failed to load doc: ${err instanceof Error ? err.message : 'Unknown error'}`,

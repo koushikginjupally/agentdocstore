@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { api } from '../api.js';
+import { api, ApiError } from '../api.js';
 import { renderViewPage } from './view.js';
 
 const doc = {
@@ -54,5 +54,74 @@ describe('view page document actions', () => {
     await actionsAs('bob');
     await vi.waitFor(() => expect(document.querySelector('#comment-list p')).not.toBeNull());
     expect(api.whoami).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('view page for an old version', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  async function renderVersion(version: number, latest: number): Promise<void> {
+    vi.spyOn(api, 'getDocument').mockResolvedValue({
+      ...doc,
+      latestVersion: latest,
+      version,
+      content: `content of v${version}`,
+    });
+    vi.spyOn(api, 'getComments').mockResolvedValue([]);
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '';
+    await renderViewPage('d1', document.body, version);
+  }
+
+  it('loads that version and says it is not the latest, with a way back', async () => {
+    await renderVersion(1, 3);
+    expect(api.getDocument).toHaveBeenCalledWith('d1', 1);
+    expect(document.body.textContent).toContain('content of v1');
+    const notice = document.querySelector('[role="note"]');
+    expect(notice?.textContent).toContain('You are viewing version 1 of 3.');
+    const latest = [...document.querySelectorAll('a')].find(
+      (a) => a.textContent === 'View the latest version',
+    );
+    expect(latest?.getAttribute('href')).toBe('#/d/d1');
+  });
+
+  it('offers only read actions for an old version, even to the owner', async () => {
+    await renderVersion(1, 3);
+    const header = document.querySelector('.flex-between');
+    const labels = [...(header?.querySelectorAll('a, button') ?? [])].map((el) => el.textContent);
+    expect(labels).toEqual(['Copy Link', 'Copy Raw', 'Versions']);
+    // Comments belong to the document, not to one old version.
+    expect(document.querySelector('.comment-panel')).toBeNull();
+    // The document's last-updated date would read as this version's date.
+    expect(document.body.textContent).not.toContain('2026');
+  });
+
+  it('shows the latest version as the normal page', async () => {
+    await renderVersion(3, 3);
+    expect(document.querySelector('[role="note"]')).toBeNull();
+    expect(document.querySelector('.comment-panel')).not.toBeNull();
+  });
+});
+
+describe('view page for a version that does not exist', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('says the version is missing and links to the document', async () => {
+    vi.spyOn(api, 'getDocument').mockRejectedValue(new ApiError('API error 404: Not found', 404));
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '';
+    await renderViewPage('d1', document.body, 99);
+    expect(document.body.textContent).toContain('Version not found');
+    const back = document.querySelector<HTMLAnchorElement>('a.btn');
+    expect(back?.textContent).toBe('Go to the document');
+    expect(back?.getAttribute('href')).toBe('#/d/d1');
+  });
+
+  it('treats an id from the address as text, not markup', async () => {
+    vi.spyOn(api, 'getDocument').mockRejectedValue(new ApiError('API error 404: Not found', 404));
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '';
+    await renderViewPage('"><img src=x onerror=alert(1)>', document.body, 2);
+    expect(document.querySelector('img')).toBeNull();
   });
 });

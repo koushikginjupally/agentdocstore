@@ -539,6 +539,14 @@ textarea {
 }
 .version-list-item:last-child { border-bottom: none; }
 .version-message { margin-top: 4px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.version-notice {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
 .version-checkbox { accent-color: var(--accent); }
 
 /* ===== Loading spinner ===== */

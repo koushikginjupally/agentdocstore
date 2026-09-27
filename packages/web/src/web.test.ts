@@ -75,6 +75,18 @@ describe('parseRoute', () => {
     const route = parseRoute('/d/abc123/versions/extra');
     expect(route.page).toBe('not-found');
   });
+
+  it('parses an old-version route', () => {
+    const route = parseRoute('/d/abc123/v/2');
+    expect(route.page).toBe('version');
+    expect(route.params).toEqual({ id: 'abc123', version: '2' });
+  });
+
+  it('only accepts a whole version number', () => {
+    expect(parseRoute('/d/abc123/v/latest').page).toBe('not-found');
+    expect(parseRoute('/d/abc123/v/2x').page).toBe('not-found');
+    expect(parseRoute('/d/abc123/v/').page).toBe('not-found');
+  });
 });
 
 // ---- Title builder tests ----

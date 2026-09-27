@@ -8,7 +8,7 @@
 import { runGuarded } from './dom.js';
 
 export interface Route {
-  readonly page: 'home' | 'view' | 'edit' | 'versions' | 'not-found';
+  readonly page: 'home' | 'view' | 'version' | 'edit' | 'versions' | 'not-found';
   readonly params: Readonly<Record<string, string>>;
 }
 
@@ -21,6 +21,7 @@ interface RoutePattern {
 const ROUTES: readonly RoutePattern[] = [
   { page: 'home', pattern: /^\/$/, paramNames: [] },
   { page: 'versions', pattern: /^\/d\/([^/]+)\/versions$/, paramNames: ['id'] },
+  { page: 'version', pattern: /^\/d\/([^/]+)\/v\/(\d+)$/, paramNames: ['id', 'version'] },
   { page: 'edit', pattern: /^\/d\/([^/]+)\/edit$/, paramNames: ['id'] },
   { page: 'view', pattern: /^\/d\/([^/]+)$/, paramNames: ['id'] },
 ];

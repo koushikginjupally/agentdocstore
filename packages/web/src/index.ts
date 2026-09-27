@@ -60,6 +60,16 @@ async function handleRoute(route: Route, container: HTMLElement): Promise<void> 
       }
       break;
     }
+    case 'version': {
+      const id = route.params['id'];
+      const version = Number(route.params['version']);
+      if (id && Number.isInteger(version) && version >= 1) {
+        await renderViewPage(id, container, version);
+      } else {
+        renderNotFoundPage(container);
+      }
+      break;
+    }
     case 'edit': {
       const id = route.params['id'];
       if (id) {

@@ -100,6 +100,12 @@ export async function renderVersionsPage(id: string, container: HTMLElement): Pr
 
       li.appendChild(checkbox);
       li.appendChild(info);
+      const viewLink = document.createElement('a');
+      viewLink.className = 'btn btn-sm';
+      viewLink.href = href(`/d/${id}/v/${ver.version}`);
+      viewLink.textContent = 'View';
+      viewLink.setAttribute('aria-label', `View version ${ver.version}`);
+      li.appendChild(viewLink);
       list.appendChild(li);
     }
 

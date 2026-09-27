@@ -10,6 +10,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- Any earlier version of a document can be opened in full: the Versions page
+  has a View link on each version, and `#/d/<id>/v/<n>` shows that version
+  rendered, read-only, with a note and a link back to the latest version.
 - The web UI asks before discarding unsaved typing: leaving the edit page, or
   the home page with a half-written new document, through Cancel, a link or
   Back now asks first, and reloading or closing the tab gets the browser's
