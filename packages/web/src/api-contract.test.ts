@@ -11,8 +11,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createMemoryProvider } from '@agentdocstore/provider-memory';
 import { createServer } from '@agentdocstore/server';
+import { VersionConflictError } from '@agentdocstore/core';
 import type { Provider } from '@agentdocstore/core';
-import { api } from './api.js';
+import { api, CredentialScanError } from './api.js';
 
 let provider: Provider;
 
@@ -138,6 +139,34 @@ describe('web API client against the real server: errors', () => {
       name: 'ApiError',
       status: 400,
       message: 'API error 400: Title exceeds maximum length',
+    });
+  });
+
+  it('reports detected credentials as a CredentialScanError', async () => {
+    const err: unknown = await api
+      .createDocument({
+        title: 'Keys',
+        content: 'password=SuperSecret123!Abc',
+        language: 'plaintext',
+      })
+      .catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(CredentialScanError);
+    expect(err).toMatchObject({ status: 409, options: ['redact', 'skip'] });
+    expect((err as CredentialScanError).detected).toContain('generic-secret');
+  });
+
+  it('reports a version conflict as a plain ApiError, not detected credentials', async () => {
+    const id = await newDocument();
+    // Another save lands between the route's read and its append.
+    vi.spyOn(provider.repository, 'appendVersion').mockRejectedValueOnce(
+      new VersionConflictError('Version conflict: expected 1, found 2', 1, 2),
+    );
+    const err: unknown = await api.updateDocument(id, { content: 'v2' }).catch((e: unknown) => e);
+    expect(err).not.toBeInstanceOf(CredentialScanError);
+    expect(err).toMatchObject({
+      name: 'ApiError',
+      status: 409,
+      message: 'API error 409: Version conflict: expected 1, found 2',
     });
   });
 });

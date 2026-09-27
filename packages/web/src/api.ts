@@ -91,11 +91,6 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     },
   });
 
-  if (res.status === 409) {
-    const body = (await res.json()) as ApiScanResult;
-    throw new CredentialScanError(body);
-  }
-
   if (!res.ok) {
     // Read the body once: after a failed res.json() the body is spent and
     // res.text() throws, which would replace this ApiError with a TypeError.
@@ -106,6 +101,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     } catch {
       // Not JSON (for example a proxy's error page); keep the text.
     }
+    // 409 is also a version conflict ({ error }), which must not open the
+    // credentials dialog: only a body that lists findings is a scan result.
+    if (res.status === 409 && isScanResult(body)) throw new CredentialScanError(body);
     throw new ApiError(
       `API error ${res.status}: ${errorMessage(body) ?? res.statusText}`,
       res.status,
@@ -115,6 +113,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+/** True for the credential-scan 409 body, `{ detected: [...], options: [...] }`. */
+function isScanResult(body: unknown): body is ApiScanResult {
+  if (typeof body !== 'object' || body === null) return false;
+  const { detected, options } = body as { detected?: unknown; options?: unknown };
+  return Array.isArray(detected) && Array.isArray(options);
 }
 
 /** The message in a `{ "error": "<message>" }` body, the REST error shape. */

@@ -76,6 +76,10 @@ versions may contain breaking changes; they will be called out under
   `message` field, but the API sends `{ "error": "<message>" }`. A non-JSON
   error response, such as a proxy's error page, now reports its status instead
   of "Body is unusable".
+- Saving while another save of the same document lands (a version conflict,
+  also HTTP 409) no longer fails silently. The web UI treated every 409 as
+  detected credentials, so the edit page showed no dialog and no message; it
+  now reports the conflict.
 
 ## [0.1.0] - 2026-09-26
 
