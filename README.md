@@ -108,14 +108,16 @@ AgentDocStore is the local alternative:
   fuse on `net.Socket#connect` and `fetch` that refuses non-loopback egress.
 - **Write-time size limits** — oversized content is rejected (`413`), never
   stored and failed later.
-- **Hardened rendering** — CSP, `nosniff`, DOMPurify, a locked-down HTML
-  sandbox, path-traversal-proof ids.
+- **Hardened rendering** — DOMPurify-sanitized markdown, a locked-down HTML
+  sandbox, `nosniff` on every response, a strict CSP on API and raw responses,
+  path-traversal-proof ids. (The web UI page itself has no CSP yet; see
+  [docs/SECURITY.md](docs/SECURITY.md).)
 
 **Surfaces**
 
 - **Web UI** — vanilla TypeScript, one bundle, zero external assets, dark and
   light themes.
-- **REST API** — 16 JSON routes plus `/raw/:id` for plain text.
+- **REST API** — 15 JSON routes plus `/raw/:id` for plain text.
 - **MCP server** — 16 tools over **stdio** and **streamable HTTP**, sharing one
   implementation.
 - **CLI** — `serve`, `mcp`, `doctor`, `init-provider`, `export`, `import`.
@@ -564,7 +566,7 @@ and **backup/restore** are covered in [docs/HOSTING.md](docs/HOSTING.md).
 ```bash
 npm ci
 npm run build      # tsc -b across the workspace, plus the web bundle
-npm test           # vitest — 481 tests, including 60 conformance cases per provider
+npm test           # vitest — every package, including 60 conformance cases per provider
 npm run lint       # eslint (correctness) + prettier --check (formatting)
 npm run verify     # end-to-end harness, writes VERIFICATION.md
 scripts/airgap-test.sh   # runs the app with no network interface at all

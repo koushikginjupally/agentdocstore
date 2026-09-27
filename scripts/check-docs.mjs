@@ -49,6 +49,11 @@ for (const file of files) {
 // entry states the count it shipped with.
 const suite = readFileSync(join(root, 'packages/provider-tests/src/conformance.ts'), 'utf8');
 const cases = suite.match(/^\s+it\(/gm)?.length ?? 0;
+// The same for the REST API's JSON routes (everything under /api, and /healthz;
+// /raw/:id serves plain text and is named separately).
+const server = readFileSync(join(root, 'packages/server/src/server.ts'), 'utf8');
+const jsonRoutes =
+  server.match(/\bapp\.(?:get|post|put|patch|delete)\(\s*'\/(?:api\/|healthz)/g)?.length ?? 0;
 for (const file of files) {
   if (file.endsWith('CHANGELOG.md')) continue;
   const body = readFileSync(file, 'utf8');
@@ -57,6 +62,11 @@ for (const file of files) {
   )) {
     if (Number(match[1]) !== cases) {
       failures.push(`${file}: says ${match[1]} conformance cases; the suite has ${cases}`);
+    }
+  }
+  for (const match of body.matchAll(/\b(\d+)\s+JSON routes\b/g)) {
+    if (Number(match[1]) !== jsonRoutes) {
+      failures.push(`${file}: says ${match[1]} JSON routes; the server has ${jsonRoutes}`);
     }
   }
 }
