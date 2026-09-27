@@ -35,3 +35,27 @@ export function searchCountMessage(total: number, query: string): string {
   if (total === 0) return emptyListMessage(q);
   return total === 1 ? `1 document matches “${q}”` : `${total} documents match “${q}”`;
 }
+
+/** Matches LIMITS.MAX_COMMENT_BYTES on the server (a test keeps them equal). */
+export const MAX_COMMENT_BYTES = 10_000;
+
+const utf8 = new TextEncoder();
+
+/** Length in UTF-8 bytes, the unit the server's size limits are counted in. */
+export function utf8Bytes(text: string): number {
+  return utf8.encode(text).length;
+}
+
+const count = (n: number): string => n.toLocaleString('en-US');
+
+/**
+ * The note under the comment box: nothing for a short comment, the size from
+ * 90% of the limit, and how much to cut once the comment is over it.
+ */
+export function commentSizeMessage(bytes: number): string {
+  if (bytes < MAX_COMMENT_BYTES * 0.9) return '';
+  const size = `${count(bytes)} of ${count(MAX_COMMENT_BYTES)} bytes`;
+  if (bytes <= MAX_COMMENT_BYTES) return size;
+  const over = bytes - MAX_COMMENT_BYTES;
+  return `${size}. Shorten the comment by ${count(over)} ${over === 1 ? 'byte' : 'bytes'} to post it.`;
+}

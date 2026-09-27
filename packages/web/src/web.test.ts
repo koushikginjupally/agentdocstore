@@ -3,6 +3,7 @@
  * Runs in vitest node environment — no browser DOM needed for these.
  */
 import { readFileSync } from 'node:fs';
+import { LIMITS } from '@agentdocstore/core';
 import { BUTTON_ICONS, STATE_ICONS, iconLabelHtml } from './icons.js';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { parseRoute } from './router.js';
@@ -10,6 +11,9 @@ import {
   buildTitle,
   emptyListMessage,
   searchCountMessage,
+  commentSizeMessage,
+  MAX_COMMENT_BYTES,
+  utf8Bytes,
   WORDMARK_HTML,
   HTML_IFRAME_SANDBOX,
   CONTENT_MAX_WIDTH,
@@ -387,6 +391,38 @@ describe('searchCountMessage', () => {
 
   it('returns the query as plain text for textContent', () => {
     expect(searchCountMessage(2, '<img src=x>')).toContain('<img src=x>');
+  });
+});
+
+describe('comment size', () => {
+  it('uses the same limit as the server', () => {
+    expect(MAX_COMMENT_BYTES).toBe(LIMITS.MAX_COMMENT_BYTES);
+  });
+
+  it('counts UTF-8 bytes, as the server does', () => {
+    expect(utf8Bytes('abc')).toBe(3);
+    expect(utf8Bytes('é')).toBe(2);
+    expect(utf8Bytes('日本')).toBe(6);
+    expect(utf8Bytes('🙂')).toBe(4);
+  });
+
+  it('says nothing until a comment is close to the limit', () => {
+    expect(commentSizeMessage(0)).toBe('');
+    expect(commentSizeMessage(8_999)).toBe('');
+  });
+
+  it('shows the size near the limit, and up to it', () => {
+    expect(commentSizeMessage(9_000)).toBe('9,000 of 10,000 bytes');
+    expect(commentSizeMessage(10_000)).toBe('10,000 of 10,000 bytes');
+  });
+
+  it('says how much to cut once over the limit', () => {
+    expect(commentSizeMessage(10_976)).toBe(
+      '10,976 of 10,000 bytes. Shorten the comment by 976 bytes to post it.',
+    );
+    expect(commentSizeMessage(10_001)).toBe(
+      '10,001 of 10,000 bytes. Shorten the comment by 1 byte to post it.',
+    );
   });
 });
 

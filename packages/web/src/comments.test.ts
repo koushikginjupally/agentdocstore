@@ -132,3 +132,77 @@ describe('a half-written comment', () => {
     expect(hasUnsavedChanges()).toBe(true);
   });
 });
+
+describe('comment size note', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  async function form() {
+    vi.spyOn(api, 'getComments').mockResolvedValue([]);
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '';
+    renderCommentPanel('d1', document.body, 'alice');
+    await vi.waitFor(() => expect(api.getComments).toHaveBeenCalled());
+    const box = document.querySelector<HTMLTextAreaElement>('textarea[aria-label="New comment"]')!;
+    const note = document.getElementById(box.getAttribute('aria-describedby') ?? '')!;
+    const post = [...document.querySelectorAll('button')].find((b) => b.textContent === 'Comment')!;
+    const type = (text: string): void => {
+      box.value = text;
+      box.dispatchEvent(new Event('input'));
+    };
+    return { box, note, post, type };
+  }
+
+  it('is linked to the comment box and empty for a short comment', async () => {
+    const { note, type } = await form();
+    expect(note).not.toBeNull();
+    type('Looks good');
+    expect(note.textContent).toBe('');
+  });
+
+  it('shows the size as the comment nears the limit', async () => {
+    const { note, type } = await form();
+    type('x'.repeat(9_500));
+    expect(note.textContent).toBe('9,500 of 10,000 bytes');
+    expect(note.classList.contains('over-limit')).toBe(false);
+  });
+
+  it('counts bytes, not characters', async () => {
+    const { note, type } = await form();
+    type('é'.repeat(5_000));
+    expect(note.textContent).toBe('10,000 of 10,000 bytes');
+    type('é'.repeat(5_001));
+    expect(note.classList.contains('over-limit')).toBe(true);
+  });
+
+  it('measures the comment as it will be sent, without surrounding space', async () => {
+    const { note, type } = await form();
+    type(`${'x'.repeat(10_000)}   \n`);
+    expect(note.classList.contains('over-limit')).toBe(false);
+  });
+
+  it('says how much to cut, and does not post a comment over the limit', async () => {
+    const { box, note, post, type } = await form();
+    const add = vi.spyOn(api, 'addComment');
+    type('x'.repeat(10_976));
+    expect(note.textContent).toBe(
+      '10,976 of 10,000 bytes. Shorten the comment by 976 bytes to post it.',
+    );
+    expect(note.classList.contains('over-limit')).toBe(true);
+    post.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(add).not.toHaveBeenCalled();
+    expect(box.getAttribute('aria-invalid')).toBe('true');
+    expect(box.value).toHaveLength(10_976);
+  });
+
+  it('clears once the comment is posted', async () => {
+    const { note, post, type } = await form();
+    vi.spyOn(api, 'addComment').mockResolvedValue({ ...comments[0]!, body: 'x' });
+    type('x'.repeat(9_500));
+    post.click();
+    await vi.waitFor(() => expect(note.textContent).toBe(''));
+  });
+});

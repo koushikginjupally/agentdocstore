@@ -10,6 +10,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- The comment box shows a comment's size once it nears the 10,000-byte limit
+  and, past it, how much to cut; an oversized comment is no longer sent only
+  to fail with "Comment exceeds maximum length".
 - A search in the web UI now says how many documents matched (for example
   "25 documents match “rollout”"), and screen readers announce it, or that
   nothing matched, while focus stays in the search box.

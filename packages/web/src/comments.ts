@@ -1,7 +1,8 @@
 /** Comment panel for a doc. */
 import { api, resolveViewer } from './api.js';
 import type { ApiComment } from './api.js';
-import { formatDate, onClick } from './dom.js';
+import { formatDate, markFieldInvalid, onClick } from './dom.js';
+import { MAX_COMMENT_BYTES, commentSizeMessage, utf8Bytes } from './constants.js';
 import { watchForUnsavedChanges } from './router.js';
 import { showToast } from './toast.js';
 
@@ -53,16 +54,36 @@ export function renderCommentPanel(
   // first, as the edit page does. Posting clears the box, which ends it.
   watchForUnsavedChanges([textarea]);
 
+  // The comment's size against the server's limit, once it gets close: the
+  // server only says "too long", not by how much.
+  const sizeNote = document.createElement('p');
+  sizeNote.id = 'comment-size';
+  sizeNote.className = 'comment-size text-sm text-muted';
+  textarea.setAttribute('aria-describedby', sizeNote.id);
+  const showSize = (): number => {
+    const bytes = utf8Bytes(textarea.value.trim());
+    sizeNote.textContent = commentSizeMessage(bytes);
+    sizeNote.classList.toggle('over-limit', bytes > MAX_COMMENT_BYTES);
+    return bytes;
+  };
+  textarea.addEventListener('input', showSize);
+
   const submitBtn = document.createElement('button');
   submitBtn.className = 'btn btn-primary';
   submitBtn.textContent = 'Comment';
   onClick(submitBtn, 'Add comment', async () => {
     const body = textarea.value.trim();
     if (!body) return;
+    if (showSize() > MAX_COMMENT_BYTES) {
+      // The note already says how much to cut; point the user back at it.
+      markFieldInvalid(textarea);
+      return;
+    }
     submitBtn.disabled = true;
     try {
       await api.addComment(documentId, body);
       textarea.value = '';
+      showSize();
       await loadComments(ctx, listEl);
       showToast('Comment added', 'success');
     } catch (err) {
@@ -78,6 +99,7 @@ export function renderCommentPanel(
   form.appendChild(textarea);
   form.appendChild(submitBtn);
   panel.appendChild(form);
+  panel.appendChild(sizeNote);
 
   container.appendChild(panel);
 

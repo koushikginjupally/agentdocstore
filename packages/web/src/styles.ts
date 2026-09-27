@@ -408,6 +408,8 @@ textarea {
   min-height: 60px;
   flex: 1;
 }
+.comment-size:not(:empty) { margin-top: 6px; }
+.comment-size.over-limit { color: var(--danger); }
 
 /* ===== Diff view ===== */
 .diff-container {
