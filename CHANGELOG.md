@@ -8,6 +8,12 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+### Fixed
+
+- `PUT /api/documents/:id` no longer applies title, language, expiry or
+  visibility changes when the same request is rejected for detected credentials
+  (409) or oversized content (413).
+
 ## [0.1.0] - 2026-09-26
 
 First public release.

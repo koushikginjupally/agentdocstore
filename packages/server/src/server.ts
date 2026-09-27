@@ -429,6 +429,28 @@ export function createServer(opts: CreateServerOptions): Hono {
     const body = await parseBody(c, UpdateDocumentSchema);
     let updated = doc;
 
+    // Validate everything and settle the credential decision BEFORE writing.
+    // A 409 means "nothing was saved", so no part of the request may be
+    // applied first — otherwise a rejected update could still rename the
+    // document or make it PUBLIC.
+    let content: string | undefined;
+    if (body.content !== undefined) {
+      validateContentSize(body.content);
+      content = body.content;
+      if (body.redactionPolicy === undefined) {
+        const findings = scan(content);
+        if (findings.length > 0) {
+          const types = [...new Set(findings.map((f) => f.type))];
+          return c.json({ detected: types, options: ['redact', 'skip'] }, 409);
+        }
+      } else if (body.redactionPolicy === 'redact') {
+        const findings = scan(content);
+        if (findings.length > 0) {
+          content = redact(content, findings);
+        }
+      }
+    }
+
     // Meta updates (title, language, expiresInDays)
     const metaChanges: { title?: string; language?: Language; expiresAt?: string | null } = {};
     let hasMetaChanges = false;
@@ -461,24 +483,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     }
 
     // Content update — append a new version
-    if (body.content !== undefined) {
-      validateContentSize(body.content);
-      let content = body.content;
-
-      // Credential-scan flow
-      if (body.redactionPolicy === undefined) {
-        const findings = scan(content);
-        if (findings.length > 0) {
-          const types = [...new Set(findings.map((f) => f.type))];
-          return c.json({ detected: types, options: ['redact', 'skip'] }, 409);
-        }
-      } else if (body.redactionPolicy === 'redact') {
-        const findings = scan(content);
-        if (findings.length > 0) {
-          content = redact(content, findings);
-        }
-      }
-
+    if (content !== undefined) {
       updated = await provider.repository.appendVersion(id, {
         content,
         editedBy: user,

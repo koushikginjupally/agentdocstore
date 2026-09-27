@@ -244,6 +244,42 @@ describe('server', () => {
       const body = (await updateRes.json()) as { detected: string[] };
       expect(body.detected).toContain('generic-secret');
     });
+
+    it('applies no part of an update rejected for credentials', async () => {
+      const createRes = await post('/api/documents', {
+        title: 'Original',
+        content: 'clean content',
+        language: 'plaintext',
+        visibility: 'PRIVATE',
+      });
+      expect(createRes.status).toBe(201);
+      const created = (await createRes.json()) as { id: string };
+
+      const updateRes = await put(`/api/documents/${created.id}`, {
+        title: 'Renamed',
+        language: 'markdown',
+        visibility: 'PUBLIC',
+        expiresInDays: 7,
+        content: secretContent,
+      });
+      expect(updateRes.status).toBe(409);
+
+      const readRes = await get(`/api/documents/${created.id}`);
+      const doc = (await readRes.json()) as {
+        title: string;
+        language: string;
+        visibility: string;
+        latestVersion: number;
+        expiresAt?: string;
+        content: string;
+      };
+      expect(doc.title).toBe('Original');
+      expect(doc.language).toBe('plaintext');
+      expect(doc.visibility).toBe('PRIVATE');
+      expect(doc.expiresAt).toBeUndefined();
+      expect(doc.latestVersion).toBe(1);
+      expect(doc.content).toBe('clean content');
+    });
   });
 
   // ========================================================================
@@ -279,6 +315,29 @@ describe('server', () => {
         redactionPolicy: 'skip',
       });
       expect(res.status).toBe(413);
+    });
+
+    it('applies no part of an update rejected as oversized', async () => {
+      const createRes = await post('/api/documents', {
+        title: 'Original',
+        content: 'small',
+        language: 'plaintext',
+      });
+      const created = (await createRes.json()) as { id: string };
+
+      const res = await put(`/api/documents/${created.id}`, {
+        title: 'Renamed',
+        content: 'x'.repeat(LIMITS.MAX_CONTENT_BYTES + 1),
+        redactionPolicy: 'skip',
+      });
+      expect(res.status).toBe(413);
+
+      const doc = (await (await get(`/api/documents/${created.id}`)).json()) as {
+        title: string;
+        latestVersion: number;
+      };
+      expect(doc.title).toBe('Original');
+      expect(doc.latestVersion).toBe(1);
     });
   });
 
