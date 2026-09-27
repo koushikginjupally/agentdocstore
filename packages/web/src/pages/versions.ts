@@ -1,5 +1,6 @@
 /** Versions page: list versions, pick two for diff view. */
 import { api, ApiError } from '../api.js';
+import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
 import { href } from '../router.js';
 import { buildTitle } from '../constants.js';
 import { formatDate } from '../dom.js';
@@ -126,7 +127,7 @@ export async function renderVersionsPage(id: string, container: HTMLElement): Pr
       document.title = buildTitle('Not Found');
       container.innerHTML = `
         <div class="empty-state">
-          <div class="icon">🔍</div>
+          <div class="icon">${ICON_SEARCH}</div>
           <div>Document not found</div>
           <a href="${href('/')}" class="btn mt-16">Go Home</a>
         </div>
@@ -136,8 +137,7 @@ export async function renderVersionsPage(id: string, container: HTMLElement): Pr
         `Failed to load versions: ${err instanceof Error ? err.message : 'Unknown error'}`,
         'error',
       );
-      container.innerHTML =
-        '<div class="empty-state"><div class="icon">❌</div><div>Failed to load versions</div></div>';
+      container.innerHTML = `<div class="empty-state"><div class="icon">${ICON_ERROR}</div><div>Failed to load versions</div></div>`;
     }
   }
 }

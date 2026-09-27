@@ -461,7 +461,8 @@ textarea {
   padding: 48px 20px;
   color: var(--text-muted);
 }
-.empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+.empty-state .icon { margin-bottom: 12px; line-height: 0; }
+.empty-state .state-icon { width: 40px; height: 40px; }
 
 /* ===== JSON pretty toggle ===== */
 .json-toggle {

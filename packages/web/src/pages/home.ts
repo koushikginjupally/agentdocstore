@@ -5,6 +5,7 @@ import { navigate, href } from '../router.js';
 import { buildTitle, emptyListMessage } from '../constants.js';
 import { formatDate, LANGUAGES } from '../dom.js';
 import { showToast } from '../toast.js';
+import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
 import { showRedactionModal } from '../redaction-modal.js';
 
 export async function renderHomePage(container: HTMLElement): Promise<void> {
@@ -163,7 +164,8 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
         const icon = document.createElement('div');
         icon.className = 'icon';
         icon.setAttribute('aria-hidden', 'true');
-        icon.textContent = currentQuery ? '🔍' : '📋';
+        // Static SVG markup from icons.ts — never user input.
+        icon.innerHTML = currentQuery ? ICON_SEARCH : ICON_DOCUMENTS;
         const message = document.createElement('div');
         message.textContent = emptyListMessage(currentQuery);
         empty.append(icon, message);

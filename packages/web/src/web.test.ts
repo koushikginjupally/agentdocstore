@@ -2,6 +2,8 @@
  * Unit tests for pure logic in the web package.
  * Runs in vitest node environment — no browser DOM needed for these.
  */
+import { readFileSync } from 'node:fs';
+import { STATE_ICONS } from './icons.js';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { parseRoute } from './router.js';
 import {
@@ -357,5 +359,24 @@ describe('emptyListMessage', () => {
 
   it('returns the query as plain text for textContent', () => {
     expect(emptyListMessage('<img src=x>')).toContain('<img src=x>');
+  });
+});
+
+describe('state icons', () => {
+  it.each(Object.entries(STATE_ICONS))('%s is a decorative, theme-coloured SVG', (_name, svg) => {
+    expect(svg.startsWith('<svg class="state-icon"')).toBe(true);
+    expect(svg.endsWith('</svg>')).toBe(true);
+    expect(svg).toContain('stroke="currentColor"');
+    expect(svg).toContain('aria-hidden="true"');
+    expect(svg).not.toMatch(/#[0-9a-f]{3,6}\b/i);
+  });
+
+  it('page empty and error states no longer use emoji icons', () => {
+    const pages = ['not-found', 'edit', 'view', 'versions', 'home'];
+    for (const page of pages) {
+      const src = readFileSync(new URL(`./pages/${page}.ts`, import.meta.url), 'utf8');
+      expect(src, page).not.toMatch(/class="icon">[^<$]/u);
+      expect(src, page).not.toMatch(/icon\.textContent = /);
+    }
   });
 });

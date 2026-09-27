@@ -22,6 +22,8 @@ versions may contain breaking changes; they will be called out under
   which runs no sweep.
 - The web UI no longer says "No documents yet" when a search matches nothing;
   it names the search and suggests clearing it.
+- Empty and error states use theme-coloured SVG icons instead of emoji, which
+  rendered as blank boxes on systems without an emoji font.
 
 ## [0.1.0] - 2026-09-26
 

@@ -1,5 +1,6 @@
 /** Edit doc page: update content, title, language, visibility. */
 import { api, ApiError, CredentialScanError } from '../api.js';
+import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
 import { navigate, href } from '../router.js';
 import { buildTitle } from '../constants.js';
 import { LANGUAGES } from '../dom.js';
@@ -140,7 +141,7 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
       document.title = buildTitle('Not Found');
       container.innerHTML = `
         <div class="empty-state">
-          <div class="icon">🔍</div>
+          <div class="icon">${ICON_SEARCH}</div>
           <div>Document not found</div>
           <a href="${href('/')}" class="btn mt-16">Go Home</a>
         </div>
@@ -150,8 +151,7 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
         `Failed to load doc: ${err instanceof Error ? err.message : 'Unknown error'}`,
         'error',
       );
-      container.innerHTML =
-        '<div class="empty-state"><div class="icon">❌</div><div>Failed to load doc</div></div>';
+      container.innerHTML = `<div class="empty-state"><div class="icon">${ICON_ERROR}</div><div>Failed to load doc</div></div>`;
     }
   }
 }

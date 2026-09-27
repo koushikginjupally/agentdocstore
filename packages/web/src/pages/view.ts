@@ -1,5 +1,6 @@
 /** View doc page: renders content, version badge, copy buttons, comment panel. */
 import { api, ApiError } from '../api.js';
+import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
 import { href, navigate } from '../router.js';
 import { buildTitle } from '../constants.js';
 import { renderContent } from '../render.js';
@@ -129,7 +130,7 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
       document.title = buildTitle('Not Found');
       container.innerHTML = `
         <div class="empty-state">
-          <div class="icon">🔍</div>
+          <div class="icon">${ICON_SEARCH}</div>
           <div>Document not found</div>
           <a href="${href('/')}" class="btn mt-16">Go Home</a>
         </div>
@@ -139,8 +140,7 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
         `Failed to load doc: ${err instanceof Error ? err.message : 'Unknown error'}`,
         'error',
       );
-      container.innerHTML =
-        '<div class="empty-state"><div class="icon">❌</div><div>Failed to load doc</div></div>';
+      container.innerHTML = `<div class="empty-state"><div class="icon">${ICON_ERROR}</div><div>Failed to load doc</div></div>`;
     }
   }
 }
