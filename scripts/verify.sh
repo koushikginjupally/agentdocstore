@@ -106,8 +106,9 @@ if [[ "$S1_STATUS" == "PASS" ]]; then
     # escape sequences sit between "Tests" and the count — so strip them first
     # or the extraction silently yields "?".
     sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' test.log >test-plain.log
-    TEST_COUNT=$(grep -oP '^\s*Tests\s+\K\d+(?= passed)' test-plain.log | tail -1 || true)
-    FILE_COUNT=$(grep -oP '^\s*Test Files\s+\K\d+(?= passed)' test-plain.log | tail -1 || true)
+    # sed -nE, not grep -P: BSD/macOS grep has no -P.
+    TEST_COUNT=$(sed -nE 's/^[[:space:]]*Tests[[:space:]]+([0-9]+) passed.*/\1/p' test-plain.log | tail -1 || true)
+    FILE_COUNT=$(sed -nE 's/^[[:space:]]*Test Files[[:space:]]+([0-9]+) passed.*/\1/p' test-plain.log | tail -1 || true)
     S1_DETAIL="$S1_DETAIL, test OK (${TEST_COUNT:-?} tests in ${FILE_COUNT:-?} files)"
   else
     S1_STATUS="FAIL"
@@ -222,7 +223,7 @@ else
       echo "$json" | jq -r ".$field" 2>/dev/null
     else
       # Crude fallback: grep for "field": "value"
-      echo "$json" | grep -oP "\"$field\"\s*:\s*\"([^\"]+)\"" | head -1 | sed 's/.*:.*"\(.*\)"/\1/'
+      echo "$json" | grep -oE "\"$field\"[[:space:]]*:[[:space:]]*\"[^\"]+\"" | head -1 | sed 's/.*:.*"\(.*\)"/\1/'
     fi
   }
 
@@ -231,7 +232,7 @@ else
     if $JQ_FOUND; then
       echo "$json" | jq -r ".$field" 2>/dev/null
     else
-      echo "$json" | grep -oP "\"$field\"\s*:\s*([0-9]+)" | head -1 | sed 's/.*: *//'
+      echo "$json" | grep -oE "\"$field\"[[:space:]]*:[[:space:]]*[0-9]+" | head -1 | sed 's/.*: *//'
     fi
   }
 
@@ -651,7 +652,9 @@ if [[ ! -d "$WEB_DIST" ]]; then
 else
   # Grep for external asset references: src="http, href="http, url(http
   # Exclude .map files (source map VLQ noise).
-  EXT_REFS=$(grep -rPn '(src|href)\s*=\s*"https?://|url\(\s*https?://' \
+  # POSIX ERE, not grep -P: on BSD/macOS grep -P errors out, and `|| true`
+  # would turn that error into an empty result — a false PASS.
+  EXT_REFS=$(grep -rEn '(src|href)[[:space:]]*=[[:space:]]*"https?://|url\([[:space:]]*https?://' \
     "$WEB_DIST" --include='*.html' --include='*.js' --include='*.css' \
     --exclude='*.map' 2>/dev/null || true)
 
