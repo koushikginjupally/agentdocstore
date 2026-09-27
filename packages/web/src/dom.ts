@@ -110,6 +110,65 @@ export function formatDate(iso: string): string {
 }
 
 /** Copy text to clipboard and show feedback. */
+/** File extension for each document language, for downloads. */
+const FILE_EXTENSIONS: Readonly<Record<string, string>> = {
+  markdown: 'md',
+  mermaid: 'mmd',
+  plaintext: 'txt',
+  text: 'txt',
+  javascript: 'js',
+  typescript: 'ts',
+  python: 'py',
+  java: 'java',
+  go: 'go',
+  rust: 'rs',
+  json: 'json',
+  yaml: 'yaml',
+  xml: 'xml',
+  html: 'html',
+  css: 'css',
+  sql: 'sql',
+  bash: 'sh',
+  dockerfile: 'dockerfile',
+};
+
+/** Characters Windows, macOS or Linux reject in a file name. */
+const UNSAFE_FILE_NAME_CHARS = '<>:"/\\|?*';
+
+/**
+ * A file name for downloading a document: its title with characters that file
+ * systems reject replaced by `-`, at most 100 characters, and the extension
+ * for its language.
+ */
+export function downloadFileName(title: string, language: string): string {
+  const cleaned = [...title]
+    .map((ch) => (ch.charCodeAt(0) < 32 || UNSAFE_FILE_NAME_CHARS.includes(ch) ? '-' : ch))
+    .join('')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\.+/, '')
+    .slice(0, 100)
+    .trim();
+  return `${cleaned || 'document'}.${FILE_EXTENSIONS[language] ?? 'txt'}`;
+}
+
+/**
+ * Save `text` as a file on the user's machine. Uses a temporary object URL,
+ * so nothing is fetched and nothing leaves the browser.
+ */
+export function downloadText(text: string, fileName: string): void {
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  // Revoke once the browser has taken the download.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 export async function copyToClipboard(text: string): Promise<boolean> {
   try {
     await navigator.clipboard.writeText(text);

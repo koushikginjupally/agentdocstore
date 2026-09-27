@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- A Download button on the document page saves the shown version as a file
+  named after the document, with the extension for its language (for
+  example `Release notes.md`). It is built in the browser; nothing is
+  fetched.
 - Any earlier version of a document can be opened in full: the Versions page
   has a View link on each version, and `#/d/<id>/v/<n>` shows that version
   rendered, read-only, with a note and a link back to the latest version.

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { api, ApiError } from '../api.js';
+import * as dom from '../dom.js';
 import { renderViewPage } from './view.js';
 
 const doc = {
@@ -36,6 +37,7 @@ describe('view page document actions', () => {
     expect(await actionsAs('alice')).toEqual([
       'Copy Link',
       'Copy Raw',
+      'Download',
       'Edit',
       'Versions',
       'Delete',
@@ -43,11 +45,16 @@ describe('view page document actions', () => {
   });
 
   it('hides Edit and Delete from other viewers', async () => {
-    expect(await actionsAs('bob')).toEqual(['Copy Link', 'Copy Raw', 'Versions']);
+    expect(await actionsAs('bob')).toEqual(['Copy Link', 'Copy Raw', 'Download', 'Versions']);
   });
 
   it('hides Edit and Delete when the viewer is unknown', async () => {
-    expect(await actionsAs(new Error('offline'))).toEqual(['Copy Link', 'Copy Raw', 'Versions']);
+    expect(await actionsAs(new Error('offline'))).toEqual([
+      'Copy Link',
+      'Copy Raw',
+      'Download',
+      'Versions',
+    ]);
   });
 
   it('asks who the viewer is once for the whole page', async () => {
@@ -89,7 +96,7 @@ describe('view page for an old version', () => {
     await renderVersion(1, 3);
     const header = document.querySelector('.flex-between');
     const labels = [...(header?.querySelectorAll('a, button') ?? [])].map((el) => el.textContent);
-    expect(labels).toEqual(['Copy Link', 'Copy Raw', 'Versions']);
+    expect(labels).toEqual(['Copy Link', 'Copy Raw', 'Download', 'Versions']);
     // Comments belong to the document, not to one old version.
     expect(document.querySelector('.comment-panel')).toBeNull();
     // The document's last-updated date would read as this version's date.
@@ -123,5 +130,32 @@ describe('view page for a version that does not exist', () => {
     document.body.innerHTML = '';
     await renderViewPage('"><img src=x onerror=alert(1)>', document.body, 2);
     expect(document.querySelector('img')).toBeNull();
+  });
+});
+
+describe('downloading a document', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('saves the shown version as a file named after the document', async () => {
+    const saved: Array<{ text: string; name: string }> = [];
+    vi.spyOn(dom, 'downloadText').mockImplementation((text, name) => {
+      saved.push({ text, name });
+    });
+    vi.spyOn(api, 'getDocument').mockResolvedValue({
+      ...doc,
+      language: 'markdown',
+      latestVersion: 3,
+      version: 1,
+      content: '# First draft',
+    });
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'bob' });
+    document.body.innerHTML = '';
+    await renderViewPage('d1', document.body, 1);
+    const download = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Download',
+    )!;
+    download.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(saved).toEqual([{ text: '# First draft', name: 'Shared notes v1.md' }]);
   });
 });

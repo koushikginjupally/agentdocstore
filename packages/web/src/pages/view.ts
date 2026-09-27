@@ -4,7 +4,7 @@ import { ICON_ERROR, ICON_SEARCH, iconLabelHtml } from '../icons.js';
 import { href, navigate } from '../router.js';
 import { buildTitle } from '../constants.js';
 import { renderContent } from '../render.js';
-import { formatDate, copyToClipboard, onClick } from '../dom.js';
+import { formatDate, copyToClipboard, downloadFileName, downloadText, onClick } from '../dom.js';
 import { showToast } from '../toast.js';
 import { renderCommentPanel } from '../comments.js';
 
@@ -132,6 +132,15 @@ export async function renderViewPage(
 
     actions.appendChild(copyLinkBtn);
     actions.appendChild(copyRawBtn);
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'btn btn-sm';
+    downloadBtn.innerHTML = iconLabelHtml('download', 'Download');
+    onClick(downloadBtn, 'Download', () => {
+      // The shown version's text, named after the document (and version).
+      const name = isOldVersion ? `${doc.title} v${version}` : doc.title;
+      downloadText(doc.content, downloadFileName(name, doc.language));
+    });
+    actions.appendChild(downloadBtn);
     if (isOwner) actions.appendChild(editBtn);
     actions.appendChild(versionsBtn);
     if (isOwner) actions.appendChild(deleteBtn);
