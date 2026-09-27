@@ -18,6 +18,11 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- `PUT /api/documents/:id` no longer applies title, language, expiry or
+  visibility when its content change hits a version conflict (409, another
+  save landed first). The metadata was written before the new version, so a
+  409 could still rename a document or make it PUBLIC. The version is now
+  appended first, as MCP `update_document` already did.
 - Deleting a comment (REST `DELETE /api/documents/:id/comments/:cid` and MCP
   `delete_comment`) is now limited to the comment's author and the document's
   owner. Previously anyone who could read a PUBLIC document could delete

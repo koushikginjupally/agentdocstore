@@ -5,10 +5,10 @@
  * (no actual port binding) backed by `createMemoryProvider()`.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createMemoryProvider } from '@agentdocstore/provider-memory';
 import type { Provider } from '@agentdocstore/core';
-import { LIMITS } from '@agentdocstore/core';
+import { LIMITS, VersionConflictError } from '@agentdocstore/core';
 import { createServer } from './server.js';
 import type { Hono } from 'hono';
 
@@ -764,7 +764,7 @@ describe('server', () => {
   });
 
   // ========================================================================
-  // VersionConflictError -> 409
+  // Edit messages are stored with each version
   // ========================================================================
   describe('edit messages', () => {
     it('stores editMessage on the new version and lists it', async () => {
@@ -799,8 +799,49 @@ describe('server', () => {
     });
   });
 
+  // ========================================================================
+  // VersionConflictError -> 409
+  // ========================================================================
   describe('version conflict -> 409', () => {
-    it('returns 409 on stale latestVersion during concurrent update', async () => {
+    it('returns 409 and applies no part of an update that conflicts', async () => {
+      const created = (await (
+        await post('/api/documents', {
+          title: 'Conflict Test',
+          content: 'v1',
+          language: 'plaintext',
+          visibility: 'PRIVATE',
+        })
+      ).json()) as { id: string };
+
+      // Another save lands between this request's read and its append.
+      vi.spyOn(provider.repository, 'appendVersion').mockRejectedValueOnce(
+        new VersionConflictError('Version conflict: expected 1, found 2', 1, 2),
+      );
+      const res = await put(`/api/documents/${created.id}`, {
+        title: 'Renamed',
+        language: 'markdown',
+        visibility: 'PUBLIC',
+        content: 'v2',
+      });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({ error: 'Version conflict: expected 1, found 2' });
+
+      // "Nothing saved" must be true: not renamed, not made PUBLIC.
+      const doc = (await (await get(`/api/documents/${created.id}`)).json()) as {
+        title: string;
+        language: string;
+        visibility: string;
+        latestVersion: number;
+      };
+      expect(doc).toMatchObject({
+        title: 'Conflict Test',
+        language: 'plaintext',
+        visibility: 'PRIVATE',
+        latestVersion: 1,
+      });
+    });
+
+    it('applies sequential updates without a conflict', async () => {
       const createRes = await post('/api/documents', {
         title: 'Conflict Test',
         content: 'v1',
@@ -808,17 +849,43 @@ describe('server', () => {
       });
       const created = (await createRes.json()) as { id: string };
 
-      // First update succeeds
       const up1 = await put(`/api/documents/${created.id}`, { content: 'v2' });
       expect(up1.status).toBe(200);
-
-      // Simulate concurrent: directly call appendVersion with stale version
-      // We test this through the route by doing two sequential updates where
-      // the second one would naturally conflict — but the route fetches fresh
-      // data so we need to hit the SPI directly for a true conflict.
-      // Instead, verify that sequential updates DO work (no conflict):
       const up2 = await put(`/api/documents/${created.id}`, { content: 'v3' });
       expect(up2.status).toBe(200);
+    });
+
+    it('applies content, metadata and visibility together and returns the result', async () => {
+      const created = (await (
+        await post('/api/documents', {
+          title: 'Combined',
+          content: 'v1',
+          language: 'plaintext',
+          visibility: 'PRIVATE',
+        })
+      ).json()) as { id: string };
+
+      const res = await put(`/api/documents/${created.id}`, {
+        title: 'Renamed',
+        language: 'markdown',
+        visibility: 'PUBLIC',
+        content: 'v2 zebra',
+      });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({
+        title: 'Renamed',
+        language: 'markdown',
+        visibility: 'PUBLIC',
+        latestVersion: 2,
+      });
+      const doc = (await (await get(`/api/documents/${created.id}`)).json()) as {
+        content: string;
+      };
+      expect(doc.content).toBe('v2 zebra');
+      const found = (await (await get('/api/documents?query=zebra')).json()) as {
+        items: Array<{ title: string; visibility: string }>;
+      };
+      expect(found.items).toMatchObject([{ title: 'Renamed', visibility: 'PUBLIC' }]);
     });
   });
 

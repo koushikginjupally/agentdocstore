@@ -499,6 +499,19 @@ export function createServer(opts: CreateServerOptions): Hono {
       hasMetaChanges = true;
     }
 
+    // Content first: the version append is compare-and-swap, so it is the one
+    // write that can fail because another save landed (409 conflict). Doing it
+    // before any other write keeps "409 = nothing saved" true, as MCP
+    // update_document does.
+    if (content !== undefined) {
+      updated = await provider.repository.appendVersion(id, {
+        content,
+        editedBy: user,
+        ...(editMessage !== undefined ? { message: editMessage } : {}),
+        expect: { latestVersion: doc.latestVersion },
+      });
+    }
+
     if (hasMetaChanges) {
       updated = await provider.repository.updateMeta(id, metaChanges);
     }
@@ -508,16 +521,9 @@ export function createServer(opts: CreateServerOptions): Hono {
       updated = await provider.repository.setVisibility(id, body.visibility);
     }
 
-    // Content update — append a new version
     if (content !== undefined) {
-      updated = await provider.repository.appendVersion(id, {
-        content,
-        editedBy: user,
-        ...(editMessage !== undefined ? { message: editMessage } : {}),
-        expect: { latestVersion: updated.latestVersion },
-      });
-
-      // Update search index
+      // Update search index, after the writes so it sees the final title and
+      // visibility.
       provider.search.update({
         documentId: id,
         owner: updated.createdBy,

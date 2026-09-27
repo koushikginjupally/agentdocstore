@@ -113,6 +113,10 @@ Any subset of `content`, `title`, `language`, `visibility`, `expiresInDays`
 (`null` clears expiry), `redactionPolicy`. Changing `content` appends a new
 version; metadata-only changes do not. Only the owner may update.
 
+A `409` means nothing was saved: when credentials are detected, or when another
+save of the same document landed first (a version conflict), no field of the
+request is applied.
+
 `editMessage` is an optional note about the change (at most 500 characters,
 trimmed; a blank note is ignored). It is stored on the new version and returned
 as `message` by `GET /api/documents/:id/versions`. It only applies when
