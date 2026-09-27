@@ -43,6 +43,9 @@ versions may contain breaking changes; they will be called out under
   readers announce the page and Tab continues from there.
 - Submitting the create form with no content now moves focus to the Content
   field and marks it invalid, instead of only showing a short-lived toast.
+- The theme toggle uses SVG sun/moon icons, so it is no longer blank in the
+  light theme on systems without an emoji font, and its label now says which
+  theme it switches to.
 - The web UI no longer says "No documents yet" when a search matches nothing;
   it names the search and suggests clearing it.
 - Empty and error states use theme-coloured SVG icons instead of emoji, which

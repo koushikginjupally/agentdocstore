@@ -2,6 +2,7 @@
 import { href } from './router.js';
 import { WORDMARK_HTML } from './constants.js';
 import { toggleTheme, getStoredTheme } from './theme.js';
+import { BUTTON_ICONS } from './icons.js';
 
 export function renderHeader(): HTMLElement {
   const header = document.createElement('header');
@@ -18,10 +19,14 @@ export function renderHeader(): HTMLElement {
 
   const themeBtn = document.createElement('button');
   themeBtn.className = 'btn-icon';
-  themeBtn.setAttribute('aria-label', 'Toggle theme');
-  themeBtn.title = 'Toggle theme';
+  // SVG rather than emoji: an emoji glyph is blank on systems without an emoji
+  // font. The label names the action, which the icon alone does not.
   const updateThemeIcon = () => {
-    themeBtn.textContent = getStoredTheme() === 'dark' ? '☀️' : '🌙';
+    const dark = getStoredTheme() === 'dark';
+    const label = dark ? 'Switch to light theme' : 'Switch to dark theme';
+    themeBtn.innerHTML = dark ? BUTTON_ICONS.sun : BUTTON_ICONS.moon;
+    themeBtn.setAttribute('aria-label', label);
+    themeBtn.title = label;
   };
   updateThemeIcon();
   themeBtn.addEventListener('click', () => {
