@@ -68,3 +68,50 @@ describe('web API client against the real server', () => {
     expect(versions.map((v) => v.version)).toEqual([1, 2]);
   });
 });
+
+describe('web API client against the real server: documents', () => {
+  it('whoami returns the caller', async () => {
+    expect(await api.whoami()).toEqual({ user: 'alice' });
+  });
+
+  it('reads a document with its content, latest and pinned version', async () => {
+    const id = await newDocument();
+    await api.updateDocument(id, { content: 'v2' });
+    const latest = await api.getDocument(id);
+    expect(latest.content).toBe('v2');
+    expect(latest.latestVersion).toBe(2);
+    const first = await api.getDocument(id, 1);
+    expect(first.content).toBe('v1');
+    expect(first.version).toBe(1);
+  });
+
+  it('lists and searches documents as pages of items', async () => {
+    const id = await newDocument();
+    const list = await api.listDocuments();
+    expect(list.items.map((d) => d.id)).toEqual([id]);
+    const found = await api.listDocuments('Contract');
+    expect(found.items.map((d) => d.id)).toEqual([id]);
+  });
+
+  it('returns a unified diff string between two versions', async () => {
+    const id = await newDocument();
+    await api.updateDocument(id, { content: 'v2' });
+    const result = await api.getDiff(id, 1, 2);
+    expect(typeof result.diff).toBe('string');
+    expect(result.diff).toContain('-v1');
+    expect(result.diff).toContain('+v2');
+  });
+
+  it('changes visibility and deletes a document', async () => {
+    const id = await newDocument();
+    expect((await api.setVisibility(id, 'PRIVATE')).visibility).toBe('PRIVATE');
+    await api.deleteDocument(id);
+    expect(await api.listDocuments()).toMatchObject({ items: [] });
+  });
+
+  it('scans content and reports the detected credential types', async () => {
+    const result = await api.scanContent('password=SuperSecret123!Abc');
+    expect(result.detected).toContain('generic-secret');
+    expect(await api.scanContent('nothing secret here')).toEqual({ detected: [] });
+  });
+});

@@ -50,8 +50,6 @@ export interface ApiScanResult {
 }
 
 export interface ApiDiff {
-  from: number;
-  to: number;
   diff: string;
 }
 
@@ -227,10 +225,13 @@ export const api = {
     });
   },
 
-  scanContent(content: string): Promise<{ detected: string[] }> {
-    return request('/api/scan', {
+  async scanContent(content: string): Promise<{ detected: string[] }> {
+    // /api/scan returns { findings: [{ type, line, start, end }] }; expose the
+    // distinct types in the same `detected` shape the 409 credential flow uses.
+    const body = await request<{ findings: Array<{ type: string }> }>('/api/scan', {
       method: 'POST',
       body: JSON.stringify({ content }),
     });
+    return { detected: [...new Set(body.findings.map((f) => f.type))] };
   },
 };
