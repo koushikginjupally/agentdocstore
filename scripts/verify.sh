@@ -1082,6 +1082,44 @@ if [[ -n "$S13_SESSION" ]]; then
   fi
 fi
 
+# (d) Bob listing Alice's documents over MCP sees her PUBLIC one, never her
+# PRIVATE one. The PUBLIC document proves the call worked, so a broken call
+# cannot pass as "nothing leaked".
+REST_URL="http://127.0.0.1:$S13_PORT/api/documents"
+curl -s -o /dev/null -X POST "$REST_URL" -H 'content-type: application/json' \
+  -H 'x-forwarded-user: alice' \
+  -d '{"title":"S13 alice private","content":"private","visibility":"PRIVATE"}'
+curl -s -o /dev/null -X POST "$REST_URL" -H 'content-type: application/json' \
+  -H 'x-forwarded-user: alice' \
+  -d '{"title":"S13 alice public","content":"public","visibility":"PUBLIC"}'
+S13_BOB_SESSION="$(curl -s -D - -o /dev/null -X POST "$MCP_URL" \
+  -H 'content-type: application/json' \
+  -H 'accept: application/json, text/event-stream' \
+  -H 'x-forwarded-user: bob' \
+  -d "$INIT_BODY" | grep -i '^mcp-session-id:' | tr -d '\r' | awk '{print $2}')"
+if [[ -n "$S13_BOB_SESSION" ]]; then
+  S13_MCP_POST=(curl -s -X POST "$MCP_URL"
+    -H 'content-type: application/json'
+    -H 'accept: application/json, text/event-stream'
+    -H 'x-forwarded-user: bob'
+    -H "mcp-session-id: $S13_BOB_SESSION")
+  "${S13_MCP_POST[@]}" -o /dev/null -d '{"jsonrpc":"2.0","method":"notifications/initialized"}'
+  S13_LIST="$("${S13_MCP_POST[@]}" \
+    -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"list_documents","arguments":{"owner":"alice"}}}')"
+  if grep -q 'S13 alice private' <<<"$S13_LIST"; then
+    S13_STATUS="FAIL"
+    S13_DETAIL="$S13_DETAIL, bob's MCP list_documents returned alice's PRIVATE doc"
+  elif grep -q 'S13 alice public' <<<"$S13_LIST"; then
+    S13_DETAIL="$S13_DETAIL, MCP list hides private"
+  else
+    S13_STATUS="FAIL"
+    S13_DETAIL="$S13_DETAIL, bob's MCP list_documents call failed"
+  fi
+else
+  S13_STATUS="FAIL"
+  S13_DETAIL="$S13_DETAIL, bob could not open a session"
+fi
+
 cleanup_server
 rm -f "$REPO_ROOT/.verify-s13.log"
 S13_DETAIL="${S13_DETAIL#, }"
