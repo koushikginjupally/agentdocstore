@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- The create and edit forms have a Preview button beside Content. It shows
+  the text rendered the way the document page will show it, in the language
+  picked on the form, through the same renderer and sanitizing; pressing it
+  again returns to the text.
 - The comment box shows a comment's size once it nears the 10,000-byte limit
   and, past it, how much to cut; an oversized comment is no longer sent only
   to fail with "Comment exceeds maximum length".

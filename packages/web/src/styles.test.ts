@@ -85,3 +85,16 @@ describe('long unbroken words', () => {
     },
   );
 });
+
+describe('toggle buttons', () => {
+  it('look pressed while on, in theme colours', () => {
+    injectStyles();
+    const sheet = document.querySelector('style')?.sheet;
+    const rule = Array.from(sheet?.cssRules ?? []).find(
+      (r): r is CSSStyleRule =>
+        r instanceof CSSStyleRule && r.selectorText === '.btn[aria-pressed="true"]',
+    );
+    expect(rule?.style.getPropertyValue('background')).toContain('var(--accent-bg)');
+    expect(rule?.style.getPropertyValue('border-color')).toBe('var(--accent)');
+  });
+});

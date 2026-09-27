@@ -160,6 +160,8 @@ textarea[aria-invalid="true"]:focus { border-color: var(--danger); }
 .btn-danger:hover { background: rgba(255, 0, 68, 0.1); }
 
 .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+/* A toggle button that is on (Preview while previewing). */
+.btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
 .btn-icon {
   padding: 6px;
   border: none;
@@ -174,6 +176,14 @@ textarea[aria-invalid="true"]:focus { border-color: var(--danger); }
 
 /* ===== Forms ===== */
 .form-group { margin-bottom: 16px; }
+/* The Preview panel takes the text box's place, at least as tall. */
+.content-preview {
+  min-height: 200px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-input);
+}
 .form-group label {
   display: block;
   margin-bottom: 4px;

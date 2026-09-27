@@ -6,6 +6,7 @@ import { buildTitle, emptyListMessage, searchCountMessage } from '../constants.j
 import { expiryField, formatDate, LANGUAGES, markFieldInvalid } from '../dom.js';
 import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
+import { contentPreview } from '../preview.js';
 import { showRedactionModal } from '../redaction-modal.js';
 
 export async function renderHomePage(container: HTMLElement): Promise<void> {
@@ -92,8 +93,13 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   contentArea.id = 'doc-content';
   contentArea.placeholder = 'Write or paste your content here...';
   contentArea.rows = 15;
-  contentGroup.appendChild(contentLabel);
+  const preview = contentPreview(contentArea, langSelect);
+  const contentHeader = document.createElement('div');
+  contentHeader.className = 'flex-between';
+  contentHeader.append(contentLabel, preview.toggle);
+  contentGroup.appendChild(contentHeader);
   contentGroup.appendChild(contentArea);
+  contentGroup.appendChild(preview.panel);
   formCard.appendChild(contentGroup);
 
   // Submit button

@@ -270,3 +270,21 @@ describe('search match count', () => {
     await vi.waitFor(() => expect(status.textContent).toBe(''));
   });
 });
+
+describe('create form preview', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  it('previews the new document in the language chosen', async () => {
+    const page = await homePage();
+    page.querySelector<HTMLTextAreaElement>('#doc-content')!.value = '## Steps';
+    page.querySelector<HTMLSelectElement>('#doc-language')!.value = 'markdown';
+    const toggle = [...page.querySelectorAll('button')].find((b) => b.textContent === 'Preview')!;
+    toggle.click();
+    const panel = page.querySelector<HTMLElement>(`#${toggle.getAttribute('aria-controls')}`)!;
+    await vi.waitFor(() => expect(panel.querySelector('h2')?.textContent).toBe('Steps'));
+    expect(page.querySelector<HTMLTextAreaElement>('#doc-content')!.hidden).toBe(true);
+  });
+});

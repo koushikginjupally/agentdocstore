@@ -4,6 +4,7 @@ import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
 import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '../router.js';
 import { buildTitle } from '../constants.js';
 import { expiryField, formatDate, LANGUAGES } from '../dom.js';
+import { contentPreview } from '../preview.js';
 import { showToast } from '../toast.js';
 import { showRedactionModal } from '../redaction-modal.js';
 
@@ -114,8 +115,13 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     contentArea.id = 'edit-content';
     contentArea.value = doc.content;
     contentArea.rows = 20;
-    contentGroup.appendChild(contentLabel);
+    const preview = contentPreview(contentArea, langSelect);
+    const contentHeader = document.createElement('div');
+    contentHeader.className = 'flex-between';
+    contentHeader.append(contentLabel, preview.toggle);
+    contentGroup.appendChild(contentHeader);
     contentGroup.appendChild(contentArea);
+    contentGroup.appendChild(preview.panel);
     card.appendChild(contentGroup);
 
     // Edit message

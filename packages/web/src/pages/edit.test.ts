@@ -158,3 +158,62 @@ describe('edit form expiry', () => {
     expect(select.options[1]!.value).toBe('never');
   });
 });
+
+describe('preview while editing', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  const previewButton = (root: HTMLElement): HTMLButtonElement =>
+    [...root.querySelectorAll('button')].find((b) => b.textContent === 'Preview')!;
+
+  async function editing(content: string, language: string) {
+    const page = await editPageAs('alice');
+    const box = page.querySelector<HTMLTextAreaElement>('#edit-content')!;
+    box.value = content;
+    page.querySelector<HTMLSelectElement>('#edit-language')!.value = language;
+    return { page, box, toggle: previewButton(page) };
+  }
+
+  it('shows the text as the document page will, then the text again', async () => {
+    const { page, box, toggle } = await editing('# Plan\n\nShip it.', 'markdown');
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    const panel = page.querySelector<HTMLElement>(`#${toggle.getAttribute('aria-controls')}`)!;
+    expect(panel.hidden).toBe(true);
+
+    toggle.click();
+    await vi.waitFor(() => expect(panel.querySelector('h1')?.textContent).toBe('Plan'));
+    expect(panel.hidden).toBe(false);
+    expect(box.hidden).toBe(true);
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+
+    toggle.click();
+    expect(panel.hidden).toBe(true);
+    expect(box.hidden).toBe(false);
+    expect(document.activeElement).toBe(box);
+    expect(box.value).toBe('# Plan\n\nShip it.');
+  });
+
+  it('renders in the language chosen on the form', async () => {
+    const { page, toggle } = await editing('# Not a heading', 'plaintext');
+    toggle.click();
+    const panel = page.querySelector<HTMLElement>(`#${toggle.getAttribute('aria-controls')}`)!;
+    await vi.waitFor(() => expect(panel.textContent).toContain('# Not a heading'));
+    expect(panel.querySelector('h1')).toBeNull();
+  });
+
+  it('sanitizes the preview the way the document page does', async () => {
+    const { page, toggle } = await editing('Hi <img src="x" onerror="alert(1)">', 'markdown');
+    toggle.click();
+    const panel = page.querySelector<HTMLElement>(`#${toggle.getAttribute('aria-controls')}`)!;
+    await vi.waitFor(() => expect(panel.querySelector('img')).not.toBeNull());
+    expect(panel.querySelector('img')!.hasAttribute('onerror')).toBe(false);
+  });
+
+  it('still counts the text as unsaved while previewing', async () => {
+    const { toggle } = await editing('changed text', 'markdown');
+    toggle.click();
+    expect(hasUnsavedChanges()).toBe(true);
+  });
+});
