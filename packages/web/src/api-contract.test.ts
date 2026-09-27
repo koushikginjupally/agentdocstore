@@ -101,6 +101,17 @@ describe('web API client against the real server: documents', () => {
     expect(found.items.map((d) => d.id)).toEqual([id]);
   });
 
+  it('pages through search results the way Load More asks for them', async () => {
+    const ids = [await newDocument(), await newDocument(), await newDocument()];
+    const first = await api.listDocuments('Contract', undefined, 2);
+    expect(first.items).toHaveLength(2);
+    expect(first.nextCursor).toBeDefined();
+    const rest = await api.listDocuments('Contract', first.nextCursor, 2);
+    expect(rest.items).toHaveLength(1);
+    expect(rest.nextCursor).toBeUndefined();
+    expect([...first.items, ...rest.items].map((d) => d.id).sort()).toEqual([...ids].sort());
+  });
+
   it('returns a unified diff string between two versions', async () => {
     const id = await newDocument();
     await api.updateDocument(id, { content: 'v2' });

@@ -98,12 +98,15 @@ Languages: `markdown`, `mermaid`, `plaintext`, `text`, `javascript`,
 
 ### `GET /api/documents` — list or search
 
-| Query    | Effect                                                                     |
-| -------- | -------------------------------------------------------------------------- |
-| _(none)_ | Your documents, newest first: `{ items, nextCursor? }`                     |
-| `cursor` | Continue a listing (opaque; pass back `nextCursor`)                        |
-| `limit`  | Page size, integer 1–100 (default 50); anything else is `400`              |
-| `query`  | Full-text search over your documents and `PUBLIC` ones: `{ items, total }` |
+| Query    | Effect                                                                                  |
+| -------- | --------------------------------------------------------------------------------------- |
+| _(none)_ | Your documents, newest first: `{ items, nextCursor? }`                                  |
+| `cursor` | Continue a listing or a search (opaque; pass back `nextCursor` with the same `query`)   |
+| `limit`  | Page size, integer 1–100 (default 50); anything else is `400`                           |
+| `query`  | Full-text search over your documents and `PUBLIC` ones: `{ items, total, nextCursor? }` |
+
+`total` counts every match, not just this page. A search `cursor` that is not
+a `nextCursor` from a search is a `400`.
 
 ### `GET /api/documents/:id` — read
 

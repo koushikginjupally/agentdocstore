@@ -419,15 +419,28 @@ export function createServer(opts: CreateServerOptions): Hono {
     }
 
     if (query !== undefined && query.trim().length > 0) {
-      // Search: own + PUBLIC
-      const results = provider.search.query(query, user, { limit: limit ?? 50 });
+      // Search: own + PUBLIC. A search cursor is the position of the next
+      // match; it comes back as nextCursor while more matches remain.
+      let offset = 0;
+      if (cursor !== undefined) {
+        offset = /^\d+$/.test(cursor) ? Number(cursor) : NaN;
+        if (!Number.isSafeInteger(offset)) {
+          throw new ValidationError("'cursor' must be a nextCursor returned by this search");
+        }
+      }
+      const results = provider.search.query(query, user, { limit: limit ?? 50, offset });
       // Fetch full doc metadata for each hit
       const documents: Document[] = [];
       for (const hit of results.hits) {
         const doc = await provider.repository.get(hit.documentId);
         if (doc !== null && !isExpired(doc)) documents.push(doc);
       }
-      return c.json({ items: documents, total: results.total });
+      const next = offset + results.hits.length;
+      return c.json({
+        items: documents,
+        total: results.total,
+        ...(next < results.total ? { nextCursor: String(next) } : {}),
+      });
     }
 
     // List own documents

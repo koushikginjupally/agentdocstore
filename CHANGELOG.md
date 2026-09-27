@@ -107,6 +107,10 @@ versions may contain breaking changes; they will be called out under
 - The version diff no longer shows its file header as changes: `--- v1` and
   `+++ v2` rendered as a removed and an added line. Comparing two versions
   with the same content now says so instead of showing an empty box.
+- Searching in the web UI showed only the first 20 matches, with no way to
+  reach the rest. Search results now page with Load More, like the document
+  list: `GET /api/documents?query=` returns `nextCursor` while more matches
+  remain and accepts it back as `cursor`.
 - Code documents are syntax-highlighted again, in both themes. The token
   colours came from a bundled stylesheet that the page never loaded, so code
   always rendered in one colour; they now follow the light/dark theme.

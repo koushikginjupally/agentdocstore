@@ -752,6 +752,49 @@ describe('server', () => {
       expect(rest.items).toHaveLength(1);
       expect(rest.nextCursor).toBeUndefined();
     });
+
+    it('pages search results with nextCursor until every match is seen', async () => {
+      for (const t of ['A', 'B', 'C', 'D', 'E']) {
+        await post('/api/documents', { title: t, content: 'zebra', language: 'plaintext' });
+      }
+      const seen: string[] = [];
+      const pageSizes: number[] = [];
+      let cursor: string | undefined;
+      do {
+        const res = await get(
+          `/api/documents?query=zebra&limit=2${cursor === undefined ? '' : `&cursor=${cursor}`}`,
+        );
+        expect(res.status).toBe(200);
+        const page = (await res.json()) as {
+          items: Array<{ id: string }>;
+          total: number;
+          nextCursor?: string;
+        };
+        expect(page.total).toBe(5);
+        pageSizes.push(page.items.length);
+        seen.push(...page.items.map((d) => d.id));
+        cursor = page.nextCursor;
+      } while (cursor !== undefined && pageSizes.length < 10);
+      expect(pageSizes).toEqual([2, 2, 1]);
+      expect(new Set(seen).size).toBe(5);
+    });
+
+    it('returns an empty last page for a search cursor past the last match', async () => {
+      await post('/api/documents', { title: 'Doc', content: 'zebra', language: 'plaintext' });
+      const res = await get('/api/documents?query=zebra&cursor=50');
+      expect(res.status).toBe(200);
+      const page = (await res.json()) as { items: unknown[]; total: number; nextCursor?: string };
+      expect(page.items).toEqual([]);
+      expect(page.total).toBe(1);
+      expect(page.nextCursor).toBeUndefined();
+    });
+
+    it.each(['abc', '-1', '1.5', ''])('rejects search cursor=%j with 400', async (cursor) => {
+      await post('/api/documents', { title: 'Doc', content: 'zebra', language: 'plaintext' });
+      const res = await get(`/api/documents?query=zebra&cursor=${cursor}`);
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { error: string }).error).toContain("'cursor'");
+    });
   });
 
   // ========================================================================
