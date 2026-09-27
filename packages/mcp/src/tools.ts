@@ -18,6 +18,7 @@ import {
   assertCanComment,
   assertCanDeleteComment,
   normalizeEditMessage,
+  validateTitle,
   NotFoundError,
   ValidationError,
   LIMITS,
@@ -163,6 +164,9 @@ export async function updateDocument(
   const doc = await requireDocument(provider, args.id);
   assertCanWrite(doc, viewer);
   const editMessage = normalizeEditMessage(args.editMessage);
+  // Before the version append: a bad title must fail the call with nothing
+  // saved, not after the new version is already stored.
+  if (args.title !== undefined) validateTitle(args.title);
 
   let updatedDocument = doc;
 

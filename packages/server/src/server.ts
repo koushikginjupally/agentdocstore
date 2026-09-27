@@ -29,6 +29,7 @@ import {
   assertCanComment,
   assertCanDeleteComment,
   normalizeEditMessage,
+  validateTitle,
   isExpired,
   DEFAULT_VISIBILITY,
   LANGUAGES,
@@ -135,12 +136,6 @@ function validateId(id: string): void {
 function validateLanguage(lang: string): asserts lang is Language {
   if (!(LANGUAGES as readonly string[]).includes(lang)) {
     throw new ValidationError(`Invalid language '${lang}'`);
-  }
-}
-
-function validateTitleSize(title: string): void {
-  if (Buffer.byteLength(title, 'utf8') > LIMITS.MAX_TITLE_BYTES) {
-    throw new ValidationError('Title exceeds maximum length');
   }
 }
 
@@ -352,7 +347,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const visibility: Visibility = body.visibility ?? DEFAULT_VISIBILITY;
     const language: Language = body.language as Language;
     validateLanguage(language);
-    validateTitleSize(body.title);
+    validateTitle(body.title);
     validateContentSize(body.content);
 
     let content = body.content;
@@ -510,7 +505,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const metaChanges: { title?: string; language?: Language; expiresAt?: string | null } = {};
     let hasMetaChanges = false;
     if (body.title !== undefined) {
-      validateTitleSize(body.title);
+      validateTitle(body.title);
       metaChanges.title = body.title;
       hasMetaChanges = true;
     }

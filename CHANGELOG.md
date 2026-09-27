@@ -91,6 +91,9 @@ versions may contain breaking changes; they will be called out under
 - A REST request body that fails validation now gets a 400 naming the field
   and the reason (for example `visibility: must be one of PUBLIC, PRIVATE`)
   instead of only "Invalid request body". The rejected value is not echoed.
+- MCP `update_document` no longer stores the new version when the same call's
+  title is rejected (blank or over 300 bytes). REST and MCP now check the
+  title before anything is written, using the new core `validateTitle`.
 
 ## [0.1.0] - 2026-09-26
 

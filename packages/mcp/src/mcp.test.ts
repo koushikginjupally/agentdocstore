@@ -452,3 +452,28 @@ describe('expired documents', () => {
     expect(await provider.repository.get(id)).toBeNull();
   });
 });
+
+describe('update_document with an invalid title', () => {
+  it.each([
+    ['too long', 'x'.repeat(301)],
+    ['blank', '   '],
+  ])('saves no new version when the title is %s', async (_label, title) => {
+    const created = jsonOf(
+      await callTool('create_document', { title: 'Original', content: 'v1' }),
+    ) as { doc: { id: string } };
+    const id = created.doc.id;
+
+    const result = await callTool('update_document', {
+      id,
+      content: 'v2',
+      latestVersion: 1,
+      title,
+    });
+    expect(result.isError).toBe(true);
+
+    const read = jsonOf(await callTool('read_document', { id })) as {
+      doc: { title: string; latestVersion: number };
+    };
+    expect(read.doc).toMatchObject({ title: 'Original', latestVersion: 1 });
+  });
+});

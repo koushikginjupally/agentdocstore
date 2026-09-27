@@ -3,6 +3,7 @@ export * from './model/version.js';
 export * from './model/comment.js';
 export * from './model/limits.js';
 export * from './model/edit-message.js';
+export * from './model/title.js';
 export * from './errors.js';
 export * from './authz.js';
 export * from './offline.js';

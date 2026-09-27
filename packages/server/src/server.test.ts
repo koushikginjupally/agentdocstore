@@ -404,6 +404,23 @@ describe('server', () => {
         error: 'Invalid request body: Expected object, received array',
       });
     });
+
+    it('saves no part of an update whose title is blank', async () => {
+      const created = (await (
+        await post('/api/documents', { title: 'T', content: 'v1' })
+      ).json()) as {
+        id: string;
+      };
+      const res = await put(`/api/documents/${created.id}`, { title: '   ', content: 'v2' });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: 'Title must not be empty' });
+      const doc = (await (await get(`/api/documents/${created.id}`)).json()) as {
+        title: string;
+        latestVersion: number;
+        content: string;
+      };
+      expect(doc).toMatchObject({ title: 'T', latestVersion: 1, content: 'v1' });
+    });
   });
 
   // ========================================================================
