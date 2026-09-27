@@ -122,3 +122,22 @@ describe('web API client against the real server: documents', () => {
     expect(await api.scanContent('nothing secret here')).toEqual({ detected: [] });
   });
 });
+
+describe('web API client against the real server: errors', () => {
+  it("reports the server's message for a missing document", async () => {
+    await expect(api.getDocument('missing123')).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 404,
+      message: 'API error 404: Document not found',
+    });
+  });
+
+  it("reports the server's reason for a rejected update", async () => {
+    const id = await newDocument();
+    await expect(api.updateDocument(id, { title: 'x'.repeat(301) })).rejects.toMatchObject({
+      name: 'ApiError',
+      status: 400,
+      message: 'API error 400: Title exceeds maximum length',
+    });
+  });
+});

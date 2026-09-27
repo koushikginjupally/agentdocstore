@@ -97,14 +97,17 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
-    let body: unknown;
+    // Read the body once: after a failed res.json() the body is spent and
+    // res.text() throws, which would replace this ApiError with a TypeError.
+    const text = await res.text();
+    let body: unknown = text;
     try {
-      body = await res.json();
+      body = JSON.parse(text);
     } catch {
-      body = await res.text();
+      // Not JSON (for example a proxy's error page); keep the text.
     }
     throw new ApiError(
-      `API error ${res.status}: ${typeof body === 'object' && body !== null && 'message' in body ? (body as { message: string }).message : res.statusText}`,
+      `API error ${res.status}: ${errorMessage(body) ?? res.statusText}`,
       res.status,
       body,
     );
@@ -112,6 +115,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+/** The message in a `{ "error": "<message>" }` body, the REST error shape. */
+function errorMessage(body: unknown): string | undefined {
+  if (typeof body !== 'object' || body === null || !('error' in body)) return undefined;
+  const { error } = body as { error: unknown };
+  return typeof error === 'string' && error !== '' ? error : undefined;
 }
 
 // ---- API methods ----

@@ -71,6 +71,11 @@ versions may contain breaking changes; they will be called out under
   "Delete" off the edge of the page.
 - The document page shows Edit and Delete only to the document's owner. Other
   viewers were offered both, and the server rejected them.
+- Web UI error messages now include the server's reason (for example "Title
+  exceeds maximum length") instead of only the HTTP status. The client read a
+  `message` field, but the API sends `{ "error": "<message>" }`. A non-JSON
+  error response, such as a proxy's error page, now reports its status instead
+  of "Body is unusable".
 
 ## [0.1.0] - 2026-09-26
 
