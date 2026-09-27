@@ -99,7 +99,7 @@ Languages: `markdown`, `mermaid`, `plaintext`, `text`, `javascript`,
 | -------- | -------------------------------------------------------------------------- |
 | _(none)_ | Your documents, newest first: `{ items, nextCursor? }`                     |
 | `cursor` | Continue a listing (opaque; pass back `nextCursor`)                        |
-| `limit`  | Page size, default 50                                                      |
+| `limit`  | Page size, integer 1–100 (default 50); anything else is `400`              |
 | `query`  | Full-text search over your documents and `PUBLIC` ones: `{ items, total }` |
 
 ### `GET /api/documents/:id` — read

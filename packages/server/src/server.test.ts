@@ -619,6 +619,34 @@ describe('server', () => {
       expect(body.items.length).toBeGreaterThanOrEqual(1);
       expect(body.items[0]!.title).toBe('Unique Findable Title');
     });
+
+    it.each(['abc', '-1', '0', '1.5', '101', ''])(
+      'rejects limit=%j with 400 for list and search',
+      async (limit) => {
+        await post('/api/documents', { title: 'Doc', content: 'hello', language: 'plaintext' });
+        const list = await get(`/api/documents?limit=${limit}`);
+        expect(list.status).toBe(400);
+        const search = await get(`/api/documents?query=hello&limit=${limit}`);
+        expect(search.status).toBe(400);
+      },
+    );
+
+    it('honours a valid limit and pages with nextCursor', async () => {
+      for (const t of ['A', 'B', 'C']) {
+        await post('/api/documents', { title: t, content: t, language: 'plaintext' });
+      }
+      const first = (await (await get('/api/documents?limit=2')).json()) as {
+        items: Array<{ id: string }>;
+        nextCursor?: string;
+      };
+      expect(first.items).toHaveLength(2);
+      expect(first.nextCursor).toBeDefined();
+      const rest = (await (
+        await get(`/api/documents?limit=100&cursor=${first.nextCursor}`)
+      ).json()) as { items: unknown[]; nextCursor?: string };
+      expect(rest.items).toHaveLength(1);
+      expect(rest.nextCursor).toBeUndefined();
+    });
   });
 
   // ========================================================================

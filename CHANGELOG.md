@@ -13,6 +13,9 @@ versions may contain breaking changes; they will be called out under
 - `PUT /api/documents/:id` no longer applies title, language, expiry or
   visibility changes when the same request is rejected for detected credentials
   (409) or oversized content (413).
+- `GET /api/documents` rejects a `limit` that is not an integer from 1 to 100
+  with `400`, matching the MCP `list_documents` tool. Previously `limit=abc`
+  returned an empty page and `limit=-1` silently dropped a document.
 
 ## [0.1.0] - 2026-09-26
 

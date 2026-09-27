@@ -365,7 +365,16 @@ export function createServer(opts: CreateServerOptions): Hono {
     const query = c.req.query('query');
     const cursor = c.req.query('cursor');
     const limitStr = c.req.query('limit');
-    const limit = limitStr !== undefined ? parseInt(limitStr, 10) : undefined;
+    let limit: number | undefined;
+    if (limitStr !== undefined) {
+      // Same contract as the MCP list tool: an integer from 1 to 100.
+      // parseInt alone accepted "abc" (NaN -> empty page) and "-1" (slice
+      // dropped the last item), so reject anything that is not a plain integer.
+      limit = /^\d+$/.test(limitStr) ? Number(limitStr) : NaN;
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+        throw new ValidationError("'limit' must be an integer from 1 to 100");
+      }
+    }
 
     if (query !== undefined && query.trim().length > 0) {
       // Search: own + PUBLIC
