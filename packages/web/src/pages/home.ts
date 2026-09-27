@@ -2,7 +2,7 @@
 import { api, CredentialScanError } from '../api.js';
 import type { ApiDocument } from '../api.js';
 import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '../router.js';
-import { buildTitle, emptyListMessage } from '../constants.js';
+import { buildTitle, emptyListMessage, searchCountMessage } from '../constants.js';
 import { expiryField, formatDate, LANGUAGES, markFieldInvalid } from '../dom.js';
 import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
@@ -134,6 +134,13 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   searchBar.appendChild(searchBtn);
   listSection.appendChild(searchBar);
 
+  // How many documents the current search matched. A status region, so a
+  // screen reader announces the result while focus stays in the search box.
+  const searchStatus = document.createElement('p');
+  searchStatus.className = 'search-status text-sm text-muted';
+  searchStatus.setAttribute('role', 'status');
+  listSection.appendChild(searchStatus);
+
   const documentListEl = document.createElement('ul');
   documentListEl.className = 'doc-list';
   documentListEl.id = 'doc-list';
@@ -164,6 +171,14 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
       renderDocumentList(result.items, documentListEl);
       currentCursor = result.nextCursor;
       loadMoreBtn.style.display = result.nextCursor ? 'inline-flex' : 'none';
+      if (!append) {
+        // The count covers the whole search, so Load More leaves it alone.
+        // With no matches the empty list below says so on screen; the status
+        // still carries the words for screen readers.
+        const total = result.total ?? result.items.length;
+        searchStatus.textContent = currentQuery ? searchCountMessage(total, currentQuery) : '';
+        searchStatus.classList.toggle('sr-only', currentQuery !== '' && total === 0);
+      }
       if (append) {
         // Carry on from the first document Load More added. On the last page
         // the button hides, and focus left on it would fall back to the top

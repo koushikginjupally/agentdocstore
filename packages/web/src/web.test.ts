@@ -9,6 +9,7 @@ import { parseRoute } from './router.js';
 import {
   buildTitle,
   emptyListMessage,
+  searchCountMessage,
   WORDMARK_HTML,
   HTML_IFRAME_SANDBOX,
   CONTENT_MAX_WIDTH,
@@ -371,6 +372,21 @@ describe('emptyListMessage', () => {
 
   it('returns the query as plain text for textContent', () => {
     expect(emptyListMessage('<img src=x>')).toContain('<img src=x>');
+  });
+});
+
+describe('searchCountMessage', () => {
+  it('counts matches in the singular and the plural', () => {
+    expect(searchCountMessage(1, 'zebra')).toBe('1 document matches “zebra”');
+    expect(searchCountMessage(25, ' zebra ')).toBe('25 documents match “zebra”');
+  });
+
+  it('says there are no matches the same way the empty list does', () => {
+    expect(searchCountMessage(0, 'zebra')).toBe(emptyListMessage('zebra'));
+  });
+
+  it('returns the query as plain text for textContent', () => {
+    expect(searchCountMessage(2, '<img src=x>')).toContain('<img src=x>');
   });
 });
 

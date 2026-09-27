@@ -475,6 +475,7 @@ textarea {
   margin-bottom: 20px;
 }
 .search-bar input { flex: 1; }
+.search-status:not(:empty) { margin: -8px 0 12px; }
 
 /* ===== Utility ===== */
 .flex-row { display: flex; gap: 8px; align-items: center; }
@@ -488,6 +489,18 @@ textarea {
 .text-sm { font-size: 0.85rem; }
 .text-center { text-align: center; }
 .hidden { display: none !important; }
+/* Read by screen readers, not shown on screen. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ===== Empty state ===== */
 .empty-state {

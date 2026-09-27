@@ -40,6 +40,8 @@ export interface ApiComment {
 export interface ApiPage<T> {
   items: T[];
   nextCursor?: string;
+  /** Searches only: how many documents matched in all, not just this page. */
+  total?: number;
 }
 
 export interface ApiWhoami {

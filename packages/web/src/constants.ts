@@ -25,3 +25,13 @@ export function emptyListMessage(query: string): string {
   if (q.length === 0) return 'No documents yet. Create your first one above!';
   return `No documents match “${q}”. Try different words, or clear the search to see all your documents.`;
 }
+
+/**
+ * How many documents a search matched, in words. No matches reads the same as
+ * the empty list. The query is plain text — set it with textContent.
+ */
+export function searchCountMessage(total: number, query: string): string {
+  const q = query.trim();
+  if (total === 0) return emptyListMessage(q);
+  return total === 1 ? `1 document matches “${q}”` : `${total} documents match “${q}”`;
+}

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { api, type ApiDocument } from '../api.js';
+import { emptyListMessage } from '../constants.js';
 import { hasUnsavedChanges, setUnsavedChangesCheck } from '../router.js';
 import { renderHomePage } from './home.js';
 
@@ -184,5 +185,88 @@ describe('document list focus', () => {
     await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(2));
     await vi.waitFor(() => expect(link(main, 'd2')).not.toBeNull());
     expect(document.activeElement).toBe(search);
+  });
+});
+
+describe('search match count', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  const found = (id: string): ApiDocument => ({
+    id,
+    title: `Note ${id}`,
+    language: 'markdown',
+    visibility: 'PUBLIC',
+    createdBy: 'alice',
+    createdAt: '2026-09-27T00:00:00Z',
+    updatedAt: '2026-09-27T00:00:00Z',
+    latestVersion: 1,
+  });
+
+  async function searchFor(
+    query: string,
+    ...pages: Array<{ items: ApiDocument[]; total?: number; nextCursor?: string }>
+  ) {
+    const list = vi.spyOn(api, 'listDocuments').mockResolvedValueOnce({ items: [found('mine')] });
+    for (const page of pages) list.mockResolvedValueOnce(page);
+    document.body.innerHTML = '<main></main>';
+    const main = document.querySelector('main')!;
+    await renderHomePage(main);
+    const status = main.querySelector<HTMLElement>('[role="status"]')!;
+    const input = main.querySelector<HTMLInputElement>('input[aria-label="Search documents"]')!;
+    input.value = query;
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return { main, status, input, list };
+  }
+
+  it('shows nothing for the plain list of your documents', async () => {
+    vi.spyOn(api, 'listDocuments').mockResolvedValue({ items: [found('mine')] });
+    document.body.innerHTML = '<main></main>';
+    const main = document.querySelector('main')!;
+    await renderHomePage(main);
+    expect(main.querySelector('[role="status"]')!.textContent).toBe('');
+  });
+
+  it('says how many documents a search matched, in a status region', async () => {
+    const { status } = await searchFor('note', {
+      items: [found('a'), found('b')],
+      total: 25,
+      nextCursor: '2',
+    });
+    expect(status.textContent).toBe('25 documents match “note”');
+    expect(status.classList.contains('sr-only')).toBe(false);
+  });
+
+  it('keeps the count for the whole search when Load More adds a page', async () => {
+    const { main, status } = await searchFor(
+      'note',
+      { items: [found('a')], total: 2, nextCursor: '1' },
+      { items: [found('b')], total: 2 },
+    );
+    main.querySelector<HTMLButtonElement>('#load-more-btn')!.click();
+    await vi.waitFor(() =>
+      expect(main.querySelector('a.doc-list-link[href="#/d/b"]')).not.toBeNull(),
+    );
+    expect(status.textContent).toBe('2 documents match “note”');
+  });
+
+  it('announces no matches without repeating the empty message on screen', async () => {
+    const { main, status } = await searchFor('zebra', { items: [], total: 0 });
+    expect(status.textContent).toBe(emptyListMessage('zebra'));
+    expect(status.classList.contains('sr-only')).toBe(true);
+    expect(main.querySelector('.doc-list .empty-state')!.textContent).toContain('“zebra”');
+  });
+
+  it('clears the count when the search is cleared', async () => {
+    const { status, input, list } = await searchFor('note', { items: [found('a')], total: 1 });
+    expect(status.textContent).toBe('1 document matches “note”');
+    list.mockResolvedValueOnce({ items: [found('mine')] });
+    input.value = '';
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await vi.waitFor(() => expect(status.textContent).toBe(''));
   });
 });

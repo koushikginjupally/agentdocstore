@@ -10,6 +10,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- A search in the web UI now says how many documents matched (for example
+  "25 documents match “rollout”"), and screen readers announce it, or that
+  nothing matched, while focus stays in the search box.
 - Expiry can be set from the web UI. The create form has an "Expires" choice
   (Never, 1, 7, 30 or 90 days, 1 year); the edit form can keep the current
   expiry, remove it, or set a new one from now; and the document page says
