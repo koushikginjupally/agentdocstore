@@ -17,6 +17,7 @@ import {
   isExpired,
   assertCanComment,
   assertCanDeleteComment,
+  normalizeEditMessage,
   NotFoundError,
   ValidationError,
   LIMITS,
@@ -155,11 +156,13 @@ export async function updateDocument(
     language?: string | undefined;
     expiresAt?: string | null | undefined;
     latestVersion?: number | undefined;
+    editMessage?: string | undefined;
     redactionPolicy?: 'redact' | 'skip' | undefined;
   },
 ): Promise<CallToolResult> {
   const doc = await requireDocument(provider, args.id);
   assertCanWrite(doc, viewer);
+  const editMessage = normalizeEditMessage(args.editMessage);
 
   let updatedDocument = doc;
 
@@ -189,6 +192,7 @@ export async function updateDocument(
     updatedDocument = await provider.repository.appendVersion(doc.id, {
       content,
       editedBy: viewer,
+      ...(editMessage !== undefined ? { message: editMessage } : {}),
       expect: { latestVersion: args.latestVersion },
     });
   }
@@ -250,6 +254,7 @@ export async function getVersions(
       version: v.version,
       createdBy: v.createdBy,
       createdAt: v.createdAt,
+      ...(v.message !== undefined ? { message: v.message } : {}),
     })),
   });
 }

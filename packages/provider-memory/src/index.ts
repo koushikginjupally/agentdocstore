@@ -164,6 +164,7 @@ class MemoryDocumentRepository implements DocumentRepository {
       content: input.content,
       createdBy: input.editedBy,
       createdAt: now,
+      ...(input.message !== undefined ? { message: input.message } : {}),
     };
 
     const doc: Document = { ...stored.doc, latestVersion: next, updatedAt: now };

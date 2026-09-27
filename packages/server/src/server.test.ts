@@ -766,6 +766,39 @@ describe('server', () => {
   // ========================================================================
   // VersionConflictError -> 409
   // ========================================================================
+  describe('edit messages', () => {
+    it('stores editMessage on the new version and lists it', async () => {
+      const created = (await (
+        await post('/api/documents', { title: 'Msg', content: 'v1' })
+      ).json()) as { id: string };
+      expect(
+        (await put(`/api/documents/${created.id}`, { content: 'v2', editMessage: '  Fix typo  ' }))
+          .status,
+      ).toBe(200);
+      await put(`/api/documents/${created.id}`, { content: 'v3', editMessage: '   ' });
+      const { versions } = (await (await get(`/api/documents/${created.id}/versions`)).json()) as {
+        versions: Array<{ version: number; message?: string }>;
+      };
+      // Trimmed; a blank message is dropped rather than stored.
+      expect(versions.map((v) => v.message)).toEqual([undefined, 'Fix typo', undefined]);
+    });
+
+    it('rejects an edit message longer than 500 characters', async () => {
+      const created = (await (
+        await post('/api/documents', { title: 'Msg', content: 'v1' })
+      ).json()) as { id: string };
+      const res = await put(`/api/documents/${created.id}`, {
+        content: 'v2',
+        editMessage: 'x'.repeat(501),
+      });
+      expect(res.status).toBe(400);
+      const doc = (await (await get(`/api/documents/${created.id}`)).json()) as {
+        latestVersion: number;
+      };
+      expect(doc.latestVersion).toBe(1);
+    });
+  });
+
   describe('version conflict -> 409', () => {
     it('returns 409 on stale latestVersion during concurrent update', async () => {
       const createRes = await post('/api/documents', {

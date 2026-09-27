@@ -357,6 +357,22 @@ describe('get_help', () => {
 });
 
 describe('diff_document', () => {
+  it('update_document stores editMessage on the new version', async () => {
+    const created = jsonOf(await callTool('create_document', { title: 'Msg', content: 'v1' })) as {
+      doc: { id: string; latestVersion: number };
+    };
+    await callTool('update_document', {
+      id: created.doc.id,
+      content: 'v2',
+      latestVersion: 1,
+      editMessage: 'Tighten wording',
+    });
+    const versions = jsonOf(await callTool('get_versions', { id: created.doc.id })) as {
+      versions: Array<{ version: number; message?: string }>;
+    };
+    expect(versions.versions.find((v) => v.version === 2)?.message).toBe('Tighten wording');
+  });
+
   it('produces a unified diff between two versions', async () => {
     const created = jsonOf(
       await callTool('create_document', { title: 'Diff test', content: 'line1\nline2\n' }),

@@ -11,6 +11,8 @@ export const LIMITS = {
   MAX_DIFF_INPUT_BYTES: 2 * 1024 * 1024,
   /** Max comment body length in UTF-8 bytes. */
   MAX_COMMENT_BYTES: 10_000,
+  /** Max edit message length in characters, after trimming. */
+  MAX_EDIT_MESSAGE_CHARS: 500,
 } as const;
 
 /** The shape of {@link LIMITS}. */

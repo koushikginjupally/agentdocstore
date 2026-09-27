@@ -8,6 +8,14 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+### Added
+
+- The edit page's "Edit Message" is now saved with the new version and shown
+  on the versions page (REST `editMessage`, MCP `update_document`
+  `editMessage`, returned as `message` on versions). Providers receive it as
+  the optional `AppendVersionInput.message`; the conformance suite checks it
+  round-trips. Previously the message was accepted and discarded.
+
 ### Security
 
 - Deleting a comment (REST `DELETE /api/documents/:id/comments/:cid` and MCP

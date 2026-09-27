@@ -54,6 +54,8 @@ interface CreateDocumentInput {
 interface AppendVersionInput {
   content: string;
   editedBy: string;
+  message?: string;                    // optional edit note; store it and
+                                       // return it as DocumentVersion.message
   expect: { latestVersion: number };   // CAS guard
 }
 

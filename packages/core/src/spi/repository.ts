@@ -24,6 +24,8 @@ export interface UpdateMetaInput {
 export interface AppendVersionInput {
   readonly content: string;
   readonly editedBy: string;
+  /** Optional edit note, stored on the new version as `message`. */
+  readonly message?: string;
   /** CAS guard: the version the caller believes is current. */
   readonly expect: { readonly latestVersion: number };
 }

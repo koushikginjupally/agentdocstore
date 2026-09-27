@@ -35,6 +35,7 @@ interface VersionMeta {
   readonly version: number;
   readonly createdBy: string;
   readonly createdAt: string;
+  readonly message?: string;
 }
 
 /** The full on-disk meta.json shape for one doc. */
@@ -104,7 +105,14 @@ export class FsDocumentRepository implements DocumentRepository {
     if (vm === undefined) return null;
     const content = await this.readVersion(id, version);
     if (content === null) return null;
-    return { documentId: id, version, content, createdBy: vm.createdBy, createdAt: vm.createdAt };
+    return {
+      documentId: id,
+      version,
+      content,
+      createdBy: vm.createdBy,
+      createdAt: vm.createdAt,
+      ...(vm.message !== undefined ? { message: vm.message } : {}),
+    };
   }
 
   async listVersions(id: string): Promise<readonly DocumentVersion[]> {
@@ -120,6 +128,7 @@ export class FsDocumentRepository implements DocumentRepository {
         content: content ?? '',
         createdBy: vm.createdBy,
         createdAt: vm.createdAt,
+        ...(vm.message !== undefined ? { message: vm.message } : {}),
       });
     }
     return out;
@@ -145,7 +154,15 @@ export class FsDocumentRepository implements DocumentRepository {
       const doc: Document = { ...meta.doc, latestVersion: next, updatedAt: now };
       const updated: StoredMeta = {
         doc,
-        versions: [...meta.versions, { version: next, createdBy: input.editedBy, createdAt: now }],
+        versions: [
+          ...meta.versions,
+          {
+            version: next,
+            createdBy: input.editedBy,
+            createdAt: now,
+            ...(input.message !== undefined ? { message: input.message } : {}),
+          },
+        ],
       };
       await atomicWrite(metaPath(this.dataDir, id), serialize(updated));
       this.index(doc, input.content);

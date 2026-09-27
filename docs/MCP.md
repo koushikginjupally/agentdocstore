@@ -152,6 +152,7 @@ Update content (creates a new version) and/or metadata.
 | `language`        | string             | no          | New language                                        |
 | `expiresAt`       | string \| null     | no          | New expiry (`null` clears)                          |
 | `latestVersion`   | number             | conditional | **Required** when `content` is provided (CAS guard) |
+| `editMessage`     | string             | no          | Note stored on the new version (max 500 characters) |
 | `redactionPolicy` | `redact` \| `skip` | no          | Credential handling for new content                 |
 
 The `latestVersion` parameter implements optimistic concurrency control. Pass
@@ -179,7 +180,8 @@ someone else, only their `PUBLIC` documents are returned.
 
 ### get_versions
 
-List all versions of a document (version number, author, timestamp — no content).
+List all versions of a document (version number, author, timestamp and edit
+message when one was given — no content).
 
 | Parameter | Type   | Required | Description        |
 | --------- | ------ | -------- | ------------------ |

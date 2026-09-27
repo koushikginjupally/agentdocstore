@@ -27,6 +27,7 @@ import {
   assertCanDelete,
   assertCanComment,
   assertCanDeleteComment,
+  normalizeEditMessage,
   isExpired,
   DEFAULT_VISIBILITY,
   LANGUAGES,
@@ -452,6 +453,7 @@ export function createServer(opts: CreateServerOptions): Hono {
 
     const body = await parseBody(c, UpdateDocumentSchema);
     let updated = doc;
+    const editMessage = normalizeEditMessage(body.editMessage);
 
     // Validate everything and settle the credential decision BEFORE writing.
     // A 409 means "nothing was saved", so no part of the request may be
@@ -511,6 +513,7 @@ export function createServer(opts: CreateServerOptions): Hono {
       updated = await provider.repository.appendVersion(id, {
         content,
         editedBy: user,
+        ...(editMessage !== undefined ? { message: editMessage } : {}),
         expect: { latestVersion: updated.latestVersion },
       });
 

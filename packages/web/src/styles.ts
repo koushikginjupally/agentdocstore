@@ -516,6 +516,7 @@ textarea {
   border-bottom: 1px solid var(--border);
 }
 .version-list-item:last-child { border-bottom: none; }
+.version-message { margin-top: 4px; color: var(--text-secondary); overflow-wrap: anywhere; }
 .version-checkbox { accent-color: var(--accent); }
 
 /* ===== Loading spinner ===== */

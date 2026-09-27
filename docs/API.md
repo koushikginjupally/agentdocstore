@@ -113,8 +113,10 @@ Any subset of `content`, `title`, `language`, `visibility`, `expiresInDays`
 (`null` clears expiry), `redactionPolicy`. Changing `content` appends a new
 version; metadata-only changes do not. Only the owner may update.
 
-`editMessage` is accepted but not yet stored — see the
-[changelog](../CHANGELOG.md#known-issues).
+`editMessage` is an optional note about the change (at most 500 characters,
+trimmed; a blank note is ignored). It is stored on the new version and returned
+as `message` by `GET /api/documents/:id/versions`. It only applies when
+`content` changes, since only that creates a version.
 
 ### `DELETE /api/documents/:id`
 

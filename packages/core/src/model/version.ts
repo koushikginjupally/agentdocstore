@@ -14,4 +14,6 @@ export interface DocumentVersion {
   readonly createdBy: string;
   /** ISO-8601 creation timestamp. */
   readonly createdAt: string;
+  /** Optional note from the editor describing this change. */
+  readonly message?: string;
 }

@@ -70,6 +70,10 @@ export const UpdateDocumentInput = z.object({
     .positive()
     .optional()
     .describe('Expected latest version for CAS (required when content is provided)'),
+  editMessage: z
+    .string()
+    .optional()
+    .describe('Optional note about this change, stored on the new version (max 500 characters)'),
   redactionPolicy: redactionPolicyEnum
     .optional()
     .describe('What to do when credentials are detected in new content'),

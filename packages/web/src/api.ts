@@ -23,6 +23,8 @@ export interface ApiDocumentVersion {
   content: string;
   createdBy: string;
   createdAt: string;
+  /** Editor's note for this change, when one was given. */
+  message?: string;
 }
 
 export interface ApiComment {

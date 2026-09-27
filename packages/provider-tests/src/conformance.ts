@@ -198,6 +198,26 @@ export function runProviderConformance(
         expect(ver3!.createdBy).toBe('bob');
       });
 
+      it('stores an optional edit message with the version it describes', async () => {
+        const doc = await provider.repository.create(defaultInput({ content: 'v1' }));
+        await provider.repository.appendVersion(doc.id, {
+          content: 'v2',
+          editedBy: 'alice',
+          message: 'Fix the intro',
+          expect: { latestVersion: 1 },
+        });
+        await provider.repository.appendVersion(doc.id, {
+          content: 'v3',
+          editedBy: 'alice',
+          expect: { latestVersion: 2 },
+        });
+
+        expect((await provider.repository.getVersion(doc.id, 2))!.message).toBe('Fix the intro');
+        expect((await provider.repository.getVersion(doc.id, 3))!.message).toBeUndefined();
+        const all = await provider.repository.listVersions(doc.id);
+        expect(all.map((v) => v.message)).toEqual([undefined, 'Fix the intro', undefined]);
+      });
+
       it('stale expect.latestVersion throws VersionConflictError', async () => {
         const doc = await provider.repository.create(defaultInput());
         // advance to version 2

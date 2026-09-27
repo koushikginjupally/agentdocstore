@@ -91,6 +91,12 @@ export async function renderVersionsPage(id: string, container: HTMLElement): Pr
 
       info.appendChild(versionLabel);
       info.appendChild(meta);
+      if (ver.message) {
+        const note = document.createElement('div');
+        note.className = 'version-message text-sm';
+        note.textContent = ver.message;
+        info.appendChild(note);
+      }
 
       li.appendChild(checkbox);
       li.appendChild(info);

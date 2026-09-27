@@ -67,6 +67,13 @@ describe('web API client against the real server', () => {
     expect(Array.isArray(versions)).toBe(true);
     expect(versions.map((v) => v.version)).toEqual([1, 2]);
   });
+
+  it('keeps the edit message sent with an update on that version', async () => {
+    const id = await newDocument();
+    await api.updateDocument(id, { content: 'v2', editMessage: 'Rewrite intro' });
+    const versions = await api.getVersions(id);
+    expect(versions.map((v) => v.message)).toEqual([undefined, 'Rewrite intro']);
+  });
 });
 
 describe('web API client against the real server: documents', () => {

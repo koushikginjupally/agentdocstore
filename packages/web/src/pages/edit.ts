@@ -109,6 +109,8 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     msgInput.type = 'text';
     msgInput.id = 'edit-message';
     msgInput.placeholder = 'Describe your changes...';
+    // Matches LIMITS.MAX_EDIT_MESSAGE_CHARS on the server.
+    msgInput.maxLength = 500;
     msgGroup.appendChild(msgLabel);
     msgGroup.appendChild(msgInput);
     card.appendChild(msgGroup);
