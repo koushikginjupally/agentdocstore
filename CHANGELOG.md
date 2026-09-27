@@ -85,6 +85,11 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- `agentdocstore mcp` now shuts down cleanly when its MCP client disconnects
+  (closes the server's stdin): it finishes the requests it has already
+  received, then releases the data directory. Before, it exited without
+  releasing the lock, so the next `mcp` or `serve` on that directory failed
+  with "already locked" until the lock was removed by hand.
 - The web UI's comment list and version history now load. Both always failed
   ("Failed to load comments." / "Failed to load versions") because the client
   expected a bare array where the API returns `{ comments }` and `{ versions }`.

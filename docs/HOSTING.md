@@ -25,7 +25,9 @@ The filesystem provider stores all data under a single directory (default:
 - **index/snapshot.json** — MiniSearch index snapshot (rebuilt automatically if
   missing or corrupt).
 - **.agentdocstore.lock/** — advisory lock directory (prevents two instances from
-  sharing one data dir).
+  sharing one data dir). It is removed when the instance stops, including when
+  an MCP client disconnects from `agentdocstore mcp`. After a hard kill (for
+  example `kill -9`) it stays; remove it by hand once no instance is running.
 
 ### Backup
 
