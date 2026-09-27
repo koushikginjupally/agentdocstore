@@ -5,6 +5,7 @@
  * All assets bundled locally from node_modules — zero external egress.
  */
 import { onRoute } from './router.js';
+import { focusPageHeading } from './dom.js';
 import type { Route } from './router.js';
 import { initTheme } from './theme.js';
 import { injectStyles } from './styles.js';
@@ -32,8 +33,13 @@ function boot(): void {
   app.appendChild(main);
 
   // Route handler
-  onRoute((route: Route) => {
-    void handleRoute(route, main);
+  // The first render keeps the browser's default focus; later navigations move
+  // focus into the new page (see focusPageHeading).
+  let firstRender = true;
+  onRoute(async (route: Route) => {
+    await handleRoute(route, main);
+    if (!firstRender) focusPageHeading(main);
+    firstRender = false;
   });
 }
 

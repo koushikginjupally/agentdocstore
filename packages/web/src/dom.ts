@@ -63,6 +63,22 @@ export function qs<T extends HTMLElement>(sel: string, root: ParentNode = docume
   return root.querySelector<T>(sel);
 }
 
+/**
+ * Move focus to the page's main heading after a client-side navigation.
+ *
+ * Rendering a new page replaces the element that had focus (the link or button
+ * the user activated), which drops focus to <body>: a screen reader announces
+ * nothing and the next Tab starts from the top. Focusing the heading announces
+ * the new page and starts the Tab order inside it. tabindex="-1" makes the
+ * heading focusable by script without adding it to the Tab order.
+ */
+export function focusPageHeading(root: ParentNode): void {
+  const heading = root.querySelector<HTMLElement>('h1') ?? root.querySelector<HTMLElement>('h2');
+  if (!heading) return;
+  if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
+  heading.focus({ preventScroll: true });
+}
+
 /** Format ISO date for display. */
 export function formatDate(iso: string): string {
   try {

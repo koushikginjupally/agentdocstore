@@ -125,6 +125,8 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 }
 .btn:hover { border-color: var(--accent); background: var(--accent-bg); }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Headings are focused by script after navigation; they are not controls. */
+.main-content [tabindex="-1"]:focus { outline: none; }
 .action-icon { flex-shrink: 0; }
 
 .btn-primary {
