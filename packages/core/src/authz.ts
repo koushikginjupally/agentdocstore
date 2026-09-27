@@ -54,6 +54,22 @@ export function canComment(doc: AccessTarget, viewer: Viewer): boolean {
 }
 
 /**
+ * True when `viewer` may delete a comment on `doc`: its author or the document
+ * owner, and only while they can still read the document. Anyone who can read
+ * a PUBLIC document may comment on it, so without this rule any reader could
+ * erase anyone else's feedback.
+ */
+export function canDeleteComment(
+  doc: AccessTarget,
+  comment: { readonly author: string },
+  viewer: Viewer,
+): boolean {
+  if (!canComment(doc, viewer)) return false;
+  if (isOwner(doc, viewer)) return true;
+  return typeof viewer === 'string' && viewer.length > 0 && comment.author === viewer;
+}
+
+/**
  * True when `doc` has an `expiresAt` at or before `now`.
  *
  * Expiry is enforced at read time with this check: the background sweep (or a
@@ -96,4 +112,21 @@ export function assertCanDelete(doc: AccessTarget, viewer: Viewer): void {
 /** Assert `viewer` may comment on `doc` (same gate as read), else throw {@link NotFoundError}. */
 export function assertCanComment(doc: AccessTarget, viewer: Viewer): void {
   if (!canComment(doc, viewer)) deny(doc);
+}
+
+/**
+ * Assert `viewer` may delete `comment` on `doc`. A viewer who cannot read the
+ * document gets the document denial; one who can read it but neither wrote the
+ * comment nor owns the document gets "comment not found", matching how every
+ * other denial is shaped.
+ */
+export function assertCanDeleteComment(
+  doc: AccessTarget,
+  comment: { readonly id: string; readonly author: string },
+  viewer: Viewer,
+): void {
+  assertCanComment(doc, viewer);
+  if (!canDeleteComment(doc, comment, viewer)) {
+    throw new NotFoundError(`Comment '${comment.id}' not found`);
+  }
 }

@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- Deleting a comment (REST `DELETE /api/documents/:id/comments/:cid` and MCP
+  `delete_comment`) is now limited to the comment's author and the document's
+  owner. Previously anyone who could read a PUBLIC document could delete
+  anyone's comments on it.
 - MCP `list_documents` with an `owner` argument returned that user's PRIVATE
   documents (titles and metadata) to any caller. It now applies the same read
   rule as every other tool and returns only their PUBLIC documents.

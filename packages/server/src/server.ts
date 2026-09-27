@@ -26,6 +26,7 @@ import {
   assertCanWrite,
   assertCanDelete,
   assertCanComment,
+  assertCanDeleteComment,
   isExpired,
   DEFAULT_VISIBILITY,
   LANGUAGES,
@@ -683,6 +684,9 @@ export function createServer(opts: CreateServerOptions): Hono {
     assertCanComment(doc, user);
 
     const cid = c.req.param('cid');
+    const target = (await provider.comments.list(id)).find((x) => x.id === cid);
+    if (!target) throw new NotFoundError('Comment not found');
+    assertCanDeleteComment(doc, target, user);
     await provider.comments.delete(id, cid);
     return c.json({ deleted: true });
   });

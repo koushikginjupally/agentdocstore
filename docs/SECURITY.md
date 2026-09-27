@@ -103,13 +103,14 @@ ownership matches what `single-user` REST resolves to on the same data directory
 Authorization is enforced in `@agentdocstore/core`, not in individual providers
 or route handlers. The rules are:
 
-| Surface                         | PUBLIC document | PRIVATE document      |
-| ------------------------------- | --------------- | --------------------- |
-| Read (GET, raw, versions, diff) | Anyone          | Owner only            |
-| Write (PUT, meta, visibility)   | Owner only      | Owner only            |
-| Delete                          | Owner only      | Owner only            |
-| Comments (read/write)           | Anyone          | Owner only            |
-| Search results                  | Visible to all  | Visible to owner only |
+| Surface                         | PUBLIC document                  | PRIVATE document      |
+| ------------------------------- | -------------------------------- | --------------------- |
+| Read (GET, raw, versions, diff) | Anyone                           | Owner only            |
+| Write (PUT, meta, visibility)   | Owner only                       | Owner only            |
+| Delete                          | Owner only                       | Owner only            |
+| Comments (read/add/resolve)     | Anyone                           | Owner only            |
+| Delete a comment                | Its author or the document owner | Owner only            |
+| Search results                  | Visible to all                   | Visible to owner only |
 
 **No existence leak:** Denied access returns `NotFoundError` (HTTP 404), never
 a "forbidden" response. A non-owner cannot distinguish "this document does not

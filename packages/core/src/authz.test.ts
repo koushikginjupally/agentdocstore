@@ -7,6 +7,7 @@ import {
   assertCanRead,
   assertCanReadRaw,
   assertCanWrite,
+  canDeleteComment,
   canRead,
   canWrite,
   isExpired,
@@ -105,5 +106,21 @@ describe('isExpired', () => {
   it('is true at and after the expiry instant', () => {
     expect(isExpired({ expiresAt: '2026-01-01T00:00:00.000Z' }, now)).toBe(true);
     expect(isExpired({ expiresAt: '2025-12-31T23:59:59.000Z' }, now)).toBe(true);
+  });
+});
+
+describe('canDeleteComment — author or document owner', () => {
+  const byCarol = { author: 'carol' };
+  it('lets the comment author and the document owner delete', () => {
+    expect(canDeleteComment(publicDocument, byCarol, 'carol')).toBe(true);
+    expect(canDeleteComment(publicDocument, byCarol, OWNER)).toBe(true);
+  });
+  it('refuses anyone else, including anonymous viewers', () => {
+    expect(canDeleteComment(publicDocument, byCarol, OTHER)).toBe(false);
+    expect(canDeleteComment(publicDocument, byCarol, null)).toBe(false);
+    expect(canDeleteComment(publicDocument, { author: '' }, '')).toBe(false);
+  });
+  it('refuses the author once they can no longer read the document', () => {
+    expect(canDeleteComment(privateDocument, byCarol, 'carol')).toBe(false);
   });
 });

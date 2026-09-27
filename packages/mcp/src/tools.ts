@@ -16,6 +16,7 @@ import {
   canRead,
   isExpired,
   assertCanComment,
+  assertCanDeleteComment,
   NotFoundError,
   ValidationError,
   LIMITS,
@@ -355,6 +356,9 @@ export async function deleteComment(
 ): Promise<CallToolResult> {
   const doc = await requireDocument(provider, args.id);
   assertCanComment(doc, viewer);
+  const target = (await provider.comments.list(doc.id)).find((c) => c.id === args.commentId);
+  if (!target) throw new NotFoundError('Comment not found');
+  assertCanDeleteComment(doc, target, viewer);
   await provider.comments.delete(doc.id, args.commentId);
   return text(`Comment ${args.commentId} deleted`);
 }

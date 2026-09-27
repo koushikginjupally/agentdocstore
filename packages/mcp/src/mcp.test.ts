@@ -312,6 +312,34 @@ describe('PRIVATE doc isolation', () => {
     expect(asBob.items.map((d) => d.title)).toEqual(['Alice public note']);
     expect(asBob.items.every((d) => d.visibility === 'PUBLIC')).toBe(true);
   });
+
+  it('delete_comment is limited to the comment author and the document owner', async () => {
+    currentViewer = 'alice';
+    const created = jsonOf(
+      await callTool('create_document', { title: 'Shared', content: 'x' }),
+    ) as { doc: { id: string } };
+    const id = created.doc.id;
+    const add = async (user: string) => {
+      currentViewer = user;
+      return (
+        jsonOf(await callTool('add_comment', { id, body: `from ${user}` })) as {
+          comment: { id: string };
+        }
+      ).comment.id;
+    };
+
+    const bobs = await add('bob');
+    currentViewer = 'carol';
+    const denied = await callTool('delete_comment', { id, commentId: bobs });
+    expect(denied.isError).toBe(true);
+    expect(textOf(denied)).toContain('not found');
+
+    currentViewer = 'bob';
+    expect((await callTool('delete_comment', { id, commentId: bobs })).isError).toBeUndefined();
+    const carols = await add('carol');
+    currentViewer = 'alice';
+    expect((await callTool('delete_comment', { id, commentId: carols })).isError).toBeUndefined();
+  });
 });
 
 // ---------------------------------------------------------------------------

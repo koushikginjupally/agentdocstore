@@ -242,7 +242,8 @@ Mark a comment as unresolved.
 
 ### delete_comment
 
-Delete a comment.
+Delete a comment. Only the comment's author or the document's owner may delete
+it; anyone else gets "not found".
 
 | Parameter   | Type   | Required | Description        |
 | ----------- | ------ | -------- | ------------------ |

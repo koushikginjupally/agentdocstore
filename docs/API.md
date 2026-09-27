@@ -149,6 +149,9 @@ The content as `text/plain`. Same visibility rules as the JSON read.
 
 A comment: `{ id, documentId, author, body, resolved, createdAt, updatedAt }`.
 
+Only the comment's author or the document's owner can delete a comment. Anyone
+else gets `404`, the same answer as for a comment that does not exist.
+
 ## Utility
 
 ### `POST /api/scan`

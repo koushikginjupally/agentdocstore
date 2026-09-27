@@ -570,6 +570,52 @@ describe('server', () => {
     });
   });
 
+  describe('DELETE /api/documents/:id/comments/:cid — who may delete', () => {
+    it('lets the comment author and the document owner delete, nobody else', async () => {
+      const multi = createServer({ provider, auth: { mode: 'trusted-header', header: 'x-user' } });
+      const as = (user: string, path: string, init: RequestInit = {}) =>
+        multi.request(path, {
+          ...init,
+          headers: { 'content-type': 'application/json', 'x-user': user },
+        });
+      const doc = (await (
+        await as('alice', '/api/documents', {
+          method: 'POST',
+          body: JSON.stringify({ title: 'Shared', content: 'x' }),
+        })
+      ).json()) as { id: string };
+      const addComment = async (user: string) =>
+        (
+          (await (
+            await as(user, `/api/documents/${doc.id}/comments`, {
+              method: 'POST',
+              body: JSON.stringify({ body: `from ${user}` }),
+            })
+          ).json()) as { id: string }
+        ).id;
+
+      const bobs = await addComment('bob');
+      // A third user cannot delete bob's comment...
+      const byCarol = await as('carol', `/api/documents/${doc.id}/comments/${bobs}`, {
+        method: 'DELETE',
+      });
+      expect(byCarol.status).toBe(404);
+      const still = (await (await as('alice', `/api/documents/${doc.id}/comments`)).json()) as {
+        comments: Array<{ id: string }>;
+      };
+      expect(still.comments.map((c) => c.id)).toContain(bobs);
+      // ...but bob can, and so can the document owner.
+      expect(
+        (await as('bob', `/api/documents/${doc.id}/comments/${bobs}`, { method: 'DELETE' })).status,
+      ).toBe(200);
+      const carols = await addComment('carol');
+      expect(
+        (await as('alice', `/api/documents/${doc.id}/comments/${carols}`, { method: 'DELETE' }))
+          .status,
+      ).toBe(200);
+    });
+  });
+
   // ========================================================================
   // POST /api/documents/:id/visibility
   // ========================================================================
