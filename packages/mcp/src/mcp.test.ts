@@ -285,6 +285,33 @@ describe('PRIVATE doc isolation', () => {
     expect(bobRaw.isError).toBe(true);
     expect(textOf(bobRaw)).toContain('not found');
   });
+
+  it("list_documents by owner hides another user's PRIVATE documents", async () => {
+    currentViewer = 'alice';
+    await callTool('create_document', {
+      title: 'Alice private plan',
+      content: 'private',
+      visibility: 'PRIVATE',
+    });
+    await callTool('create_document', { title: 'Alice public note', content: 'public' });
+
+    // The owner still sees both.
+    const own = jsonOf(await callTool('list_documents', {})) as {
+      items: Array<{ title: string }>;
+    };
+    expect(own.items.map((d) => d.title).sort()).toEqual([
+      'Alice private plan',
+      'Alice public note',
+    ]);
+
+    // Viewer is read per call, so switching it is enough.
+    currentViewer = 'bob';
+    const asBob = jsonOf(await callTool('list_documents', { owner: 'alice' })) as {
+      items: Array<{ title: string; visibility: string }>;
+    };
+    expect(asBob.items.map((d) => d.title)).toEqual(['Alice public note']);
+    expect(asBob.items.every((d) => d.visibility === 'PUBLIC')).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------

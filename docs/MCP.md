@@ -168,7 +168,8 @@ Delete a document and all its versions and comments (owner only).
 
 ### list_documents
 
-List documents by owner (defaults to the current user).
+List documents by owner (defaults to the current user). When `owner` names
+someone else, only their `PUBLIC` documents are returned.
 
 | Parameter | Type   | Required | Description                       |
 | --------- | ------ | -------- | --------------------------------- |

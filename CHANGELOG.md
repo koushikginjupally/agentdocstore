@@ -8,6 +8,12 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+### Security
+
+- MCP `list_documents` with an `owner` argument returned that user's PRIVATE
+  documents (titles and metadata) to any caller. It now applies the same read
+  rule as every other tool and returns only their PUBLIC documents.
+
 ### Fixed
 
 - The web UI's comment list and version history now load. Both always failed

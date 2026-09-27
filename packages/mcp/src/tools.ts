@@ -13,6 +13,7 @@ import {
   assertCanReadRaw,
   assertCanWrite,
   assertCanDelete,
+  canRead,
   isExpired,
   assertCanComment,
   NotFoundError,
@@ -228,7 +229,10 @@ export async function listDocuments(
   if (args.limit !== undefined) query.limit = args.limit;
   if (args.cursor !== undefined) query.cursor = args.cursor;
   const page = await provider.repository.listByOwner(owner, query);
-  return jsonResult({ ...page, items: page.items.filter((d) => !isExpired(d)) });
+  // `owner` may name someone else, so apply the same read rule as every other
+  // tool: another user's PRIVATE documents must never be listed.
+  const items = page.items.filter((d) => !isExpired(d) && canRead(d, viewer));
+  return jsonResult({ ...page, items });
 }
 
 export async function getVersions(
