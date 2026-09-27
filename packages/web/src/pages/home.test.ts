@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { api } from '../api.js';
+import { api, type ApiDocument } from '../api.js';
 import { hasUnsavedChanges, setUnsavedChangesCheck } from '../router.js';
 import { renderHomePage } from './home.js';
 
@@ -93,5 +93,96 @@ describe('create form expiry', () => {
 
   it('sends no expiry for Never', async () => {
     expect(await createWith('')).not.toHaveProperty('expiresInDays');
+  });
+});
+
+describe('document list focus', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  const listed = (id: string): ApiDocument => ({
+    id,
+    title: `Note ${id}`,
+    language: 'markdown',
+    visibility: 'PRIVATE',
+    createdBy: 'alice',
+    createdAt: '2026-09-27T00:00:00Z',
+    updatedAt: '2026-09-27T00:00:00Z',
+    latestVersion: 1,
+  });
+
+  async function pagedHome(...pages: Array<{ items: ApiDocument[]; nextCursor?: string }>) {
+    const list = vi.spyOn(api, 'listDocuments');
+    for (const page of pages) list.mockResolvedValueOnce(page);
+    document.body.innerHTML = '<main></main>';
+    const main = document.querySelector('main')!;
+    await renderHomePage(main);
+    return { main, list, loadMore: main.querySelector<HTMLButtonElement>('#load-more-btn')! };
+  }
+
+  const link = (main: HTMLElement, id: string) =>
+    main.querySelector<HTMLAnchorElement>(`a.doc-list-link[href="#/d/${id}"]`);
+
+  it('moves focus to the first document Load More added, so the last page does not lose it', async () => {
+    const { main, loadMore } = await pagedHome(
+      { items: [listed('d1'), listed('d2')], nextCursor: 'd2' },
+      { items: [listed('d3')] },
+    );
+    loadMore.focus();
+    loadMore.click();
+    await vi.waitFor(() => expect(link(main, 'd3')).not.toBeNull());
+    expect(loadMore.style.display).toBe('none');
+    expect(document.activeElement).toBe(link(main, 'd3'));
+  });
+
+  it('also moves focus to the first new document while more remain', async () => {
+    const { main, loadMore } = await pagedHome(
+      { items: [listed('d1')], nextCursor: 'd1' },
+      { items: [listed('d2')], nextCursor: 'd2' },
+    );
+    loadMore.focus();
+    loadMore.click();
+    await vi.waitFor(() => expect(document.activeElement).toBe(link(main, 'd2')));
+    expect(loadMore.style.display).not.toBe('none');
+  });
+
+  it('moves focus to the last document when the last page brought none', async () => {
+    const { main, loadMore } = await pagedHome(
+      { items: [listed('d1'), listed('d2')], nextCursor: 'd2' },
+      { items: [] },
+    );
+    loadMore.focus();
+    loadMore.click();
+    await vi.waitFor(() => expect(loadMore.style.display).toBe('none'));
+    expect(document.activeElement).toBe(link(main, 'd2'));
+  });
+
+  it('keeps focus on Load More when a page added nothing but more remain', async () => {
+    const { list, loadMore } = await pagedHome(
+      { items: [listed('d1')], nextCursor: 'd1' },
+      { items: [], nextCursor: 'd9' },
+    );
+    loadMore.focus();
+    loadMore.click();
+    await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(loadMore.style.display).not.toBe('none');
+    expect(document.activeElement).toBe(loadMore);
+  });
+
+  it('keeps focus in the search box when a search loads results', async () => {
+    const { main, list } = await pagedHome(
+      { items: [listed('d1')] },
+      { items: [listed('d2')], nextCursor: 'd2' },
+    );
+    const search = main.querySelector<HTMLInputElement>('input[aria-label="Search documents"]')!;
+    search.focus();
+    search.value = 'note';
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await vi.waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(link(main, 'd2')).not.toBeNull());
+    expect(document.activeElement).toBe(search);
   });
 });

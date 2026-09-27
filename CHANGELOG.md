@@ -111,6 +111,9 @@ versions may contain breaking changes; they will be called out under
   reach the rest. Search results now page with Load More, like the document
   list: `GET /api/documents?query=` returns `nextCursor` while more matches
   remain and accepts it back as `cursor`.
+- Load More now moves keyboard focus to the first document it added. When it
+  loaded the last page, the focused button disappeared and the next Tab
+  started again from the top of the page.
 - Code documents are syntax-highlighted again, in both themes. The token
   colours came from a bundled stylesheet that the page never loaded, so code
   always rendered in one colour; they now follow the light/dark theme.

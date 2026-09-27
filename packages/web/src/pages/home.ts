@@ -160,9 +160,20 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
         20,
       );
       if (!append) documentListEl.innerHTML = '';
+      const firstNew = documentListEl.children.length;
       renderDocumentList(result.items, documentListEl);
       currentCursor = result.nextCursor;
       loadMoreBtn.style.display = result.nextCursor ? 'inline-flex' : 'none';
+      if (append) {
+        // Carry on from the first document Load More added. On the last page
+        // the button hides, and focus left on it would fall back to the top
+        // of the page. A page that added nothing leaves focus on the button
+        // while it stays, or moves it to the end of the list when it hides.
+        const next =
+          documentListEl.children[firstNew] ??
+          (result.nextCursor ? null : documentListEl.lastElementChild);
+        next?.querySelector<HTMLAnchorElement>('a')?.focus();
+      }
       if (!append && result.items.length === 0) {
         const empty = document.createElement('li');
         empty.className = 'empty-state';
