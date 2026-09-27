@@ -10,6 +10,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- The web UI's comment list and version history now load. Both always failed
+  ("Failed to load comments." / "Failed to load versions") because the client
+  expected a bare array where the API returns `{ comments }` and `{ versions }`.
 - `PUT /api/documents/:id` no longer applies title, language, expiry or
   visibility changes when the same request is rejected for detected credentials
   (409) or oversized content (413).

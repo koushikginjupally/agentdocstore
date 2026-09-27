@@ -174,8 +174,12 @@ export const api = {
     return request(`/api/documents/${encodeURIComponent(id)}`, { method: 'DELETE' });
   },
 
-  getVersions(id: string): Promise<ApiDocumentVersion[]> {
-    return request(`/api/documents/${encodeURIComponent(id)}/versions`);
+  async getVersions(id: string): Promise<ApiDocumentVersion[]> {
+    // The server wraps lists in an envelope: { versions: [...] }.
+    const body = await request<{ versions: ApiDocumentVersion[] }>(
+      `/api/documents/${encodeURIComponent(id)}/versions`,
+    );
+    return body.versions;
   },
 
   getDiff(id: string, from: number, to: number): Promise<ApiDiff> {
@@ -194,8 +198,12 @@ export const api = {
     });
   },
 
-  getComments(documentId: string): Promise<ApiComment[]> {
-    return request(`/api/documents/${encodeURIComponent(documentId)}/comments`);
+  async getComments(documentId: string): Promise<ApiComment[]> {
+    // The server wraps lists in an envelope: { comments: [...] }.
+    const body = await request<{ comments: ApiComment[] }>(
+      `/api/documents/${encodeURIComponent(documentId)}/comments`,
+    );
+    return body.comments;
   },
 
   resolveComment(documentId: string, commentId: string, resolved: boolean): Promise<ApiComment> {
