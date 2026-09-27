@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "agentdocstore": "./packages/cli/dist/index.js"
+  },
   "description": "Offline-first, self-hostable artifact sharing with a web UI, REST API, and MCP server.",
   "keywords": [
     "artifact-sharing",

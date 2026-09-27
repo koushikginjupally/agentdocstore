@@ -82,6 +82,22 @@ if [[ "$S1_STATUS" == "PASS" ]]; then
 fi
 
 if [[ "$S1_STATUS" == "PASS" ]]; then
+  ROOT_CLI=$(node -e "const p=require('./package.json'); process.stdout.write(p.bin?.agentdocstore ?? '')")
+  if [[ "$ROOT_CLI" != "./packages/cli/dist/index.js" ]]; then
+    S1_STATUS="FAIL"
+    S1_DETAIL="$S1_DETAIL, root agentdocstore bin mapping missing"
+  elif [[ ! -x "$REPO_ROOT/${ROOT_CLI#./}" ]]; then
+    S1_STATUS="FAIL"
+    S1_DETAIL="$S1_DETAIL, root CLI target is not executable"
+  elif npx --no-install agentdocstore --version >/dev/null 2>&1; then
+    S1_DETAIL="$S1_DETAIL, root npx CLI OK"
+  else
+    S1_STATUS="FAIL"
+    S1_DETAIL="$S1_DETAIL, root npx CLI FAILED"
+  fi
+fi
+
+if [[ "$S1_STATUS" == "PASS" ]]; then
   if npm test >test.log 2>&1; then
     # Read the run SUMMARY, not the last per-file line. `grep -oP '\d+ tests?'
     # | tail -1` matched the final "(57 tests)" file heading and under-reported
