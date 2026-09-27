@@ -127,7 +127,7 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
     await renderContent(doc.language, doc.content, contentDiv);
 
     // Comment panel
-    renderCommentPanel(id, container);
+    renderCommentPanel(id, container, doc.createdBy);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       document.title = buildTitle('Not Found');

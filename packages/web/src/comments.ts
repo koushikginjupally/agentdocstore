@@ -4,7 +4,34 @@ import type { ApiComment } from './api.js';
 import { formatDate, onClick } from './dom.js';
 import { showToast } from './toast.js';
 
-export function renderCommentPanel(documentId: string, container: HTMLElement): void {
+/**
+ * Whether `viewer` may delete a comment by `author` on a document owned by
+ * `docOwner`. Mirrors the server rule (core `canDeleteComment`): the comment's
+ * author or the document owner. The server still enforces it; this only keeps
+ * the UI from offering a button that would fail.
+ */
+export function canDeleteCommentAs(
+  viewer: string | null,
+  docOwner: string,
+  author: string,
+): boolean {
+  if (!viewer) return false;
+  return viewer === docOwner || viewer === author;
+}
+
+export function renderCommentPanel(
+  documentId: string,
+  container: HTMLElement,
+  docOwner: string,
+): void {
+  // Resolved once per panel. If the viewer is unknown, no Delete buttons are
+  // shown (fail closed).
+  const viewer: Promise<string | null> = api.whoami().then(
+    (w) => w.user,
+    () => null,
+  );
+  const ctx: PanelContext = { documentId, docOwner, viewer };
+
   const panel = document.createElement('div');
   panel.className = 'comment-panel';
 
@@ -35,7 +62,7 @@ export function renderCommentPanel(documentId: string, container: HTMLElement): 
     try {
       await api.addComment(documentId, body);
       textarea.value = '';
-      await loadComments(documentId, listEl);
+      await loadComments(ctx, listEl);
       showToast('Comment added', 'success');
     } catch (err) {
       showToast(
@@ -54,19 +81,31 @@ export function renderCommentPanel(documentId: string, container: HTMLElement): 
   container.appendChild(panel);
 
   // Load existing comments
-  void loadComments(documentId, listEl);
+  void loadComments(ctx, listEl);
 }
 
-async function loadComments(documentId: string, listEl: HTMLElement): Promise<void> {
+interface PanelContext {
+  readonly documentId: string;
+  readonly docOwner: string;
+  readonly viewer: Promise<string | null>;
+}
+
+async function loadComments(ctx: PanelContext, listEl: HTMLElement): Promise<void> {
   try {
-    const comments = await api.getComments(documentId);
-    renderCommentList(documentId, comments, listEl);
+    const [comments, viewer] = await Promise.all([api.getComments(ctx.documentId), ctx.viewer]);
+    renderCommentList(ctx, viewer, comments, listEl);
   } catch {
     listEl.innerHTML = '<p class="text-muted text-sm">Failed to load comments.</p>';
   }
 }
 
-function renderCommentList(documentId: string, comments: ApiComment[], listEl: HTMLElement): void {
+function renderCommentList(
+  ctx: PanelContext,
+  viewer: string | null,
+  comments: ApiComment[],
+  listEl: HTMLElement,
+): void {
+  const { documentId } = ctx;
   listEl.innerHTML = '';
 
   if (comments.length === 0) {
@@ -105,27 +144,30 @@ function renderCommentList(documentId: string, comments: ApiComment[], listEl: H
     onClick(resolveBtn, comment.resolved ? 'Unresolve comment' : 'Resolve comment', async () => {
       try {
         await api.resolveComment(documentId, comment.id, !comment.resolved);
-        await loadComments(documentId, listEl);
+        await loadComments(ctx, listEl);
       } catch (err) {
         showToast(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
       }
     });
 
-    const deleteBtn = document.createElement('button');
-    deleteBtn.className = 'btn btn-sm btn-danger';
-    deleteBtn.textContent = 'Delete';
-    onClick(deleteBtn, 'Delete comment', async () => {
-      try {
-        await api.deleteComment(documentId, comment.id);
-        await loadComments(documentId, listEl);
-        showToast('Comment deleted', 'success');
-      } catch (err) {
-        showToast(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
-      }
-    });
+    let deleteBtn: HTMLButtonElement | null = null;
+    if (canDeleteCommentAs(viewer, ctx.docOwner, comment.author)) {
+      deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn btn-sm btn-danger';
+      deleteBtn.textContent = 'Delete';
+      onClick(deleteBtn, 'Delete comment', async () => {
+        try {
+          await api.deleteComment(documentId, comment.id);
+          await loadComments(ctx, listEl);
+          showToast('Comment deleted', 'success');
+        } catch (err) {
+          showToast(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
+        }
+      });
+    }
 
     actions.appendChild(resolveBtn);
-    actions.appendChild(deleteBtn);
+    if (deleteBtn) actions.appendChild(deleteBtn);
 
     item.appendChild(header);
     item.appendChild(body);

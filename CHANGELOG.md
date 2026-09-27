@@ -22,6 +22,8 @@ versions may contain breaking changes; they will be called out under
   `delete_comment`) is now limited to the comment's author and the document's
   owner. Previously anyone who could read a PUBLIC document could delete
   anyone's comments on it.
+- The web UI shows a comment's Delete button only to its author and the
+  document owner, matching the server rule.
 - MCP `list_documents` with an `owner` argument returned that user's PRIVATE
   documents (titles and metadata) to any caller. It now applies the same read
   rule as every other tool and returns only their PUBLIC documents.
