@@ -2,6 +2,7 @@
 import { api, resolveViewer } from './api.js';
 import type { ApiComment } from './api.js';
 import { formatDate, onClick } from './dom.js';
+import { watchForUnsavedChanges } from './router.js';
 import { showToast } from './toast.js';
 
 /**
@@ -48,6 +49,9 @@ export function renderCommentPanel(
   const textarea = document.createElement('textarea');
   textarea.placeholder = 'Add a comment...';
   textarea.setAttribute('aria-label', 'New comment');
+  // A half-written comment is lost when the page changes, so leaving asks
+  // first, as the edit page does. Posting clears the box, which ends it.
+  watchForUnsavedChanges([textarea]);
 
   const submitBtn = document.createElement('button');
   submitBtn.className = 'btn btn-primary';

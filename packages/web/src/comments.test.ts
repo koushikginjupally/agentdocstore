@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { api } from './api.js';
 import { canDeleteCommentAs, renderCommentPanel } from './comments.js';
+import { hasUnsavedChanges, setUnsavedChangesCheck } from './router.js';
 
 const comments = [
   {
@@ -83,5 +84,51 @@ describe('deleting a comment', () => {
   it('keeps the comment when the user declines', async () => {
     await clickDeleteOnOwnComment(false);
     expect(api.deleteComment).not.toHaveBeenCalled();
+  });
+});
+
+describe('a half-written comment', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  async function commentForm(): Promise<{ box: HTMLTextAreaElement; post: HTMLButtonElement }> {
+    vi.spyOn(api, 'getComments').mockResolvedValue([]);
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '';
+    renderCommentPanel('d1', document.body, 'alice');
+    await vi.waitFor(() => expect(api.getComments).toHaveBeenCalled());
+    return {
+      box: document.querySelector<HTMLTextAreaElement>('textarea[aria-label="New comment"]')!,
+      post: [...document.querySelectorAll('button')].find((b) => b.textContent === 'Comment')!,
+    };
+  }
+
+  it('counts as unsaved, so leaving the page asks first', async () => {
+    const { box } = await commentForm();
+    expect(hasUnsavedChanges()).toBe(false);
+    box.value = 'Please check step 3';
+    expect(hasUnsavedChanges()).toBe(true);
+  });
+
+  it('is no longer unsaved once it has been posted', async () => {
+    const { box, post } = await commentForm();
+    vi.spyOn(api, 'addComment').mockResolvedValue({ ...comments[0]!, body: 'Please check step 3' });
+    box.value = 'Please check step 3';
+    post.click();
+    await vi.waitFor(() => expect(box.value).toBe(''));
+    expect(hasUnsavedChanges()).toBe(false);
+  });
+
+  it('stays unsaved when posting fails, since the text is kept', async () => {
+    const { box, post } = await commentForm();
+    vi.spyOn(api, 'addComment').mockRejectedValue(new Error('Comment too long'));
+    box.value = 'Please check step 3';
+    post.click();
+    await vi.waitFor(() => expect(api.addComment).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(box.value).toBe('Please check step 3');
+    expect(hasUnsavedChanges()).toBe(true);
   });
 });

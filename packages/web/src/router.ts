@@ -104,13 +104,14 @@ export function onRoute(handler: RouteHandler): void {
   _handler = handler;
   // In-app links ask before the browser navigates, so declining leaves no
   // extra history entry behind. Modified clicks open a new tab and leave
-  // nothing, so they are not asked about.
+  // nothing, so they are not asked about. Only `#/…` links change page: a
+  // `#heading` link inside a document scrolls to that heading instead.
   document.addEventListener(
     'click',
     (event) => {
       if (event.defaultPrevented || event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const link = event.target instanceof Element ? event.target.closest('a[href^="#"]') : null;
+      const link = event.target instanceof Element ? event.target.closest('a[href^="#/"]') : null;
       if (!link || link.getAttribute('href') === (window.location.hash || '#/')) return;
       if (!hasUnsavedChanges()) return;
       if (window.confirm(LEAVE_PROMPT)) {

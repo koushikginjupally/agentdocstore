@@ -24,10 +24,11 @@ versions may contain breaking changes; they will be called out under
 - Any earlier version of a document can be opened in full: the Versions page
   has a View link on each version, and `#/d/<id>/v/<n>` shows that version
   rendered, read-only, with a note and a link back to the latest version.
-- The web UI asks before discarding unsaved typing: leaving the edit page, or
-  the home page with a half-written new document, through Cancel, a link or
-  Back now asks first, and reloading or closing the tab gets the browser's
-  own warning.
+- The web UI asks before discarding unsaved typing: leaving the edit page,
+  the home page with a half-written new document, or a document page with a
+  half-written comment through Cancel, a link or Back now asks first, and
+  reloading or closing the tab gets the browser's own warning. Links that
+  only scroll within a document never ask.
 - The edit page's "Edit Message" is now saved with the new version and shown
   on the versions page (REST `editMessage`, MCP `update_document`
   `editMessage`, returned as `message` on versions). Providers receive it as

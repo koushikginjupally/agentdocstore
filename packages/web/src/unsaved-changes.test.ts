@@ -134,6 +134,14 @@ describe('clicking an in-app link with unsaved changes', () => {
     expect(confirm).not.toHaveBeenCalled();
     expect(hasUnsavedChanges()).toBe(true);
   });
+
+  it('does not ask for a link within a document, which only scrolls to a heading', () => {
+    setUnsavedChangesCheck(() => true);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    expect(clickLink('#install')).toBe(false);
+    expect(confirm).not.toHaveBeenCalled();
+    expect(hasUnsavedChanges()).toBe(true);
+  });
 });
 
 describe('watchForUnsavedChanges', () => {
