@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- MCP `list_documents` takes a `query` and then searches, like the REST API's
+  `?query=`: `PUBLIC` documents and the caller's own `PRIVATE` ones, best
+  match first, with `total` and a `nextCursor` for the next page. Agents
+  connected over MCP could not search before.
 - A markdown document with three or more h1–h3 headings starts with a
   Contents list, closed until opened; its links jump to each heading within
   the page. It shows in the Preview too.

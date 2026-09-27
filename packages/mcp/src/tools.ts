@@ -231,8 +231,16 @@ export async function deleteDocument(
 export async function listDocuments(
   provider: Provider,
   viewer: string,
-  args: { owner?: string | undefined; limit?: number | undefined; cursor?: string | undefined },
+  args: {
+    owner?: string | undefined;
+    query?: string | undefined;
+    limit?: number | undefined;
+    cursor?: string | undefined;
+  },
 ): Promise<CallToolResult> {
+  if (args.query !== undefined && args.query.trim().length > 0) {
+    return searchDocuments(provider, viewer, args.query, args);
+  }
   const owner = args.owner ?? viewer;
   const query: { limit?: number; cursor?: string } = {};
   if (args.limit !== undefined) query.limit = args.limit;
@@ -242,6 +250,46 @@ export async function listDocuments(
   // tool: another user's PRIVATE documents must never be listed.
   const items = page.items.filter((d) => !isExpired(d) && canRead(d, viewer));
   return jsonResult({ ...page, items });
+}
+
+/**
+ * list_documents with a query: the same search as REST's
+ * `GET /api/documents?query=` — PUBLIC documents plus the viewer's own PRIVATE
+ * ones. The cursor is the position of the next match and comes back as
+ * nextCursor while more matches remain.
+ */
+async function searchDocuments(
+  provider: Provider,
+  viewer: string,
+  query: string,
+  args: { owner?: string | undefined; limit?: number | undefined; cursor?: string | undefined },
+): Promise<CallToolResult> {
+  // Search spans every owner, so an owner filter cannot be honoured without
+  // breaking the page and total counts.
+  if (args.owner !== undefined) {
+    throw new ValidationError("'owner' cannot be combined with 'query'");
+  }
+  let offset = 0;
+  if (args.cursor !== undefined) {
+    offset = /^\d+$/.test(args.cursor) ? Number(args.cursor) : NaN;
+    if (!Number.isSafeInteger(offset)) {
+      throw new ValidationError("'cursor' must be a nextCursor returned by this search");
+    }
+  }
+  const results = provider.search.query(query, viewer, { limit: args.limit ?? 50, offset });
+  const items: Document[] = [];
+  for (const hit of results.hits) {
+    const doc = await provider.repository.get(hit.documentId);
+    // The index already applies visibility; the read check keeps a faulty
+    // provider from listing someone else's PRIVATE document.
+    if (doc !== null && !isExpired(doc) && canRead(doc, viewer)) items.push(doc);
+  }
+  const next = offset + results.hits.length;
+  return jsonResult({
+    items,
+    total: results.total,
+    ...(next < results.total ? { nextCursor: String(next) } : {}),
+  });
 }
 
 export async function getVersions(
@@ -425,7 +473,7 @@ export async function getHelp(
       '- read_document: Read a doc and its content (by id or URL)',
       '- update_document: Update content (new version) and/or metadata',
       '- delete_document: Delete a doc (owner only)',
-      '- list_documents: List documents by owner',
+      '- list_documents: List documents by owner, or search them with query',
       '- get_versions: List all versions of a doc',
       '- diff_document: Unified diff between two versions',
       '- get_raw_document: Get raw content of a doc',

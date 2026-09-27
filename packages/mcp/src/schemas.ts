@@ -85,6 +85,12 @@ export const DeleteDocumentInput = z.object({
 
 export const ListDocumentsInput = z.object({
   owner: z.string().optional().describe('Filter by owner (defaults to viewer)'),
+  query: z
+    .string()
+    .optional()
+    .describe(
+      'Search keywords: matches PUBLIC documents and your own PRIVATE ones (not with owner)',
+    ),
   limit: z.number().int().positive().max(100).optional().describe('Page size'),
   cursor: z.string().optional().describe('Pagination cursor'),
 });

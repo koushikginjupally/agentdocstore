@@ -172,11 +172,18 @@ Delete a document and all its versions and comments (owner only).
 List documents by owner (defaults to the current user). When `owner` names
 someone else, only their `PUBLIC` documents are returned.
 
-| Parameter | Type   | Required | Description                       |
-| --------- | ------ | -------- | --------------------------------- |
-| `owner`   | string | no       | Filter by owner (default: viewer) |
-| `limit`   | number | no       | Page size (max 100)               |
-| `cursor`  | string | no       | Pagination cursor                 |
+With a non-blank `query`, it searches instead, like `GET /api/documents?query=`
+in the REST API: it matches titles and content across every `PUBLIC` document
+and the caller's own `PRIVATE` ones, best match first. The result adds `total`,
+the number of matches, and returns `nextCursor` while more remain; pass it back
+as `cursor` for the next page. `owner` cannot be combined with `query`.
+
+| Parameter | Type   | Required | Description                                       |
+| --------- | ------ | -------- | ------------------------------------------------- |
+| `owner`   | string | no       | Filter by owner (default: viewer)                 |
+| `query`   | string | no       | Search keywords instead of listing by owner       |
+| `limit`   | number | no       | Page size (max 100)                               |
+| `cursor`  | string | no       | Pagination cursor (a `nextCursor` from this call) |
 
 ### get_versions
 

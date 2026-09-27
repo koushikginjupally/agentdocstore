@@ -146,7 +146,7 @@ export function createMcpServer(opts: McpServerOptions): McpServer {
   // ----- list_documents -----
   mcp.tool(
     'list_documents',
-    'List documents by owner (defaults to current user)',
+    'List documents by owner (defaults to current user), or search them with query',
     schemas.ListDocumentsInput.shape,
     wrap(async (args) => {
       const viewer = requireViewer(getViewer());

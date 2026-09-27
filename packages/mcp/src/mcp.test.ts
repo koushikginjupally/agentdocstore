@@ -314,6 +314,84 @@ describe('PRIVATE doc isolation', () => {
     expect(asBob.items.every((d) => d.visibility === 'PUBLIC')).toBe(true);
   });
 
+  it("list_documents with a query searches PUBLIC documents and the viewer's own PRIVATE ones", async () => {
+    currentViewer = 'alice';
+    await callTool('create_document', {
+      title: 'Alice rollout plan',
+      content: 'private rollout steps',
+      visibility: 'PRIVATE',
+    });
+    await callTool('create_document', { title: 'Alice rollout note', content: 'public rollout' });
+    await callTool('create_document', { title: 'Alice lunch menu', content: 'soup' });
+    currentViewer = 'bob';
+    await callTool('create_document', {
+      title: 'Bob rollout draft',
+      content: 'private rollout',
+      visibility: 'PRIVATE',
+    });
+    await callTool('create_document', { title: 'Bob rollout guide', content: 'public rollout' });
+
+    currentViewer = 'alice';
+    const found = jsonOf(await callTool('list_documents', { query: 'rollout' })) as {
+      items: Array<{ title: string }>;
+      total: number;
+      nextCursor?: string;
+    };
+    expect(found.items.map((d) => d.title).sort()).toEqual([
+      'Alice rollout note',
+      'Alice rollout plan',
+      'Bob rollout guide',
+    ]);
+    expect(found.total).toBe(3);
+    expect(found.nextCursor).toBeUndefined();
+  });
+
+  it('list_documents search pages with nextCursor', async () => {
+    currentViewer = 'alice';
+    for (let i = 1; i <= 5; i++) {
+      await callTool('create_document', { title: `Runbook ${i}`, content: 'failover runbook' });
+    }
+    type SearchPage = { items: Array<{ id: string }>; total: number; nextCursor?: string };
+    const first = jsonOf(
+      await callTool('list_documents', { query: 'failover', limit: 2 }),
+    ) as SearchPage;
+    expect(first.items).toHaveLength(2);
+    expect(first.total).toBe(5);
+    expect(first.nextCursor).toBe('2');
+    const second = jsonOf(
+      await callTool('list_documents', { query: 'failover', limit: 2, cursor: first.nextCursor }),
+    ) as SearchPage;
+    expect(second.items).toHaveLength(2);
+    expect(second.nextCursor).toBe('4');
+    const last = jsonOf(
+      await callTool('list_documents', { query: 'failover', limit: 2, cursor: second.nextCursor }),
+    ) as SearchPage;
+    expect(last.items).toHaveLength(1);
+    expect(last.nextCursor).toBeUndefined();
+    const ids = [...first.items, ...second.items, ...last.items].map((d) => d.id);
+    expect(new Set(ids).size).toBe(5);
+  });
+
+  it('list_documents search rejects a cursor it did not issue, and an owner', async () => {
+    currentViewer = 'alice';
+    await callTool('create_document', { title: 'Runbook', content: 'failover' });
+    const badCursor = await callTool('list_documents', { query: 'failover', cursor: 'abc' });
+    expect(badCursor.isError).toBe(true);
+    expect(textOf(badCursor)).toContain("'cursor' must be a nextCursor returned by this search");
+    const withOwner = await callTool('list_documents', { query: 'failover', owner: 'alice' });
+    expect(withOwner.isError).toBe(true);
+    expect(textOf(withOwner)).toContain("'owner' cannot be combined with 'query'");
+  });
+
+  it('list_documents with a blank query lists by owner as before', async () => {
+    currentViewer = 'alice';
+    await callTool('create_document', { title: 'Only doc', content: 'x' });
+    const listed = jsonOf(await callTool('list_documents', { query: '   ' })) as {
+      items: Array<{ title: string }>;
+    };
+    expect(listed.items.map((d) => d.title)).toEqual(['Only doc']);
+  });
+
   it('delete_comment is limited to the comment author and the document owner', async () => {
     currentViewer = 'alice';
     const created = jsonOf(
