@@ -11,6 +11,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createMemoryProvider } from '@agentdocstore/provider-memory';
 import type { Provider } from '@agentdocstore/core';
+import { LIMITS } from '@agentdocstore/core';
 import { createMcpServer } from './register.js';
 
 // ---------------------------------------------------------------------------
@@ -475,5 +476,37 @@ describe('update_document with an invalid title', () => {
       doc: { title: string; latestVersion: number };
     };
     expect(read.doc).toMatchObject({ title: 'Original', latestVersion: 1 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Size errors say how much is too much
+// ---------------------------------------------------------------------------
+
+describe('size errors name the limit', () => {
+  it('for content', async () => {
+    const result = await callTool('create_document', {
+      title: 'Big',
+      content: 'x'.repeat(LIMITS.MAX_CONTENT_BYTES + 1),
+      redactionPolicy: 'skip',
+    });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain(
+      `(${LIMITS.MAX_CONTENT_BYTES + 1} bytes; the limit is ${LIMITS.MAX_CONTENT_BYTES} bytes)`,
+    );
+  });
+
+  it('for a comment', async () => {
+    const created = jsonOf(
+      await callTool('create_document', { title: 'Doc', content: 'body' }),
+    ) as { doc: { id: string } };
+    const result = await callTool('add_comment', {
+      id: created.doc.id,
+      body: 'x'.repeat(LIMITS.MAX_COMMENT_BYTES + 1),
+    });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toContain(
+      `(${LIMITS.MAX_COMMENT_BYTES + 1} bytes; the limit is ${LIMITS.MAX_COMMENT_BYTES} bytes)`,
+    );
   });
 });

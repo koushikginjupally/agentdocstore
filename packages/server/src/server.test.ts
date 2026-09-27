@@ -342,6 +342,49 @@ describe('server', () => {
   });
 
   // ========================================================================
+  // Size errors say how much is too much
+  // ========================================================================
+  describe('size errors name the limit', () => {
+    it('for content', async () => {
+      const res = await post('/api/documents', {
+        title: 'Big Document',
+        content: 'x'.repeat(LIMITS.MAX_CONTENT_BYTES + 1),
+        language: 'plaintext',
+        redactionPolicy: 'skip',
+      });
+      expect(res.status).toBe(413);
+      expect(((await res.json()) as { error: string }).error).toBe(
+        `Content exceeds size cap (${LIMITS.MAX_CONTENT_BYTES + 1} bytes; the limit is ${LIMITS.MAX_CONTENT_BYTES} bytes)`,
+      );
+    });
+
+    it('for a comment', async () => {
+      const created = (await (
+        await post('/api/documents', { title: 'Doc', content: 'a', language: 'plaintext' })
+      ).json()) as { id: string };
+      const res = await post(`/api/documents/${created.id}/comments`, {
+        body: 'x'.repeat(LIMITS.MAX_COMMENT_BYTES + 1),
+      });
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { error: string }).error).toBe(
+        `Comment exceeds maximum length (${LIMITS.MAX_COMMENT_BYTES + 1} bytes; the limit is ${LIMITS.MAX_COMMENT_BYTES} bytes)`,
+      );
+    });
+
+    it('for a title', async () => {
+      const res = await post('/api/documents', {
+        title: 'x'.repeat(LIMITS.MAX_TITLE_BYTES + 1),
+        content: 'a',
+        language: 'plaintext',
+      });
+      expect(res.status).toBe(400);
+      expect(((await res.json()) as { error: string }).error).toBe(
+        `Title exceeds maximum length (${LIMITS.MAX_TITLE_BYTES + 1} bytes; the limit is ${LIMITS.MAX_TITLE_BYTES} bytes)`,
+      );
+    });
+  });
+
+  // ========================================================================
   // Validation errors -> 400
   // ========================================================================
   describe('validation errors -> 400', () => {

@@ -17,3 +17,12 @@ export const LIMITS = {
 
 /** The shape of {@link LIMITS}. */
 export type Limits = typeof LIMITS;
+
+/**
+ * The detail for a size-limit error: "10976 bytes; the limit is 10000 bytes".
+ * Size errors carry it so a REST or MCP client learns how much to cut, not
+ * only that the value was too big.
+ */
+export function sizeOverLimit(size: number, limit: number): string {
+  return `${size} bytes; the limit is ${limit} bytes`;
+}

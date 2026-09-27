@@ -1,5 +1,5 @@
 import { ValidationError } from '../errors.js';
-import { LIMITS } from './limits.js';
+import { LIMITS, sizeOverLimit } from './limits.js';
 
 /**
  * Reject a title the built-in providers would refuse: blank, or longer than
@@ -9,7 +9,10 @@ import { LIMITS } from './limits.js';
  */
 export function validateTitle(title: string): void {
   if (title.trim().length === 0) throw new ValidationError('Title must not be empty');
-  if (Buffer.byteLength(title, 'utf8') > LIMITS.MAX_TITLE_BYTES) {
-    throw new ValidationError('Title exceeds maximum length');
+  const size = Buffer.byteLength(title, 'utf8');
+  if (size > LIMITS.MAX_TITLE_BYTES) {
+    throw new ValidationError(
+      `Title exceeds maximum length (${sizeOverLimit(size, LIMITS.MAX_TITLE_BYTES)})`,
+    );
   }
 }

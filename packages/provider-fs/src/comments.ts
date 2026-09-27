@@ -1,4 +1,11 @@
-import { isValidId, LIMITS, newId, NotFoundError, ValidationError } from '@agentdocstore/core';
+import {
+  isValidId,
+  LIMITS,
+  newId,
+  NotFoundError,
+  sizeOverLimit,
+  ValidationError,
+} from '@agentdocstore/core';
 import type { AddCommentInput, Comment, CommentStore } from '@agentdocstore/core';
 import { atomicWrite, commentsPath, metaPath, readJsonIfExists } from './layout.js';
 import type { KeyedMutex } from './lock.js';
@@ -15,8 +22,11 @@ export class FsCommentStore implements CommentStore {
     if (input.body.trim().length === 0) {
       throw new ValidationError('Comment body must not be empty');
     }
-    if (Buffer.byteLength(input.body, 'utf8') > LIMITS.MAX_COMMENT_BYTES) {
-      throw new ValidationError('Comment exceeds maximum length');
+    const size = Buffer.byteLength(input.body, 'utf8');
+    if (size > LIMITS.MAX_COMMENT_BYTES) {
+      throw new ValidationError(
+        `Comment exceeds maximum length (${sizeOverLimit(size, LIMITS.MAX_COMMENT_BYTES)})`,
+      );
     }
     return this.mutex.run(documentId, async () => {
       await this.assertDocumentExists(documentId);

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ValidationError } from '../errors.js';
-import { LIMITS } from './limits.js';
+import { LIMITS, sizeOverLimit } from './limits.js';
 import { validateTitle } from './title.js';
 
 describe('validateTitle', () => {
@@ -19,7 +19,13 @@ describe('validateTitle', () => {
     // 'é' is two bytes: 150 fit exactly, 151 do not.
     expect(() => validateTitle('é'.repeat(LIMITS.MAX_TITLE_BYTES / 2))).not.toThrow();
     expect(() => validateTitle('é'.repeat(LIMITS.MAX_TITLE_BYTES / 2 + 1))).toThrow(
-      new ValidationError('Title exceeds maximum length'),
+      new ValidationError('Title exceeds maximum length (302 bytes; the limit is 300 bytes)'),
     );
+  });
+});
+
+describe('sizeOverLimit', () => {
+  it('says how big the value is and what the limit is', () => {
+    expect(sizeOverLimit(10_976, 10_000)).toBe('10976 bytes; the limit is 10000 bytes');
   });
 });

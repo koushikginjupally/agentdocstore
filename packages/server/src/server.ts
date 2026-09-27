@@ -14,6 +14,7 @@ import type { Server } from 'node:http';
 
 import {
   LIMITS,
+  sizeOverLimit,
   NotFoundError,
   ValidationError,
   ContentTooLargeError,
@@ -142,13 +143,20 @@ function validateLanguage(lang: string): asserts lang is Language {
 function validateContentSize(content: string): void {
   const size = Buffer.byteLength(content, 'utf8');
   if (size > LIMITS.MAX_CONTENT_BYTES) {
-    throw new ContentTooLargeError('Content exceeds size cap', LIMITS.MAX_CONTENT_BYTES, size);
+    throw new ContentTooLargeError(
+      `Content exceeds size cap (${sizeOverLimit(size, LIMITS.MAX_CONTENT_BYTES)})`,
+      LIMITS.MAX_CONTENT_BYTES,
+      size,
+    );
   }
 }
 
 function validateCommentSize(body: string): void {
-  if (Buffer.byteLength(body, 'utf8') > LIMITS.MAX_COMMENT_BYTES) {
-    throw new ValidationError('Comment exceeds maximum length');
+  const size = Buffer.byteLength(body, 'utf8');
+  if (size > LIMITS.MAX_COMMENT_BYTES) {
+    throw new ValidationError(
+      `Comment exceeds maximum length (${sizeOverLimit(size, LIMITS.MAX_COMMENT_BYTES)})`,
+    );
   }
 }
 

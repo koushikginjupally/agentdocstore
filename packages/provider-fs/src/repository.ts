@@ -5,6 +5,7 @@ import {
   LIMITS,
   newId,
   NotFoundError,
+  sizeOverLimit,
   ValidationError,
   VersionConflictError,
 } from '@agentdocstore/core';
@@ -317,14 +318,21 @@ function assertValidId(id: string): void {
 
 function validateTitle(title: string): void {
   if (title.trim().length === 0) throw new ValidationError('Title must not be empty');
-  if (Buffer.byteLength(title, 'utf8') > LIMITS.MAX_TITLE_BYTES) {
-    throw new ValidationError('Title exceeds maximum length');
+  const size = Buffer.byteLength(title, 'utf8');
+  if (size > LIMITS.MAX_TITLE_BYTES) {
+    throw new ValidationError(
+      `Title exceeds maximum length (${sizeOverLimit(size, LIMITS.MAX_TITLE_BYTES)})`,
+    );
   }
 }
 
 function validateContent(content: string): void {
   const size = Buffer.byteLength(content, 'utf8');
   if (size > LIMITS.MAX_CONTENT_BYTES) {
-    throw new ContentTooLargeError('Content exceeds size cap', LIMITS.MAX_CONTENT_BYTES, size);
+    throw new ContentTooLargeError(
+      `Content exceeds size cap (${sizeOverLimit(size, LIMITS.MAX_CONTENT_BYTES)})`,
+      LIMITS.MAX_CONTENT_BYTES,
+      size,
+    );
   }
 }

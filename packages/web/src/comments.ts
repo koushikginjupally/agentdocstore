@@ -54,8 +54,8 @@ export function renderCommentPanel(
   // first, as the edit page does. Posting clears the box, which ends it.
   watchForUnsavedChanges([textarea]);
 
-  // The comment's size against the server's limit, once it gets close: the
-  // server only says "too long", not by how much.
+  // The comment's size against the server's limit, once it gets close, so the
+  // writer sees it while typing instead of after a rejected post.
   const sizeNote = document.createElement('p');
   sizeNote.id = 'comment-size';
   sizeNote.className = 'comment-size text-sm text-muted';

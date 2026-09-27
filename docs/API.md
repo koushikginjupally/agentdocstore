@@ -14,7 +14,9 @@ Every route authenticates the caller with the server's auth mode — see
 - **Errors** have the shape `{ "error": "<message>" }`. When a request body fails
   validation, the message names the field and why, for example
   `Invalid request body: visibility: must be one of PUBLIC, PRIVATE`. The
-  rejected value itself is never repeated back.
+  rejected value itself is never repeated back. A value over a size limit is
+  reported with its size and the limit, for example
+  `Comment exceeds maximum length (10976 bytes; the limit is 10000 bytes)`.
 
 | Status | Meaning                                                  |
 | ------ | -------------------------------------------------------- |

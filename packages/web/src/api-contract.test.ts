@@ -149,7 +149,7 @@ describe('web API client against the real server: errors', () => {
     await expect(api.updateDocument(id, { title: 'x'.repeat(301) })).rejects.toMatchObject({
       name: 'ApiError',
       status: 400,
-      message: 'API error 400: Title exceeds maximum length',
+      message: 'API error 400: Title exceeds maximum length (301 bytes; the limit is 300 bytes)',
     });
   });
 
