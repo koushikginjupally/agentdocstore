@@ -129,7 +129,7 @@ public`, a description, license, keywords and an `engines.node` floor.
   fork-only: `npm install` next to the app, then name it in config. Plain
   `import()` is the fallback so workspace links and file URLs still work.
 - **`doctor` implements its own runner-free smoke checks instead of executing the
-  vitest suite.** Running the 57-case suite programmatically would require vitest
+  vitest suite.** Running the conformance suite programmatically would require vitest
   in every install and a generated temp test file. The smoke subset covers the
   clauses that corrupt data silently (CAS, immutability, pagination, PRIVATE
   search isolation, size limits, expiry, cascade), and the command prints how to

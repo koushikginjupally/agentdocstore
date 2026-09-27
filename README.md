@@ -77,7 +77,7 @@ AgentDocStore is the local alternative:
 | Confidence nothing is sent anywhere    | Offline by default, with a runtime **network fuse** and an air-gap test  |
 | No accidental secret leaks             | A credential scanner that blocks the write until you choose redact/skip  |
 | History, not overwrites                | Immutable versions with unified diffs between any two                    |
-| Your database, not ours                | A storage SPI + 59-case conformance kit; install a provider with `npm i` |
+| Your database, not ours                | A storage SPI + 60-case conformance kit; install a provider with `npm i` |
 | Something a team can share             | Reverse-proxy SSO and bearer-token auth, PRIVATE/PUBLIC visibility       |
 
 ## Features
@@ -125,7 +125,7 @@ AgentDocStore is the local alternative:
 - **Storage SPI** with filesystem and in-memory providers built in.
 - **Installable providers** — resolved from _your_ working directory, validated
   with a schema at boot, checked by `agentdocstore doctor`.
-- **Conformance kit** — `@agentdocstore/provider-tests`, 59 cases any store must
+- **Conformance kit** — `@agentdocstore/provider-tests`, 60 cases any store must
   pass.
 
 ## Quickstart
@@ -458,7 +458,7 @@ native TTL declares `nativeTtl: false` and core runs the expiry sweep.
 
 ```bash
 npx agentdocstore init-provider mystore       # scaffold, conformance suite wired in
-npm test                                    # 59 conformance cases
+npm test                                    # 60 conformance cases
 npx agentdocstore doctor --provider ./dist/index.js   # live smoke check
 ```
 
@@ -564,7 +564,7 @@ and **backup/restore** are covered in [docs/HOSTING.md](docs/HOSTING.md).
 ```bash
 npm ci
 npm run build      # tsc -b across the workspace, plus the web bundle
-npm test           # vitest — 481 tests, including 59 conformance cases per provider
+npm test           # vitest — 481 tests, including 60 conformance cases per provider
 npm run lint       # eslint (correctness) + prettier --check (formatting)
 npm run verify     # end-to-end harness, writes VERIFICATION.md
 scripts/airgap-test.sh   # runs the app with no network interface at all

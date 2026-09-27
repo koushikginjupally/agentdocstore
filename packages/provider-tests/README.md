@@ -3,7 +3,7 @@
 The reusable conformance suite for
 [AgentDocStore](https://github.com/koushikginjupally/agentdocstore) storage providers.
 
-It registers 59 Vitest cases covering CRUD, compare-and-set conflicts, immutable
+It registers 60 Vitest cases covering CRUD, compare-and-set conflicts, immutable
 versions, stable pagination, opaque cursors, private-search isolation, Unicode
 and size boundaries, expiry, comments, capabilities and delete cascades.
 

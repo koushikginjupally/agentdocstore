@@ -279,7 +279,7 @@ On-disk layout:
 - Search: `CoreSearchIndex` with snapshot persistence; full rebuild from store
   if the snapshot is missing or corrupt.
 
-Both built-in providers pass the same 59-case conformance suite.
+Both built-in providers pass the same 60-case conformance suite.
 
 ## Writing your own provider
 
@@ -391,7 +391,7 @@ runProviderConformance('my-provider', async () => {
 ```
 
 4. Run: `npx vitest run my-provider.conformance.test.ts`
-5. All 59 cases must pass.
+5. All 60 cases must pass.
 
 Passing `doctor` is necessary but not sufficient: a provider that fails doctor
 cannot pass the suite, and only the suite covers the full contract.

@@ -44,6 +44,23 @@ for (const file of files) {
   }
 }
 
+// Stated conformance case counts must match the suite. A case was added once
+// and every "59 cases" went stale. CHANGELOG.md is left alone: each release
+// entry states the count it shipped with.
+const suite = readFileSync(join(root, 'packages/provider-tests/src/conformance.ts'), 'utf8');
+const cases = suite.match(/^\s+it\(/gm)?.length ?? 0;
+for (const file of files) {
+  if (file.endsWith('CHANGELOG.md')) continue;
+  const body = readFileSync(file, 'utf8');
+  for (const match of body.matchAll(
+    /\b(\d+)(?:-case\b|\s+(?:conformance\s+|Vitest\s+)?cases\b)/g,
+  )) {
+    if (Number(match[1]) !== cases) {
+      failures.push(`${file}: says ${match[1]} conformance cases; the suite has ${cases}`);
+    }
+  }
+}
+
 if (failures.length > 0) {
   console.error(`Documentation check failed (${failures.length}):`);
   for (const failure of failures) console.error(`- ${failure.replace(`${root}/`, '')}`);

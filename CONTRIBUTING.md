@@ -37,7 +37,7 @@ packages/
   core/             # Domain model, SPI interfaces, scanner, diff, id gen
   provider-fs/      # Filesystem storage backend
   provider-memory/  # In-memory backend (tests + --ephemeral mode)
-  provider-tests/   # 59-case conformance suite (exported for fork use)
+  provider-tests/   # 60-case conformance suite (exported for fork use)
   server/           # Hono HTTP server: REST + static UI + MCP-over-HTTP
   mcp/              # MCP tool implementations + stdio entry point
   web/              # Frontend (vanilla TS, esbuild bundle, zero frameworks)
@@ -170,7 +170,7 @@ deleted. SKIPs (exit 2) when docker is unavailable.
      return { provider, cleanup: () => provider.close() };
    });
    ```
-4. All 59 cases must pass. The conformance suite is the contract.
+4. All 60 cases must pass. The conformance suite is the contract.
 
 ## Decisions
 
