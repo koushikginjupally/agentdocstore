@@ -91,6 +91,8 @@ versions may contain breaking changes; they will be called out under
 - A `#section` link inside a markdown document now scrolls to that heading
   instead of opening "Page Not Found". Headings get `user-content-` prefixed
   ids so they can be linked to.
+- Deleting a comment now asks for confirmation, like deleting a document.
+  One click used to delete it for good.
 - The document page shows Edit and Delete only to the document's owner. Other
   viewers were offered both, and the server rejected them.
 - Web UI error messages now include the server's reason (for example "Title

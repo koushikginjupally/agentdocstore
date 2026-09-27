@@ -153,6 +153,8 @@ function renderCommentList(
       deleteBtn.className = 'btn btn-sm btn-danger';
       deleteBtn.textContent = 'Delete';
       onClick(deleteBtn, 'Delete comment', async () => {
+        // Like the document's own Delete: there is no undo.
+        if (!confirm('Delete this comment permanently?')) return;
         try {
           await api.deleteComment(documentId, comment.id);
           await loadComments(ctx, listEl);

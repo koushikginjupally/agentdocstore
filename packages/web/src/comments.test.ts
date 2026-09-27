@@ -61,3 +61,27 @@ describe('comment Delete button', () => {
     expect(canDeleteCommentAs('', '', '')).toBe(false);
   });
 });
+
+describe('deleting a comment', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  async function clickDeleteOnOwnComment(answer: boolean): Promise<void> {
+    await deletableAs('bob', 'alice');
+    vi.spyOn(window, 'confirm').mockReturnValue(answer);
+    vi.spyOn(api, 'deleteComment').mockResolvedValue(undefined);
+    const del = [...document.querySelectorAll('button')].find((b) => b.textContent === 'Delete')!;
+    del.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  it('asks first, since a deleted comment cannot be restored', async () => {
+    await clickDeleteOnOwnComment(true);
+    expect(window.confirm).toHaveBeenCalledWith('Delete this comment permanently?');
+    expect(api.deleteComment).toHaveBeenCalledWith('d1', 'c1');
+  });
+
+  it('keeps the comment when the user declines', async () => {
+    await clickDeleteOnOwnComment(false);
+    expect(api.deleteComment).not.toHaveBeenCalled();
+  });
+});
