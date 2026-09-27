@@ -57,6 +57,15 @@ export class CoreSearchIndex implements SearchIndex {
 
   query(q: string, viewer: string | null, opts?: SearchQueryOptions): SearchResults {
     const trimmed = q.trim();
+    if (trimmed.length > 0 && this.mini.dirtCount > 0) {
+      // Replacing or removing a document only marks its old entry as
+      // discarded; MiniSearch drops those entries later, or when a search
+      // meets them. A search that meets one scores the matches it saw before
+      // it as if the discarded entry still counted, which can make scores
+      // negative and put a weaker match first. This throwaway search drops
+      // the discarded entries for these terms, so the one below scores right.
+      this.mini.search(trimmed);
+    }
     const raw = trimmed.length === 0 ? [] : this.mini.search(trimmed);
     const now = Date.now();
     const visible = raw.filter((r) => {

@@ -134,6 +134,10 @@ versions may contain breaking changes; they will be called out under
 - MCP `update_document` no longer stores the new version when the same call's
   title is rejected (blank or over 300 bytes). REST and MCP now check the
   title before anything is written, using the new core `validateTitle`.
+- The first search after a document was created or saved could rank its
+  results wrongly, even putting a weaker match first; repeating the search
+  gave a different order. The search index now scores after dropping the
+  entries that saving replaced.
 
 ## [0.1.0] - 2026-09-26
 

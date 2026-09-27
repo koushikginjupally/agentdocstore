@@ -49,3 +49,41 @@ describe('CoreSearchIndex expiry', () => {
     expect(result.total).toBe(1);
   });
 });
+
+describe('CoreSearchIndex ranking after replaced entries', () => {
+  it('scores equal matches equally on the first search after an update', () => {
+    const index = new CoreSearchIndex();
+    for (const id of ['a', 'b', 'c', 'd', 'e']) {
+      index.add({ ...entry(id), title: 'notes' });
+      // Re-indexing a document replaces its entry, as every save does.
+      index.update({ ...entry(id), title: 'notes' });
+    }
+
+    const first = index.query('zebra', 'alice');
+    const scores = first.hits.map((h) => h.score);
+    expect(new Set(scores).size).toBe(1);
+    expect(scores[0]).toBeGreaterThan(0);
+    expect(index.query('zebra', 'alice').hits).toEqual(first.hits);
+  });
+
+  it('ranks the better match first on the first search after an update', () => {
+    const index = new CoreSearchIndex();
+    index.add({ ...entry('strong'), title: 'notes', content: 'zebra zebra zebra' });
+    index.add({ ...entry('weak'), title: 'notes', content: 'zebra and many other words here' });
+    // Only the weaker match is saved again.
+    index.update({ ...entry('weak'), title: 'notes', content: 'zebra and many other words here' });
+
+    expect(index.query('zebra', 'alice').hits.map((h) => h.documentId)).toEqual(['strong', 'weak']);
+  });
+
+  it('ranks correctly on the first search after restoring a snapshot taken after an update', () => {
+    const before = new CoreSearchIndex();
+    before.add({ ...entry('strong'), title: 'notes', content: 'zebra zebra zebra' });
+    before.add({ ...entry('weak'), title: 'notes', content: 'zebra and many other words here' });
+    before.update({ ...entry('weak'), title: 'notes', content: 'zebra and many other words here' });
+
+    const after = new CoreSearchIndex();
+    after.restore(before.snapshot());
+    expect(after.query('zebra', 'alice').hits.map((h) => h.documentId)).toEqual(['strong', 'weak']);
+  });
+});
