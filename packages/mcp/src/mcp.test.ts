@@ -347,3 +347,37 @@ describe('extractId from URL in diff_document', () => {
     expect(textOf(diffResult)).toContain('v1');
   });
 });
+
+describe('expired documents', () => {
+  it('are not found and not listed, but can still be deleted', async () => {
+    const created = jsonOf(
+      await callTool('create_document', { title: 'Ephemeral', content: 'short-lived' }),
+    ) as { doc: { id: string } };
+    const id = created.doc.id;
+    // The stdio MCP server runs no sweep, so the record stays in the store.
+    await provider.repository.updateMeta(id, {
+      expiresAt: new Date(Date.now() - 1000).toISOString(),
+    });
+
+    for (const [tool, args] of [
+      ['read_document', { id }],
+      ['get_raw_document', { id }],
+      ['get_versions', { id }],
+      ['get_comments', { id }],
+      ['add_comment', { id, body: 'late' }],
+      ['update_document', { id, title: 'revived' }],
+      ['set_visibility', { id, visibility: 'PRIVATE' }],
+    ] as const) {
+      const result = await callTool(tool, args);
+      expect(result.isError, tool).toBe(true);
+      expect(textOf(result), tool).toMatch(/not found/i);
+    }
+
+    const list = jsonOf(await callTool('list_documents', {})) as { items: Array<{ id: string }> };
+    expect(list.items.map((d) => d.id)).not.toContain(id);
+
+    const deleted = await callTool('delete_document', { id });
+    expect(deleted.isError).toBeFalsy();
+    expect(await provider.repository.get(id)).toBeNull();
+  });
+});

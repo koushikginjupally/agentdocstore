@@ -742,4 +742,68 @@ describe('server', () => {
       expect(up2.status).toBe(200);
     });
   });
+
+  // ========================================================================
+  // Expiry is enforced at read time, not only by the background sweep
+  // ========================================================================
+  describe('expired documents', () => {
+    async function createExpired(): Promise<string> {
+      const res = await post('/api/documents', {
+        title: 'Ephemeral zebra',
+        content: 'zebra content',
+        language: 'plaintext',
+      });
+      const { id } = (await res.json()) as { id: string };
+      // The sweep has not run yet: the record still exists in the store.
+      await provider.repository.updateMeta(id, {
+        expiresAt: new Date(Date.now() - 1000).toISOString(),
+      });
+      expect(await provider.repository.get(id)).not.toBeNull();
+      return id;
+    }
+
+    it('are not found on every document route before the sweep runs', async () => {
+      const id = await createExpired();
+      const responses = await Promise.all([
+        get(`/api/documents/${id}`),
+        get(`/raw/${id}`),
+        get(`/api/documents/${id}/versions`),
+        get(`/api/documents/${id}/diff?from=1&to=1`),
+        get(`/api/documents/${id}/comments`),
+        post(`/api/documents/${id}/comments`, { body: 'late comment' }),
+        put(`/api/documents/${id}`, { title: 'revived' }),
+        post(`/api/documents/${id}/visibility`, { visibility: 'PRIVATE' }),
+      ]);
+      expect(responses.map((r) => r.status)).toEqual([404, 404, 404, 404, 404, 404, 404, 404]);
+    });
+
+    it('are excluded from list and search', async () => {
+      const id = await createExpired();
+      const list = (await (await get('/api/documents')).json()) as {
+        items: Array<{ id: string }>;
+      };
+      expect(list.items.map((d) => d.id)).not.toContain(id);
+      const search = (await (await get('/api/documents?query=zebra')).json()) as {
+        items: Array<{ id: string }>;
+      };
+      expect(search.items.map((d) => d.id)).not.toContain(id);
+    });
+
+    it('can still be deleted by the owner', async () => {
+      const id = await createExpired();
+      expect((await del(`/api/documents/${id}`)).status).toBe(200);
+      expect(await provider.repository.get(id)).toBeNull();
+    });
+
+    it('stay readable until the moment they expire', async () => {
+      const res = await post('/api/documents', {
+        title: 'Still alive',
+        content: 'alive',
+        language: 'plaintext',
+        expiresInDays: 1,
+      });
+      const { id } = (await res.json()) as { id: string };
+      expect((await get(`/api/documents/${id}`)).status).toBe(200);
+    });
+  });
 });

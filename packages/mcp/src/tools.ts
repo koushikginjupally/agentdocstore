@@ -13,6 +13,7 @@ import {
   assertCanReadRaw,
   assertCanWrite,
   assertCanDelete,
+  isExpired,
   assertCanComment,
   NotFoundError,
   ValidationError,
@@ -58,10 +59,18 @@ function jsonResult(obj: unknown): CallToolResult {
   return { content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }] };
 }
 
-async function requireDocument(provider: Provider, rawId: string): Promise<Document> {
+async function requireDocument(
+  provider: Provider,
+  rawId: string,
+  opts: { includeExpired?: boolean } = {},
+): Promise<Document> {
   const id = extractId(rawId);
   const doc = await provider.repository.get(id);
-  if (doc === null) throw new NotFoundError(`Document '${id}' not found`);
+  // An expired document is absent even before anything reclaims it: the stdio
+  // server runs no expiry sweep at all.
+  if (doc === null || (opts.includeExpired !== true && isExpired(doc))) {
+    throw new NotFoundError(`Document '${id}' not found`);
+  }
   return doc;
 }
 
@@ -202,7 +211,8 @@ export async function deleteDocument(
   viewer: string,
   args: { id: string },
 ): Promise<CallToolResult> {
-  const doc = await requireDocument(provider, args.id);
+  // Expired documents stay deletable by their owner.
+  const doc = await requireDocument(provider, args.id, { includeExpired: true });
   assertCanDelete(doc, viewer);
   await provider.repository.delete(doc.id);
   return text(`Deleted doc ${doc.id}`);
@@ -218,7 +228,7 @@ export async function listDocuments(
   if (args.limit !== undefined) query.limit = args.limit;
   if (args.cursor !== undefined) query.cursor = args.cursor;
   const page = await provider.repository.listByOwner(owner, query);
-  return jsonResult(page);
+  return jsonResult({ ...page, items: page.items.filter((d) => !isExpired(d)) });
 }
 
 export async function getVersions(

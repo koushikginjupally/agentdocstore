@@ -16,6 +16,10 @@ versions may contain breaking changes; they will be called out under
 - `GET /api/documents` rejects a `limit` that is not an integer from 1 to 100
   with `400`, matching the MCP `list_documents` tool. Previously `limit=abc`
   returned an empty page and `limit=-1` silently dropped a document.
+- Expired documents are now treated as deleted the moment they expire, over both
+  REST and MCP. Previously they stayed readable, searchable and editable until
+  the once-a-minute sweep ran — and indefinitely under `agentdocstore mcp`,
+  which runs no sweep.
 
 ## [0.1.0] - 2026-09-26
 

@@ -54,6 +54,18 @@ export function canComment(doc: AccessTarget, viewer: Viewer): boolean {
 }
 
 /**
+ * True when `doc` has an `expiresAt` at or before `now`.
+ *
+ * Expiry is enforced at read time with this check: the background sweep (or a
+ * store's native TTL) only reclaims storage, and may run minutes later — or,
+ * for the stdio MCP server, not at all. An expired document must behave as
+ * deleted from the moment it expires.
+ */
+export function isExpired(doc: { readonly expiresAt?: string }, now: Date = new Date()): boolean {
+  return doc.expiresAt !== undefined && Date.parse(doc.expiresAt) <= now.getTime();
+}
+
+/**
  * Uniform denial: throw NotFound with a message that reveals neither the
  * owner nor whether the doc merely exists.
  */

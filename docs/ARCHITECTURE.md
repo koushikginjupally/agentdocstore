@@ -265,7 +265,14 @@ a viewer sees their own documents plus `PUBLIC` ones, never someone else's
 
 ## Expiry
 
-Documents may carry `expiresAt` (set with `expiresInDays`). If the provider declares
+Documents may carry `expiresAt` (set with `expiresInDays`). An expired document
+is treated as deleted from the moment it expires: REST and MCP answer "not found"
+for every read, update and comment operation, and leave it out of lists and
+search results. Only its owner can still delete it. This check does not depend
+on the sweep, which only reclaims storage — the stdio MCP server runs no sweep
+at all.
+
+If the provider declares
 `nativeTtl: false`, the server runs a sweep every minute that asks
 `listExpired()` for up to 100 due ids and deletes them. Sweep errors are
 swallowed — a failing sweep never takes the server down — and the timer is

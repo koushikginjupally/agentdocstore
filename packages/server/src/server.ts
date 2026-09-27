@@ -26,6 +26,7 @@ import {
   assertCanWrite,
   assertCanDelete,
   assertCanComment,
+  isExpired,
   DEFAULT_VISIBILITY,
   LANGUAGES,
 } from '@agentdocstore/core';
@@ -222,6 +223,20 @@ export function createServer(opts: CreateServerOptions): Hono {
     return id.user;
   }
 
+  // ------ Helper: load a document, treating expired ones as absent ------
+  // Expiry is enforced here rather than trusted to the background sweep, which
+  // runs once a minute and may lag or fail.
+  async function loadDocument(
+    id: string,
+    opts: { includeExpired?: boolean } = {},
+  ): Promise<Document> {
+    const doc = await provider.repository.get(id);
+    if (doc === null || (opts.includeExpired !== true && isExpired(doc))) {
+      throw new NotFoundError('Document not found');
+    }
+    return doc;
+  }
+
   // ------ Helper: parse JSON body with size check ------
   async function parseBody<T>(
     c: { req: { text: () => Promise<string> } },
@@ -383,7 +398,7 @@ export function createServer(opts: CreateServerOptions): Hono {
       const documents: Document[] = [];
       for (const hit of results.hits) {
         const doc = await provider.repository.get(hit.documentId);
-        if (doc !== null) documents.push(doc);
+        if (doc !== null && !isExpired(doc)) documents.push(doc);
       }
       return c.json({ items: documents, total: results.total });
     }
@@ -394,7 +409,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     };
     if (cursor !== undefined) listQuery.cursor = cursor;
     const page = await provider.repository.listByOwner(user, listQuery);
-    return c.json(page);
+    return c.json({ ...page, items: page.items.filter((d) => !isExpired(d)) });
   });
 
   // ====================================================================
@@ -405,8 +420,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanRead(doc, user);
 
     const versionParam = c.req.query('version');
@@ -431,8 +445,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanWrite(doc, user);
 
     const body = await parseBody(c, UpdateDocumentSchema);
@@ -520,8 +533,9 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    // Expired documents stay deletable, so an owner can remove one before the
+    // sweep reclaims it.
+    const doc = await loadDocument(id, { includeExpired: true });
     assertCanDelete(doc, user);
 
     await provider.repository.delete(id);
@@ -537,8 +551,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanRead(doc, user);
 
     const versions = await provider.repository.listVersions(id);
@@ -553,8 +566,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanRead(doc, user);
 
     const fromStr = c.req.query('from');
@@ -590,8 +602,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanReadRaw(doc, user);
 
     const versionParam = c.req.query('version');
@@ -616,8 +627,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanComment(doc, user);
 
     const body = await parseBody(c, CreateCommentSchema);
@@ -635,8 +645,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanComment(doc, user);
 
     const comments = await provider.comments.list(id);
@@ -651,8 +660,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanComment(doc, user);
 
     const cid = c.req.param('cid');
@@ -669,8 +677,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanComment(doc, user);
 
     const cid = c.req.param('cid');
@@ -686,8 +693,7 @@ export function createServer(opts: CreateServerOptions): Hono {
     const id = c.req.param('id');
     validateId(id);
 
-    const doc = await provider.repository.get(id);
-    if (doc === null) throw new NotFoundError('Document not found');
+    const doc = await loadDocument(id);
     assertCanWrite(doc, user);
 
     const body = await parseBody(c, SetVisibilitySchema);

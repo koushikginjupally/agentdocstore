@@ -9,6 +9,7 @@ import {
   assertCanWrite,
   canRead,
   canWrite,
+  isExpired,
   isOwner,
 } from './authz.js';
 
@@ -90,5 +91,19 @@ describe('authz — boolean predicates', () => {
     expect(canRead(privateDocument, OWNER)).toBe(true);
     expect(canWrite(publicDocument, OTHER)).toBe(false);
     expect(canWrite(publicDocument, OWNER)).toBe(true);
+  });
+});
+
+describe('isExpired', () => {
+  const now = new Date('2026-01-01T00:00:00.000Z');
+  it('is false without an expiry', () => {
+    expect(isExpired({}, now)).toBe(false);
+  });
+  it('is false before the expiry instant', () => {
+    expect(isExpired({ expiresAt: '2026-01-01T00:00:00.001Z' }, now)).toBe(false);
+  });
+  it('is true at and after the expiry instant', () => {
+    expect(isExpired({ expiresAt: '2026-01-01T00:00:00.000Z' }, now)).toBe(true);
+    expect(isExpired({ expiresAt: '2025-12-31T23:59:59.000Z' }, now)).toBe(true);
   });
 });
