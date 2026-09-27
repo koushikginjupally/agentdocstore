@@ -39,6 +39,9 @@ export function searchCountMessage(total: number, query: string): string {
 /** Matches LIMITS.MAX_COMMENT_BYTES on the server (a test keeps them equal). */
 export const MAX_COMMENT_BYTES = 10_000;
 
+/** Matches LIMITS.MAX_TITLE_BYTES on the server (a test keeps them equal). */
+export const MAX_TITLE_BYTES = 300;
+
 const utf8 = new TextEncoder();
 
 /** Length in UTF-8 bytes, the unit the server's size limits are counted in. */

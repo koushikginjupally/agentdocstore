@@ -7,6 +7,7 @@ import { renderContent } from '../render.js';
 import { formatDate, copyToClipboard, downloadFileName, downloadText, onClick } from '../dom.js';
 import { showToast } from '../toast.js';
 import { renderCommentPanel } from '../comments.js';
+import { copyTitle, offerNewDocumentDraft } from '../new-document-draft.js';
 
 /**
  * Render a document. With `version`, show that version's content: when it is
@@ -147,6 +148,21 @@ export async function renderViewPage(
       downloadText(doc.content, downloadFileName(name, doc.language));
     });
     actions.appendChild(downloadBtn);
+    const makeCopyBtn = document.createElement('button');
+    makeCopyBtn.className = 'btn btn-sm';
+    makeCopyBtn.innerHTML = iconLabelHtml('duplicate', 'Make a Copy');
+    onClick(makeCopyBtn, 'Make a copy', () => {
+      // The shown version, as a new document the user reviews and creates.
+      // Visibility carries over, so a copy of a private document stays private.
+      offerNewDocumentDraft({
+        title: copyTitle(doc.title),
+        language: doc.language,
+        visibility: doc.visibility,
+        content: doc.content,
+      });
+      navigate('/');
+    });
+    actions.appendChild(makeCopyBtn);
     if (isOwner) actions.appendChild(editBtn);
     actions.appendChild(versionsBtn);
     if (isOwner) actions.appendChild(deleteBtn);

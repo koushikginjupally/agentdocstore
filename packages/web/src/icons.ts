@@ -66,6 +66,10 @@ export const BUTTON_ICONS = {
   moon: buttonIcon('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'),
   warning: buttonIcon('<path d="M12 3 2 20h20L12 3z"/><path d="M12 10v4"/><path d="M12 17h.01"/>'),
   download: buttonIcon('<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>'),
+  duplicate: buttonIcon(
+    '<rect x="8" y="8" width="12" height="12" rx="2"/>' +
+      '<path d="M4 16V6a2 2 0 0 1 2-2h10"/><path d="M14 11v6M11 14h6"/>',
+  ),
 } as const;
 
 export type ButtonIcon = keyof typeof BUTTON_ICONS;

@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- A Make a Copy button on the document page opens the create form filled with
+  the shown version — title "Copy of …", language, visibility (a private
+  document's copy stays private) and content. Nothing is saved until the copy
+  is created, and leaving the form first asks, as for any unsaved document.
 - The create and edit forms have a Preview button beside Content. It shows
   the text rendered the way the document page will show it, in the language
   picked on the form, through the same renderer and sanitizing; pressing it

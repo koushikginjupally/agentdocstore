@@ -7,6 +7,7 @@ import { expiryField, formatDate, LANGUAGES, markFieldInvalid } from '../dom.js'
 import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
 import { contentPreview } from '../preview.js';
+import { takeNewDocumentDraft } from '../new-document-draft.js';
 import { showRedactionModal } from '../redaction-modal.js';
 
 export async function renderHomePage(container: HTMLElement): Promise<void> {
@@ -116,6 +117,20 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   container.appendChild(formCard);
   // Opening a document from the list would otherwise drop a half-written one.
   watchForUnsavedChanges([titleInput, contentArea]);
+
+  // "Make a Copy" on a document page: start from that document. Filled in
+  // after the watch above, so the copy counts as unsaved until it is created.
+  const draft = takeNewDocumentDraft();
+  if (draft) {
+    titleInput.value = draft.title;
+    langSelect.value = draft.language;
+    visSelect.value = draft.visibility;
+    contentArea.value = draft.content;
+    const note = document.createElement('p');
+    note.className = 'text-sm text-muted mb-16';
+    note.textContent = 'This copy is not saved yet. Change what you need, then create it.';
+    formTitle.after(note);
+  }
 
   // Search + My Documents section
   const listSection = document.createElement('div');

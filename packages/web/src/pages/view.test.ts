@@ -2,6 +2,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { api, ApiError } from '../api.js';
 import * as dom from '../dom.js';
+import * as router from '../router.js';
+import { takeNewDocumentDraft } from '../new-document-draft.js';
 import { renderViewPage } from './view.js';
 
 const doc = {
@@ -38,6 +40,7 @@ describe('view page document actions', () => {
       'Copy Link',
       'Copy Raw',
       'Download',
+      'Make a Copy',
       'Edit',
       'Versions',
       'Delete',
@@ -45,7 +48,13 @@ describe('view page document actions', () => {
   });
 
   it('hides Edit and Delete from other viewers', async () => {
-    expect(await actionsAs('bob')).toEqual(['Copy Link', 'Copy Raw', 'Download', 'Versions']);
+    expect(await actionsAs('bob')).toEqual([
+      'Copy Link',
+      'Copy Raw',
+      'Download',
+      'Make a Copy',
+      'Versions',
+    ]);
   });
 
   it('hides Edit and Delete when the viewer is unknown', async () => {
@@ -53,6 +62,7 @@ describe('view page document actions', () => {
       'Copy Link',
       'Copy Raw',
       'Download',
+      'Make a Copy',
       'Versions',
     ]);
   });
@@ -96,7 +106,7 @@ describe('view page for an old version', () => {
     await renderVersion(1, 3);
     const header = document.querySelector('.flex-between');
     const labels = [...(header?.querySelectorAll('a, button') ?? [])].map((el) => el.textContent);
-    expect(labels).toEqual(['Copy Link', 'Copy Raw', 'Download', 'Versions']);
+    expect(labels).toEqual(['Copy Link', 'Copy Raw', 'Download', 'Make a Copy', 'Versions']);
     // Comments belong to the document, not to one old version.
     expect(document.querySelector('.comment-panel')).toBeNull();
     // The document's last-updated date would read as this version's date.
@@ -178,5 +188,47 @@ describe('document expiry on the page', () => {
 
   it('says nothing about expiry when it never expires', async () => {
     expect(await renderWith()).not.toContain('Expires');
+  });
+});
+
+describe('making a copy', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    takeNewDocumentDraft();
+  });
+
+  async function copyFrom(
+    shown: typeof doc & { visibility: 'PUBLIC' | 'PRIVATE' },
+    version?: number,
+  ) {
+    vi.spyOn(api, 'getDocument').mockResolvedValue(shown);
+    vi.spyOn(api, 'getComments').mockResolvedValue([]);
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'bob' });
+    const go = vi.spyOn(router, 'navigate').mockImplementation(() => undefined);
+    document.body.innerHTML = '';
+    await renderViewPage('d1', document.body, version);
+    [...document.querySelectorAll('button')].find((b) => b.textContent === 'Make a Copy')!.click();
+    return go;
+  }
+
+  it('opens the create form with this document as an unsaved copy', async () => {
+    const go = await copyFrom({ ...doc, language: 'markdown', content: '# Checklist' });
+    expect(go).toHaveBeenCalledWith('/');
+    expect(takeNewDocumentDraft()).toEqual({
+      title: 'Copy of Shared notes',
+      language: 'markdown',
+      visibility: 'PUBLIC',
+      content: '# Checklist',
+    });
+  });
+
+  it('keeps a private document private in the copy', async () => {
+    await copyFrom({ ...doc, visibility: 'PRIVATE' });
+    expect(takeNewDocumentDraft()?.visibility).toBe('PRIVATE');
+  });
+
+  it('copies the version being shown', async () => {
+    await copyFrom({ ...doc, latestVersion: 3, version: 1, content: 'content of v1' }, 1);
+    expect(takeNewDocumentDraft()?.content).toBe('content of v1');
   });
 });

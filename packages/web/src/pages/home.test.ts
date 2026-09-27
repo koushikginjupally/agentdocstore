@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { api, type ApiDocument } from '../api.js';
 import { emptyListMessage } from '../constants.js';
+import { offerNewDocumentDraft, takeNewDocumentDraft } from '../new-document-draft.js';
 import { hasUnsavedChanges, setUnsavedChangesCheck } from '../router.js';
 import { renderHomePage } from './home.js';
 
@@ -286,5 +287,44 @@ describe('create form preview', () => {
     const panel = page.querySelector<HTMLElement>(`#${toggle.getAttribute('aria-controls')}`)!;
     await vi.waitFor(() => expect(panel.querySelector('h2')?.textContent).toBe('Steps'));
     expect(page.querySelector<HTMLTextAreaElement>('#doc-content')!.hidden).toBe(true);
+  });
+});
+
+describe('create form from a copy', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+    takeNewDocumentDraft();
+  });
+
+  const draft = {
+    title: 'Copy of Runbook',
+    language: 'markdown',
+    visibility: 'PRIVATE' as const,
+    content: '# Runbook\n\n1. Check',
+  };
+
+  it('fills the form from the copy and says it is not saved yet', async () => {
+    offerNewDocumentDraft(draft);
+    const page = await homePage();
+    expect(page.querySelector<HTMLInputElement>('#doc-title')!.value).toBe('Copy of Runbook');
+    expect(page.querySelector<HTMLSelectElement>('#doc-language')!.value).toBe('markdown');
+    expect(page.querySelector<HTMLSelectElement>('#doc-visibility')!.value).toBe('PRIVATE');
+    expect(page.querySelector<HTMLTextAreaElement>('#doc-content')!.value).toBe(
+      '# Runbook\n\n1. Check',
+    );
+    expect(page.textContent).toContain('This copy is not saved yet.');
+    // Leaving now would drop the copy, so it counts as unsaved.
+    expect(hasUnsavedChanges()).toBe(true);
+  });
+
+  it('uses the copy once; the next visit starts empty', async () => {
+    offerNewDocumentDraft(draft);
+    await homePage();
+    setUnsavedChangesCheck(null);
+    const page = await homePage();
+    expect(page.querySelector<HTMLInputElement>('#doc-title')!.value).toBe('');
+    expect(page.textContent).not.toContain('This copy is not saved yet.');
+    expect(hasUnsavedChanges()).toBe(false);
   });
 });

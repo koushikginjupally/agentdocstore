@@ -13,6 +13,7 @@ import {
   searchCountMessage,
   commentSizeMessage,
   MAX_COMMENT_BYTES,
+  MAX_TITLE_BYTES,
   utf8Bytes,
   WORDMARK_HTML,
   HTML_IFRAME_SANDBOX,
@@ -20,6 +21,7 @@ import {
 } from './constants.js';
 import { getRendererType, LANGUAGE_RENDERER_MAP } from './renderers.js';
 import { runGuarded, onClick } from './dom.js';
+import { copyTitle } from './new-document-draft.js';
 
 // ---- Router tests ----
 describe('parseRoute', () => {
@@ -423,6 +425,20 @@ describe('comment size', () => {
     expect(commentSizeMessage(10_001)).toBe(
       '10,001 of 10,000 bytes. Shorten the comment by 1 byte to post it.',
     );
+  });
+});
+
+describe('the title of a copy', () => {
+  it('starts with "Copy of"', () => {
+    expect(copyTitle('Runbook')).toBe('Copy of Runbook');
+  });
+
+  it('keeps the original title when the prefix would pass the title limit', () => {
+    expect(MAX_TITLE_BYTES).toBe(LIMITS.MAX_TITLE_BYTES);
+    const long = 'x'.repeat(MAX_TITLE_BYTES - 7);
+    expect(copyTitle(long)).toBe(long);
+    const fits = 'x'.repeat(MAX_TITLE_BYTES - 8);
+    expect(copyTitle(fits)).toBe(`Copy of ${fits}`);
   });
 });
 
