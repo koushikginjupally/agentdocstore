@@ -1,5 +1,5 @@
 /** Comment panel for a doc. */
-import { api } from './api.js';
+import { api, resolveViewer } from './api.js';
 import type { ApiComment } from './api.js';
 import { formatDate, onClick } from './dom.js';
 import { showToast } from './toast.js';
@@ -23,13 +23,10 @@ export function renderCommentPanel(
   documentId: string,
   container: HTMLElement,
   docOwner: string,
+  // Resolved once per panel, or passed in by a page that already asked. If the
+  // viewer is unknown, no Delete buttons are shown (fail closed).
+  viewer: Promise<string | null> = resolveViewer(),
 ): void {
-  // Resolved once per panel. If the viewer is unknown, no Delete buttons are
-  // shown (fail closed).
-  const viewer: Promise<string | null> = api.whoami().then(
-    (w) => w.user,
-    () => null,
-  );
   const ctx: PanelContext = { documentId, docOwner, viewer };
 
   const panel = document.createElement('div');

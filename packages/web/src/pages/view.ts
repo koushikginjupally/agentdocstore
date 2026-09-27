@@ -1,5 +1,5 @@
 /** View doc page: renders content, version badge, copy buttons, comment panel. */
-import { api, ApiError } from '../api.js';
+import { api, ApiError, resolveViewer } from '../api.js';
 import { ICON_ERROR, ICON_SEARCH, iconLabelHtml } from '../icons.js';
 import { href, navigate } from '../router.js';
 import { buildTitle } from '../constants.js';
@@ -11,9 +11,15 @@ import { renderCommentPanel } from '../comments.js';
 export async function renderViewPage(id: string, container: HTMLElement): Promise<void> {
   container.innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
 
+  // Asked once per page and shared with the comment panel.
+  const viewerLookup = resolveViewer();
+
   try {
-    const doc = await api.getDocument(id);
+    const [doc, viewer] = await Promise.all([api.getDocument(id), viewerLookup]);
     document.title = buildTitle(doc.title);
+    // Edit and Delete are owner-only on the server (core canWrite/canDelete),
+    // so only the owner is offered them. An unknown viewer sees neither.
+    const isOwner = viewer !== null && viewer !== '' && viewer === doc.createdBy;
 
     container.innerHTML = '';
 
@@ -112,9 +118,9 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
 
     actions.appendChild(copyLinkBtn);
     actions.appendChild(copyRawBtn);
-    actions.appendChild(editBtn);
+    if (isOwner) actions.appendChild(editBtn);
     actions.appendChild(versionsBtn);
-    actions.appendChild(deleteBtn);
+    if (isOwner) actions.appendChild(deleteBtn);
 
     header.appendChild(left);
     header.appendChild(actions);
@@ -127,7 +133,7 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
     await renderContent(doc.language, doc.content, contentDiv);
 
     // Comment panel
-    renderCommentPanel(id, container, doc.createdBy);
+    renderCommentPanel(id, container, doc.createdBy, viewerLookup);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       document.title = buildTitle('Not Found');

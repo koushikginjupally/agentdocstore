@@ -237,3 +237,15 @@ export const api = {
     return { detected: [...new Set(body.findings.map((f) => f.type))] };
   },
 };
+
+/**
+ * The signed-in user's name, or `null` when it cannot be determined. Never
+ * rejects: pages treat `null` as "not the owner" and hide owner-only actions
+ * (fail closed). The server enforces every rule regardless.
+ */
+export function resolveViewer(): Promise<string | null> {
+  return api.whoami().then(
+    (w) => w.user,
+    () => null,
+  );
+}

@@ -69,6 +69,8 @@ versions may contain breaking changes; they will be called out under
   "wastebasket Delete").
 - On phone-width screens the document action buttons wrap instead of pushing
   "Delete" off the edge of the page.
+- The document page shows Edit and Delete only to the document's owner. Other
+  viewers were offered both, and the server rejected them.
 
 ## [0.1.0] - 2026-09-26
 
