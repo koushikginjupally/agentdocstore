@@ -118,6 +118,9 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
   margin: 0 auto;
   padding: 24px;
 }
+/* A title that is one long word (a URL, a hash) wraps instead of running off
+   a narrow screen; "anywhere" also lets the flex row it sits in shrink. */
+.main-content h1 { overflow-wrap: anywhere; }
 
 /* ===== Buttons ===== */
 .btn {
@@ -246,6 +249,7 @@ textarea {
 .doc-list-link .doc-title {
   font-weight: 500;
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 .doc-list-link .doc-meta {
   font-size: 0.8rem;
@@ -297,6 +301,9 @@ textarea {
 /* ===== Markdown rendering ===== */
 .markdown-body {
   line-height: 1.7;
+  /* Long URLs and hashes in text wrap; code blocks keep white-space: pre and
+     scroll sideways instead. */
+  overflow-wrap: anywhere;
 }
 .markdown-body h1,
 .markdown-body h2,
@@ -394,6 +401,7 @@ textarea {
   font-size: 0.9rem;
   line-height: 1.5;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
 }
 .comment-resolved {
   opacity: 0.5;

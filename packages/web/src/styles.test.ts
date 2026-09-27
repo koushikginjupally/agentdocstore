@@ -57,3 +57,31 @@ describe('syntax highlighting colours', () => {
     }
   });
 });
+
+describe('long unbroken words', () => {
+  function rulesFor(selector: string): CSSStyleRule[] {
+    injectStyles();
+    const sheet = document.querySelector('style')?.sheet;
+    return Array.from(sheet?.cssRules ?? []).filter(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule && rule.selectorText === selector,
+    );
+  }
+
+  it('reads the property this check relies on', () => {
+    // Guards the check itself: an existing rule that already wraps.
+    expect(
+      rulesFor('.version-message').map((r) => r.style.getPropertyValue('overflow-wrap')),
+    ).toContain('anywhere');
+  });
+
+  // A pasted URL, hash or token has no place to break, so on a 390px screen it
+  // ran off the right edge of the card in each of these.
+  it.each(['.doc-list-link .doc-title', '.main-content h1', '.markdown-body', '.comment-body'])(
+    '%s breaks them instead of overflowing',
+    (selector) => {
+      const values = rulesFor(selector).map((r) => r.style.getPropertyValue('overflow-wrap'));
+      expect(values).toContain('anywhere');
+    },
+  );
+});

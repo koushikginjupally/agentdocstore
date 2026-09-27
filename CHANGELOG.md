@@ -121,6 +121,9 @@ versions may contain breaking changes; they will be called out under
 - Load More now moves keyboard focus to the first document it added. When it
   loaded the last page, the focused button disappeared and the next Tab
   started again from the top of the page.
+- A long unbroken word (a pasted URL, hash or token) in a document title,
+  rendered text or a comment now wraps instead of running off the right edge
+  of a phone screen. Code blocks still scroll sideways.
 - Code documents are syntax-highlighted again, in both themes. The token
   colours came from a bundled stylesheet that the page never loaded, so code
   always rendered in one colour; they now follow the light/dark theme.
