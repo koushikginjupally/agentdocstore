@@ -65,6 +65,9 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
     // Action buttons
     const actions = document.createElement('div');
     actions.className = 'flex-row';
+    // Wrap like the header and meta rows; without it the five buttons overflow
+    // a phone-width screen and "Delete" is pushed off the edge.
+    actions.style.flexWrap = 'wrap';
 
     const copyLinkBtn = document.createElement('button');
     copyLinkBtn.className = 'btn btn-sm';

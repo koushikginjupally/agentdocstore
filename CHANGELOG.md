@@ -30,6 +30,8 @@ versions may contain breaking changes; they will be called out under
 - Document action buttons and the credential warning use SVG icons instead of
   emoji, so screen readers announce only the label ("Delete", not
   "wastebasket Delete").
+- On phone-width screens the document action buttons wrap instead of pushing
+  "Delete" off the edge of the page.
 
 ## [0.1.0] - 2026-09-26
 

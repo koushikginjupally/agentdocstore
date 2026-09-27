@@ -401,3 +401,10 @@ describe('button icons', () => {
     }
   });
 });
+
+describe('view page layout', () => {
+  it('lets the action button row wrap on narrow screens', () => {
+    const src = readFileSync(new URL('./pages/view.ts', import.meta.url), 'utf8');
+    expect(src).toMatch(/actions\.style\.flexWrap = 'wrap'/);
+  });
+});
