@@ -68,11 +68,72 @@ export type RouteHandler = (route: Route) => void | Promise<void>;
 
 let _handler: RouteHandler | null = null;
 
+// ---- Unsaved changes ----
+//
+// A page with a form registers a check. While it reports unsaved changes,
+// leaving the page asks first (in-app links, the Back button) and the browser
+// warns on reload or tab close. Every completed navigation clears the check,
+// so each page registers its own.
+
+let unsavedCheck: (() => boolean) | null = null;
+
+/** Asked before in-app navigation discards unsaved changes. */
+export const LEAVE_PROMPT = 'You have unsaved changes. Leave this page and discard them?';
+
+/** Register the current page's "has unsaved changes" check, or clear it with `null`. */
+export function setUnsavedChangesCheck(check: (() => boolean) | null): void {
+  unsavedCheck = check;
+}
+
+/** True when leaving the current page would discard changes the user made. */
+export function hasUnsavedChanges(): boolean {
+  return unsavedCheck?.() ?? false;
+}
+
+/** Treat the page as having unsaved changes while any field differs from its value now. */
+export function watchForUnsavedChanges(
+  fields: ReadonlyArray<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+): void {
+  const initial = fields.map((field) => field.value);
+  setUnsavedChangesCheck(() => fields.some((field, i) => field.value !== initial[i]));
+}
+
 /** Listen for route changes and invoke the handler. */
 export function onRoute(handler: RouteHandler): void {
   _handler = handler;
-  window.addEventListener('hashchange', () => {
+  // In-app links ask before the browser navigates, so declining leaves no
+  // extra history entry behind. Modified clicks open a new tab and leave
+  // nothing, so they are not asked about.
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = event.target instanceof Element ? event.target.closest('a[href^="#"]') : null;
+      if (!link || link.getAttribute('href') === (window.location.hash || '#/')) return;
+      if (!hasUnsavedChanges()) return;
+      if (window.confirm(LEAVE_PROMPT)) {
+        unsavedCheck = null; // Leaving was confirmed; hashchange must not ask again.
+      } else {
+        event.preventDefault();
+      }
+    },
+    true,
+  );
+  window.addEventListener('hashchange', (event) => {
+    // Back/Forward and typed addresses arrive here, after the fact.
+    if (hasUnsavedChanges() && !window.confirm(LEAVE_PROMPT)) {
+      // Stay: put the previous address back. replaceState fires no
+      // hashchange, so the page and what was typed into it are untouched.
+      history.replaceState(history.state, '', event.oldURL);
+      return;
+    }
+    unsavedCheck = null;
     runGuarded('Page render', () => handler(currentRoute()));
+  });
+  window.addEventListener('beforeunload', (event) => {
+    // Reload, tab close or leaving the app: the browser shows its own prompt.
+    if (hasUnsavedChanges()) event.preventDefault();
   });
   // Initial route
   runGuarded('Page render', () => handler(currentRoute()));

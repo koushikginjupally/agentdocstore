@@ -1,7 +1,7 @@
 /** Edit doc page: update content, title, language, visibility. */
 import { api, ApiError, CredentialScanError, resolveViewer } from '../api.js';
 import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
-import { navigate, href } from '../router.js';
+import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '../router.js';
 import { buildTitle } from '../constants.js';
 import { LANGUAGES } from '../dom.js';
 import { showToast } from '../toast.js';
@@ -147,6 +147,8 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     card.appendChild(btnRow);
 
     container.appendChild(card);
+    // Cancel, the header link or Back would otherwise drop edits silently.
+    watchForUnsavedChanges([titleInput, langSelect, visSelect, contentArea, msgInput]);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       document.title = buildTitle('Not Found');
@@ -215,6 +217,7 @@ async function handleSave(
 
   try {
     await api.updateDocument(id, input);
+    setUnsavedChangesCheck(null);
     navigate(`/d/${id}`);
     showToast('Document updated!', 'success');
   } catch (err) {
@@ -223,6 +226,7 @@ async function handleSave(
       if (choice) {
         try {
           await api.updateDocument(id, { ...input, redactionPolicy: choice.policy });
+          setUnsavedChangesCheck(null);
           navigate(`/d/${id}`);
           showToast('Document updated!', 'success');
         } catch (err2) {

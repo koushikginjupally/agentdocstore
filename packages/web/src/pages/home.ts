@@ -1,7 +1,7 @@
 /** Home page: create form + my documents list + search. */
 import { api, CredentialScanError } from '../api.js';
 import type { ApiDocument } from '../api.js';
-import { navigate, href } from '../router.js';
+import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '../router.js';
 import { buildTitle, emptyListMessage } from '../constants.js';
 import { formatDate, LANGUAGES, markFieldInvalid } from '../dom.js';
 import { showToast } from '../toast.js';
@@ -105,6 +105,8 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   formCard.appendChild(createBtn);
 
   container.appendChild(formCard);
+  // Opening a document from the list would otherwise drop a half-written one.
+  watchForUnsavedChanges([titleInput, contentArea]);
 
   // Search + My Documents section
   const listSection = document.createElement('div');
@@ -215,6 +217,7 @@ async function handleCreate(
   createBtn.disabled = true;
   try {
     const doc = await api.createDocument({ title, content, language, visibility });
+    setUnsavedChangesCheck(null);
     navigate(`/d/${doc.id}`);
     showToast('Document created!', 'success');
   } catch (err) {
@@ -229,6 +232,7 @@ async function handleCreate(
             visibility,
             redactionPolicy: choice.policy,
           });
+          setUnsavedChangesCheck(null);
           navigate(`/d/${doc.id}`);
           showToast('Document created!', 'success');
         } catch (err2) {

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { api } from '../api.js';
+import { hasUnsavedChanges, setUnsavedChangesCheck } from '../router.js';
 import { renderEditPage } from './edit.js';
 
 const doc = {
@@ -67,5 +68,36 @@ describe('edit page access', () => {
     await renderEditPage('d1', main);
     expect(main.querySelector('b')).toBeNull();
     expect(main.textContent).toContain('This document belongs to <b>mallory</b>.');
+  });
+});
+
+describe('edit page unsaved changes', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  it('reports typed changes, and forgets them once the save succeeds', async () => {
+    const page = await editPageAs('alice');
+    expect(hasUnsavedChanges()).toBe(false);
+
+    const content = page.querySelector<HTMLTextAreaElement>('#edit-content')!;
+    content.value = 'rewritten';
+    expect(hasUnsavedChanges()).toBe(true);
+
+    vi.spyOn(api, 'updateDocument').mockResolvedValue({ ...doc, latestVersion: 2 });
+    (saveButton(page) as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(api.updateDocument).toHaveBeenCalled());
+    await vi.waitFor(() => expect(hasUnsavedChanges()).toBe(false));
+  });
+
+  it('keeps reporting them when the save fails', async () => {
+    const page = await editPageAs('alice');
+    page.querySelector<HTMLInputElement>('#edit-title')!.value = 'Renamed';
+    vi.spyOn(api, 'updateDocument').mockRejectedValue(new Error('offline'));
+    (saveButton(page) as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(api.updateDocument).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(hasUnsavedChanges()).toBe(true);
   });
 });

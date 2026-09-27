@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- The web UI asks before discarding unsaved typing: leaving the edit page, or
+  the home page with a half-written new document, through Cancel, a link or
+  Back now asks first, and reloading or closing the tab gets the browser's
+  own warning.
 - The edit page's "Edit Message" is now saved with the new version and shown
   on the versions page (REST `editMessage`, MCP `update_document`
   `editMessage`, returned as `message` on versions). Providers receive it as
