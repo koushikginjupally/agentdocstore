@@ -165,6 +165,8 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   // Search bar
   const searchBar = document.createElement('div');
   searchBar.className = 'search-bar';
+  // A search landmark, so screen reader users can jump straight to it.
+  searchBar.setAttribute('role', 'search');
   const searchInput = document.createElement('input');
   searchInput.type = 'text';
   searchInput.placeholder = 'Search documents...';

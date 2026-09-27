@@ -85,6 +85,8 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- The home page's search box is now a search landmark, so screen reader
+  users can jump straight to it instead of tabbing through the create form.
 - Every page of the web UI now has one main heading (`h1`), and its headings
   no longer skip a level. The home, edit and not-found pages had no `h1`, and
   the Comments and diff headings jumped from `h1` to `h3`, so screen reader

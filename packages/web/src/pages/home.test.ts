@@ -22,6 +22,19 @@ const createButton = (root: HTMLElement): HTMLButtonElement =>
 const headingLevels = (root: ParentNode): number[] =>
   [...root.querySelectorAll('h1, h2, h3, h4, h5, h6')].map((h) => Number(h.tagName[1]));
 
+describe('home page search landmark', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('holds the search box and its button, so screen readers can jump to it', async () => {
+    const main = await homePage();
+    const landmarks = main.querySelectorAll('[role="search"]');
+    expect(landmarks).toHaveLength(1);
+    const landmark = landmarks[0]!;
+    expect(landmark.querySelector('input')?.getAttribute('aria-label')).toBe('Search documents');
+    expect([...landmark.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['Search']);
+  });
+});
+
 describe('home page headings', () => {
   afterEach(() => vi.restoreAllMocks());
 
