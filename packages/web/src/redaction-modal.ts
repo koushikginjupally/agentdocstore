@@ -3,6 +3,8 @@
  * Shows detected credential types and offers Redact / Save Anyway options.
  */
 
+import { iconLabelHtml } from './icons.js';
+
 export interface RedactionChoice {
   policy: 'redact' | 'skip';
 }
@@ -24,7 +26,7 @@ export function showRedactionModal(detected: string[]): Promise<RedactionChoice 
 
     const title = document.createElement('h2');
     title.className = 'modal-title';
-    title.textContent = '⚠️ Credentials Detected';
+    title.innerHTML = iconLabelHtml('warning', 'Credentials Detected');
 
     const body = document.createElement('div');
     body.className = 'modal-body';

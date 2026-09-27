@@ -125,6 +125,7 @@ a:hover { color: var(--accent-hover); text-decoration: underline; }
 }
 .btn:hover { border-color: var(--accent); background: var(--accent-bg); }
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.action-icon { flex-shrink: 0; }
 
 .btn-primary {
   background: var(--accent);
@@ -414,10 +415,14 @@ textarea {
   box-shadow: var(--shadow);
 }
 .modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 12px;
 }
+.modal-title .action-icon { width: 20px; height: 20px; color: var(--warning); }
 .modal-body { margin-bottom: 16px; font-size: 0.9rem; color: var(--text-secondary); }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
 

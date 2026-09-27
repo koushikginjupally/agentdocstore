@@ -3,7 +3,7 @@
  * Runs in vitest node environment — no browser DOM needed for these.
  */
 import { readFileSync } from 'node:fs';
-import { STATE_ICONS } from './icons.js';
+import { BUTTON_ICONS, STATE_ICONS, iconLabelHtml } from './icons.js';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { parseRoute } from './router.js';
 import {
@@ -377,6 +377,27 @@ describe('state icons', () => {
       const src = readFileSync(new URL(`./pages/${page}.ts`, import.meta.url), 'utf8');
       expect(src, page).not.toMatch(/class="icon">[^<$]/u);
       expect(src, page).not.toMatch(/icon\.textContent = /);
+    }
+  });
+});
+
+describe('button icons', () => {
+  it.each(Object.entries(BUTTON_ICONS))('%s is a decorative, theme-coloured SVG', (_name, svg) => {
+    expect(svg.startsWith('<svg class="action-icon"')).toBe(true);
+    expect(svg).toContain('stroke="currentColor"');
+    expect(svg).toContain('aria-hidden="true"');
+  });
+
+  it('iconLabelHtml escapes the label and keeps it as the only text', () => {
+    const html = iconLabelHtml('trash', '<b>Delete</b>');
+    expect(html).toContain('<span>&lt;b&gt;Delete&lt;/b&gt;</span>');
+    expect(html.replace(/<svg[\s\S]*?<\/svg>/, '')).toBe('<span>&lt;b&gt;Delete&lt;/b&gt;</span>');
+  });
+
+  it('action buttons and the redaction title carry no emoji', () => {
+    for (const file of ['./pages/view.ts', './redaction-modal.ts']) {
+      const src = readFileSync(new URL(file, import.meta.url), 'utf8');
+      expect(src, file).not.toMatch(/textContent = '[^\p{L}\p{N}\s'][^']*'/u);
     }
   });
 });

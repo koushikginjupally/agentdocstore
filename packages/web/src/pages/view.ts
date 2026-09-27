@@ -1,6 +1,6 @@
 /** View doc page: renders content, version badge, copy buttons, comment panel. */
 import { api, ApiError } from '../api.js';
-import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
+import { ICON_ERROR, ICON_SEARCH, iconLabelHtml } from '../icons.js';
 import { href, navigate } from '../router.js';
 import { buildTitle } from '../constants.js';
 import { renderContent } from '../render.js';
@@ -68,7 +68,7 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
 
     const copyLinkBtn = document.createElement('button');
     copyLinkBtn.className = 'btn btn-sm';
-    copyLinkBtn.textContent = '🔗 Copy Link';
+    copyLinkBtn.innerHTML = iconLabelHtml('link', 'Copy Link');
     onClick(copyLinkBtn, 'Copy link', async () => {
       const url = `${window.location.origin}${href(`/d/${id}`).replace('#', '#')}`;
       const ok = await copyToClipboard(url);
@@ -77,7 +77,7 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
 
     const copyRawBtn = document.createElement('button');
     copyRawBtn.className = 'btn btn-sm';
-    copyRawBtn.textContent = '📋 Copy Raw';
+    copyRawBtn.innerHTML = iconLabelHtml('copy', 'Copy Raw');
     onClick(copyRawBtn, 'Copy raw content', async () => {
       const ok = await copyToClipboard(doc.content);
       showToast(ok ? 'Content copied!' : 'Failed to copy', ok ? 'success' : 'error');
@@ -86,16 +86,16 @@ export async function renderViewPage(id: string, container: HTMLElement): Promis
     const editBtn = document.createElement('a');
     editBtn.className = 'btn btn-sm';
     editBtn.href = href(`/d/${id}/edit`);
-    editBtn.textContent = '✏️ Edit';
+    editBtn.innerHTML = iconLabelHtml('edit', 'Edit');
 
     const versionsBtn = document.createElement('a');
     versionsBtn.className = 'btn btn-sm';
     versionsBtn.href = href(`/d/${id}/versions`);
-    versionsBtn.textContent = '📜 Versions';
+    versionsBtn.innerHTML = iconLabelHtml('history', 'Versions');
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-sm btn-danger';
-    deleteBtn.textContent = '🗑️ Delete';
+    deleteBtn.innerHTML = iconLabelHtml('trash', 'Delete');
     onClick(deleteBtn, 'Delete doc', async () => {
       if (!confirm('Delete this doc permanently?')) return;
       try {

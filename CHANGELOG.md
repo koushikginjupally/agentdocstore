@@ -24,6 +24,9 @@ versions may contain breaking changes; they will be called out under
   it names the search and suggests clearing it.
 - Empty and error states use theme-coloured SVG icons instead of emoji, which
   rendered as blank boxes on systems without an emoji font.
+- Document action buttons and the credential warning use SVG icons instead of
+  emoji, so screen readers announce only the label ("Delete", not
+  "wastebasket Delete").
 
 ## [0.1.0] - 2026-09-26
 
