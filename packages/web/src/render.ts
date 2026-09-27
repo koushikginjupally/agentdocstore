@@ -73,6 +73,64 @@ async function renderMarkdown(content: string, container: HTMLElement): Promise<
     ADD_ATTR: ['target', 'rel'],
   });
   container.innerHTML = `<div class="markdown-body">${clean}</div>`;
+  addHeadingIds(container);
+  container.addEventListener('click', followInDocumentLink);
+}
+
+/**
+ * Prefix for heading ids in rendered markdown. The prefix keeps document text
+ * from producing an id the app itself uses (DOM clobbering).
+ */
+export const HEADING_ID_PREFIX = 'user-content-';
+
+/** A heading's anchor name, as GitHub builds it: lowercase, punctuation dropped, spaces as `-`. */
+export function headingSlug(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{M}\p{N}\s_-]/gu, '')
+    .replace(/\s/g, '-');
+}
+
+function addHeadingIds(container: HTMLElement): void {
+  const seen = new Map<string, number>();
+  for (const heading of container.querySelectorAll<HTMLElement>('h1, h2, h3, h4, h5, h6')) {
+    const slug = headingSlug(heading.textContent ?? '');
+    if (slug === '') continue;
+    const count = seen.get(slug) ?? 0;
+    seen.set(slug, count + 1);
+    heading.id = `${HEADING_ID_PREFIX}${count === 0 ? slug : `${slug}-${count}`}`;
+  }
+}
+
+/**
+ * A `#section` link inside a document would otherwise change the app's hash
+ * route and show "Page Not Found". Scroll to the matching heading instead;
+ * `#/…` links are app routes and are left to the router.
+ */
+function followInDocumentLink(event: MouseEvent): void {
+  if (event.defaultPrevented || event.button !== 0) return;
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  const link = event.target instanceof Element ? event.target.closest('a[href^="#"]') : null;
+  const href = link?.getAttribute('href') ?? '';
+  if (!link || href.startsWith('#/')) return;
+  event.preventDefault();
+
+  const container = event.currentTarget as HTMLElement;
+  let fragment = href.slice(1);
+  try {
+    fragment = decodeURIComponent(fragment);
+  } catch {
+    // Malformed escape: match it as written.
+  }
+  const wanted = [`${HEADING_ID_PREFIX}${headingSlug(fragment)}`, fragment];
+  const target = [...container.querySelectorAll<HTMLElement>('[id]')].find((el) =>
+    wanted.includes(el.id),
+  );
+  if (!target) return;
+  if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+  target.focus({ preventScroll: true });
+  target.scrollIntoView({ block: 'start' });
 }
 
 async function renderMermaid(content: string, container: HTMLElement): Promise<void> {
