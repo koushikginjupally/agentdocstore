@@ -2,7 +2,7 @@
 import { api, CredentialScanError } from '../api.js';
 import type { ApiDocument } from '../api.js';
 import { navigate, href } from '../router.js';
-import { buildTitle } from '../constants.js';
+import { buildTitle, emptyListMessage } from '../constants.js';
 import { formatDate, LANGUAGES } from '../dom.js';
 import { showToast } from '../toast.js';
 import { showRedactionModal } from '../redaction-modal.js';
@@ -158,8 +158,16 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
       currentCursor = result.nextCursor;
       loadMoreBtn.style.display = result.nextCursor ? 'inline-flex' : 'none';
       if (!append && result.items.length === 0) {
-        documentListEl.innerHTML =
-          '<li class="empty-state"><div class="icon">📋</div><div>No documents yet. Create your first one above!</div></li>';
+        const empty = document.createElement('li');
+        empty.className = 'empty-state';
+        const icon = document.createElement('div');
+        icon.className = 'icon';
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = currentQuery ? '🔍' : '📋';
+        const message = document.createElement('div');
+        message.textContent = emptyListMessage(currentQuery);
+        empty.append(icon, message);
+        documentListEl.replaceChildren(empty);
       }
     } catch (err) {
       showToast(

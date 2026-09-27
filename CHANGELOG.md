@@ -20,6 +20,8 @@ versions may contain breaking changes; they will be called out under
   REST and MCP. Previously they stayed readable, searchable and editable until
   the once-a-minute sweep ran — and indefinitely under `agentdocstore mcp`,
   which runs no sweep.
+- The web UI no longer says "No documents yet" when a search matches nothing;
+  it names the search and suggests clearing it.
 
 ## [0.1.0] - 2026-09-26
 

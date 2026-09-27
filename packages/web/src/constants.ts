@@ -14,3 +14,14 @@ export const HTML_IFRAME_SANDBOX = 'allow-scripts allow-popups allow-popups-to-e
 
 /** Maximum content column width CSS value. */
 export const CONTENT_MAX_WIDTH = 'min(1920px, 96vw)';
+
+/**
+ * Message for an empty document list. A search that matches nothing must not
+ * claim the user has no documents; it names the query instead. The query is
+ * returned as plain text — callers must set it with textContent, never HTML.
+ */
+export function emptyListMessage(query: string): string {
+  const q = query.trim();
+  if (q.length === 0) return 'No documents yet. Create your first one above!';
+  return `No documents match “${q}”. Try different words, or clear the search to see all your documents.`;
+}

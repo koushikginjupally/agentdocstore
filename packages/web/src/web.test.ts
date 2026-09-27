@@ -4,7 +4,13 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { parseRoute } from './router.js';
-import { buildTitle, WORDMARK_HTML, HTML_IFRAME_SANDBOX, CONTENT_MAX_WIDTH } from './constants.js';
+import {
+  buildTitle,
+  emptyListMessage,
+  WORDMARK_HTML,
+  HTML_IFRAME_SANDBOX,
+  CONTENT_MAX_WIDTH,
+} from './constants.js';
 import { getRendererType, LANGUAGE_RENDERER_MAP } from './renderers.js';
 import { runGuarded, onClick } from './dom.js';
 
@@ -334,5 +340,22 @@ describe('runGuarded / onClick', () => {
     await flush();
     expect(spy).toHaveBeenCalled();
     expect(created.some((e) => e.textContent.includes('listener-boom'))).toBe(true);
+  });
+});
+
+describe('emptyListMessage', () => {
+  it('invites creating a document when nothing was searched', () => {
+    expect(emptyListMessage('')).toBe('No documents yet. Create your first one above!');
+    expect(emptyListMessage('   ')).toBe('No documents yet. Create your first one above!');
+  });
+
+  it('names the query instead of claiming the library is empty', () => {
+    const msg = emptyListMessage('  zebra  ');
+    expect(msg).toContain('“zebra”');
+    expect(msg).not.toContain('No documents yet');
+  });
+
+  it('returns the query as plain text for textContent', () => {
+    expect(emptyListMessage('<img src=x>')).toContain('<img src=x>');
   });
 });
