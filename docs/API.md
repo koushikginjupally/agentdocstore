@@ -154,14 +154,17 @@ The content as `text/plain`. Same visibility rules as the JSON read.
 
 ## Comments
 
-| Method   | Path                               | Body                   | Returns                 |
-| -------- | ---------------------------------- | ---------------------- | ----------------------- |
-| `POST`   | `/api/documents/:id/comments`      | `{ "body": "…" }`      | `201` the comment       |
-| `GET`    | `/api/documents/:id/comments`      |                        | `{ "comments": [ … ] }` |
-| `PATCH`  | `/api/documents/:id/comments/:cid` | `{ "resolved": true }` | the comment             |
-| `DELETE` | `/api/documents/:id/comments/:cid` |                        | `{ "deleted": true }`   |
+| Method   | Path                               | Body                            | Returns                 |
+| -------- | ---------------------------------- | ------------------------------- | ----------------------- |
+| `POST`   | `/api/documents/:id/comments`      | `{ "body": "…" }`               | `201` the comment       |
+| `GET`    | `/api/documents/:id/comments`      |                                 | `{ "comments": [ … ] }` |
+| `PATCH`  | `/api/documents/:id/comments/:cid` | `{ "resolved": true \| false }` | the comment             |
+| `DELETE` | `/api/documents/:id/comments/:cid` |                                 | `{ "deleted": true }`   |
 
 A comment: `{ id, documentId, author, body, resolved, createdAt, updatedAt }`.
+
+`PATCH` with `"resolved": false` reopens a resolved comment. Anyone who can read
+the document can comment on it and resolve or reopen its comments.
 
 Only the comment's author or the document's owner can delete a comment. Anyone
 else gets `404`, the same answer as for a comment that does not exist.
