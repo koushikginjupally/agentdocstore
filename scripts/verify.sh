@@ -194,6 +194,17 @@ else
       fi
     fi
 
+    # The UI page and bundle carry nosniff, like the API responses
+    if [[ "$S2_STATUS" == "PASS" ]]; then
+      for ui_path in / /app.js; do
+        if ! curl -s -D - -o /dev/null "http://127.0.0.1:${PORT}${ui_path}" 2>/dev/null |
+          grep -qi '^x-content-type-options: *nosniff'; then
+          S2_STATUS="FAIL"; S2_DETAIL="$S2_DETAIL, ${ui_path} lacks X-Content-Type-Options: nosniff"
+        fi
+      done
+      [[ "$S2_STATUS" == "PASS" ]] && S2_DETAIL="$S2_DETAIL, UI nosniff"
+    fi
+
     # Bind address check
     if [[ "$S2_STATUS" == "PASS" ]]; then
       BIND_CHECK=""

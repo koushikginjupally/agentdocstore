@@ -32,6 +32,14 @@ const MIME_TYPES: Record<string, string> = {
   '.ico': 'image/x-icon',
 };
 
+/**
+ * Headers for the web UI's own files. The Hono app adds nosniff and its CSP to
+ * API responses, but these files are served here, outside it. A script/style
+ * CSP for the UI needs its own design (inline styles, the sandboxed HTML
+ * preview), so only nosniff is sent for now.
+ */
+const STATIC_HEADERS = { 'X-Content-Type-Options': 'nosniff' } as const;
+
 function mimeFor(file: string): string {
   return MIME_TYPES[extname(file)] ?? 'application/octet-stream';
 }
@@ -150,7 +158,7 @@ export async function runServe(config: ResolvedConfig): Promise<void> {
         const filePath = join(webDistDir, fileName);
         if (existsSync(filePath) && statSync(filePath).isFile()) {
           const content = readFileSync(filePath);
-          res.writeHead(200, { 'Content-Type': mimeFor(filePath) });
+          res.writeHead(200, { 'Content-Type': mimeFor(filePath), ...STATIC_HEADERS });
           res.end(content);
           return;
         }
@@ -166,7 +174,7 @@ export async function runServe(config: ResolvedConfig): Promise<void> {
         const indexPath = join(webDistDir, 'index.html');
         if (existsSync(indexPath)) {
           const content = readFileSync(indexPath);
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', ...STATIC_HEADERS });
           res.end(content);
           return;
         }

@@ -288,10 +288,16 @@ at the API boundary.
 
 ## Security headers
 
-Every response carries:
+Every response carries `X-Content-Type-Options: nosniff`.
 
-- `X-Content-Type-Options: nosniff`
+API responses (`/api/*`, `/raw/*`, `/healthz`) also carry:
+
 - `Content-Security-Policy: default-src 'self'; script-src 'none'; style-src 'self'; img-src 'self'; object-src 'none'`
+
+The web UI's own page and bundle do not carry a Content-Security-Policy yet:
+the UI injects its stylesheet at runtime and the sandboxed HTML preview
+inherits its parent's policy, so a UI policy needs its own design. Rendered
+markdown is sanitized with DOMPurify either way (see Markdown rendering).
 
 ## Path traversal defence
 

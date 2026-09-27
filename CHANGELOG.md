@@ -27,6 +27,9 @@ versions may contain breaking changes; they will be called out under
   stripped, so a PUBLIC document could show another site (for example a fake
   sign-in page) inside AgentDocStore to anyone who opened it. Use the `html`
   language, which renders in a sandbox, for embedded HTML.
+- The web UI's page and bundle now carry `X-Content-Type-Options: nosniff`.
+  docs/SECURITY.md said every response carried it and the CSP; it now says
+  the CSP covers API responses and that the UI has none yet.
 - `PUT /api/documents/:id` no longer applies title, language, expiry or
   visibility when its content change hits a version conflict (409, another
   save landed first). The metadata was written before the new version, so a
