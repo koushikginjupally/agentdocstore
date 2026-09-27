@@ -8,6 +8,7 @@
 
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
+import { ZodError, type ZodIssue } from 'zod';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
 
@@ -156,6 +157,34 @@ function validateCommentSize(body: string): void {
   }
 }
 
+/**
+ * The 400 message for a body that fails its schema: which field and why, so an
+ * API client can fix the request. The rejected value is never repeated back
+ * (zod's own enum message includes it, and a mistyped field could hold a
+ * secret), so only codes whose messages name types and bounds are passed on.
+ */
+function describeInvalidBody(err: unknown): string {
+  const issue = err instanceof ZodError ? err.issues[0] : undefined;
+  if (issue === undefined) return 'Invalid request body';
+  const field = issue.path.join('.');
+  const reason = issueReason(issue) ?? (field ? 'is invalid' : undefined);
+  if (reason === undefined) return 'Invalid request body';
+  return field ? `Invalid request body: ${field}: ${reason}` : `Invalid request body: ${reason}`;
+}
+
+function issueReason(issue: ZodIssue): string | undefined {
+  switch (issue.code) {
+    case 'invalid_enum_value':
+      return `must be one of ${issue.options.join(', ')}`;
+    case 'invalid_type':
+    case 'too_small':
+    case 'too_big':
+      return issue.message;
+    default:
+      return undefined;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // createServer
 // ---------------------------------------------------------------------------
@@ -256,8 +285,8 @@ export function createServer(opts: CreateServerOptions): Hono {
     }
     try {
       return schema.parse(parsed);
-    } catch {
-      throw new ValidationError('Invalid request body');
+    } catch (err) {
+      throw new ValidationError(describeInvalidBody(err));
     }
   }
 

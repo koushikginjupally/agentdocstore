@@ -11,7 +11,10 @@ Every route authenticates the caller with the server's auth mode — see
   `400`, never a lookup.
 - **Visibility.** A `PRIVATE` document you do not own behaves exactly like a document that
   does not exist: `404` on every route.
-- **Errors** have the shape `{ "error": "<message>" }`.
+- **Errors** have the shape `{ "error": "<message>" }`. When a request body fails
+  validation, the message names the field and why, for example
+  `Invalid request body: visibility: must be one of PUBLIC, PRIVATE`. The
+  rejected value itself is never repeated back.
 
 | Status | Meaning                                                  |
 | ------ | -------------------------------------------------------- |

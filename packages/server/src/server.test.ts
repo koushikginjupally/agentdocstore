@@ -362,6 +362,48 @@ describe('server', () => {
       });
       expect(res.status).toBe(400);
     });
+
+    it('names the field and its allowed values', async () => {
+      const created = (await (
+        await post('/api/documents', { title: 'T', content: 'v1' })
+      ).json()) as {
+        id: string;
+      };
+      const res = await put(`/api/documents/${created.id}`, { visibility: 'public' });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({
+        error: 'Invalid request body: visibility: must be one of PUBLIC, PRIVATE',
+      });
+    });
+
+    it('names the field for a wrong type or out-of-range value', async () => {
+      const res = await post('/api/documents', { title: 7, content: 'x' });
+      expect(await res.json()).toEqual({
+        error: 'Invalid request body: title: Expected string, received number',
+      });
+      const created = (await (
+        await post('/api/documents', { title: 'T', content: 'v1' })
+      ).json()) as {
+        id: string;
+      };
+      const res2 = await put(`/api/documents/${created.id}`, { expiresInDays: -1 });
+      expect(await res2.json()).toEqual({
+        error: 'Invalid request body: expiresInDays: Number must be greater than 0',
+      });
+    });
+
+    it('does not repeat the rejected value back', async () => {
+      const res = await post('/api/documents', { content: 'x', visibility: 'hunter2-SECRET' });
+      expect(res.status).toBe(400);
+      expect(JSON.stringify(await res.json())).not.toContain('hunter2');
+    });
+
+    it('explains a body that is not a JSON object', async () => {
+      const res = await post('/api/documents', ['not', 'an', 'object']);
+      expect(await res.json()).toEqual({
+        error: 'Invalid request body: Expected object, received array',
+      });
+    });
   });
 
   // ========================================================================

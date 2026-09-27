@@ -88,6 +88,9 @@ versions may contain breaking changes; they will be called out under
 - Opening a document's edit page as someone other than its owner now says
   only the owner can edit it, with a link back, instead of showing a form
   whose Save always failed.
+- A REST request body that fails validation now gets a 400 naming the field
+  and the reason (for example `visibility: must be one of PUBLIC, PRIVATE`)
+  instead of only "Invalid request body". The rejected value is not echoed.
 
 ## [0.1.0] - 2026-09-26
 
