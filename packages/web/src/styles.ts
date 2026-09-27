@@ -24,6 +24,12 @@ const CSS = `
   --success: #2dd4a8;
   --warning: #f5a623;
   --code-bg: #161622;
+  --syntax-keyword: #ff7b72;
+  --syntax-string: #a5d6ff;
+  --syntax-number: #79c0ff;
+  --syntax-comment: #8b949e;
+  --syntax-title: #d2a8ff;
+  --syntax-type: #ffa657;
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   --radius: 6px;
   --radius-lg: 10px;
@@ -48,6 +54,12 @@ const CSS = `
   --success: #16a67a;
   --warning: #d49318;
   --code-bg: #f6f6fb;
+  --syntax-keyword: #cf222e;
+  --syntax-string: #0a3069;
+  --syntax-number: #0550ae;
+  --syntax-comment: #6e7781;
+  --syntax-title: #8250df;
+  --syntax-type: #953800;
   --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   --radius: 6px;
   --radius-lg: 10px;
@@ -271,6 +283,16 @@ textarea {
   white-space: pre;
 }
 .code-block .line-content .hljs { background: transparent; }
+
+/* Syntax colours come from the theme, so they follow the light/dark toggle.
+   (The page links no stylesheet besides this one.) */
+.code-block .hljs-keyword, .code-block .hljs-selector-tag, .code-block .hljs-doctag { color: var(--syntax-keyword); }
+.code-block .hljs-string, .code-block .hljs-regexp, .code-block .hljs-meta .hljs-string { color: var(--syntax-string); }
+.code-block .hljs-number, .code-block .hljs-literal, .code-block .hljs-attr, .code-block .hljs-attribute, .code-block .hljs-variable, .code-block .hljs-symbol { color: var(--syntax-number); }
+.code-block .hljs-comment, .code-block .hljs-quote, .code-block .hljs-meta { color: var(--syntax-comment); }
+.code-block .hljs-comment { font-style: italic; }
+.code-block .hljs-title, .code-block .hljs-section, .code-block .hljs-name { color: var(--syntax-title); }
+.code-block .hljs-built_in, .code-block .hljs-type, .code-block .hljs-params .hljs-type { color: var(--syntax-type); }
 
 /* ===== Markdown rendering ===== */
 .markdown-body {

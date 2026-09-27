@@ -9,8 +9,8 @@ import mermaid from 'mermaid';
 import { getRendererType } from './renderers.js';
 import { HTML_IFRAME_SANDBOX } from './constants.js';
 
-// ---- highlight.js theme (bundled) ----
-import 'highlight.js/styles/github-dark.css';
+// Syntax colours are theme variables in styles.ts (the page loads no other
+// stylesheet, so a bundled highlight.js theme would never apply).
 
 // Initialize mermaid with strict security
 let mermaidInitialized = false;
