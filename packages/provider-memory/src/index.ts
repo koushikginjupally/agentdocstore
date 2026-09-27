@@ -267,6 +267,7 @@ class MemoryDocumentRepository implements DocumentRepository {
       visibility: doc.visibility,
       title: doc.title,
       content,
+      ...(doc.expiresAt !== undefined ? { expiresAt: doc.expiresAt } : {}),
     });
   }
 }

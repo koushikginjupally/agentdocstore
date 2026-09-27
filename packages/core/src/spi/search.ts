@@ -7,6 +7,12 @@ export interface SearchDoc {
   readonly visibility: Visibility;
   readonly title: string;
   readonly content: string;
+  /**
+   * Optional ISO-8601 expiry. An expired entry is excluded from `query` hits
+   * and `total` even before the sweep removes it. Optional so existing index
+   * writers keep working; they simply get no read-time expiry filtering.
+   */
+  readonly expiresAt?: string;
 }
 
 /** Query pagination options. */

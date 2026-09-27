@@ -367,6 +367,7 @@ export function createServer(opts: CreateServerOptions): Hono {
       visibility: doc.visibility,
       title: doc.title,
       content,
+      ...(doc.expiresAt !== undefined ? { expiresAt: doc.expiresAt } : {}),
     });
 
     return c.json(doc, 201);
@@ -519,6 +520,7 @@ export function createServer(opts: CreateServerOptions): Hono {
         visibility: updated.visibility,
         title: updated.title,
         content,
+        ...(updated.expiresAt !== undefined ? { expiresAt: updated.expiresAt } : {}),
       });
     }
 
@@ -707,6 +709,7 @@ export function createServer(opts: CreateServerOptions): Hono {
       visibility: updated.visibility,
       title: updated.title,
       content: latest?.content ?? '',
+      ...(updated.expiresAt !== undefined ? { expiresAt: updated.expiresAt } : {}),
     });
 
     return c.json(updated);

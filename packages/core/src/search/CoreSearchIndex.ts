@@ -15,10 +15,11 @@ interface IndexedDoc {
   readonly visibility: Visibility;
   readonly title: string;
   readonly content: string;
+  readonly expiresAt?: string;
 }
 
 const SEARCH_FIELDS = ['title', 'content'];
-const STORE_FIELDS = ['owner', 'visibility'];
+const STORE_FIELDS = ['owner', 'visibility', 'expiresAt'];
 const OPTIONS = {
   idField: 'id',
   fields: SEARCH_FIELDS,
@@ -57,9 +58,12 @@ export class CoreSearchIndex implements SearchIndex {
   query(q: string, viewer: string | null, opts?: SearchQueryOptions): SearchResults {
     const trimmed = q.trim();
     const raw = trimmed.length === 0 ? [] : this.mini.search(trimmed);
+    const now = Date.now();
     const visible = raw.filter((r) => {
       const visibility = r['visibility'] as Visibility;
       const owner = r['owner'] as string;
+      const expiresAt = r['expiresAt'] as string | undefined;
+      if (expiresAt !== undefined && Date.parse(expiresAt) <= now) return false;
       return visibility === 'PUBLIC' || (viewer !== null && owner === viewer);
     });
     const total = visible.length;
@@ -95,5 +99,6 @@ function toIndexed(doc: SearchDoc): IndexedDoc {
     visibility: doc.visibility,
     title: doc.title,
     content: doc.content,
+    ...(doc.expiresAt !== undefined ? { expiresAt: doc.expiresAt } : {}),
   };
 }

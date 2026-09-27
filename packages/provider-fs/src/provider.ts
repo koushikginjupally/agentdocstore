@@ -92,6 +92,7 @@ export class FsProvider implements Provider {
         visibility: doc.visibility,
         title: doc.title,
         content: latest?.content ?? '',
+        ...(doc.expiresAt !== undefined ? { expiresAt: doc.expiresAt } : {}),
       });
     }
     await this.persistIndex();

@@ -107,6 +107,7 @@ interface SearchDoc {
   visibility: Visibility;
   title: string;
   content: string;
+  expiresAt?: string;      // optional; expired entries are left out of query results
 }
 
 interface SearchResults {
@@ -216,6 +217,11 @@ parse, construct, or assume anything about their format.
 `search.query()` returns PUBLIC hits plus the `viewer`'s own PRIVATE hits.
 A PRIVATE document owned by someone else is **never** returned, regardless of the
 query.
+
+Pass the document's `expiresAt` in every `search.add()` / `search.update()`.
+`CoreSearchIndex` then leaves expired documents out of both `hits` and `total`
+from the moment they expire, before the sweep removes them. A native search
+implementation should do the same.
 
 ### 9. Write-time size limits
 

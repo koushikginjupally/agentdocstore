@@ -785,8 +785,10 @@ describe('server', () => {
       expect(list.items.map((d) => d.id)).not.toContain(id);
       const search = (await (await get('/api/documents?query=zebra')).json()) as {
         items: Array<{ id: string }>;
+        total: number;
       };
       expect(search.items.map((d) => d.id)).not.toContain(id);
+      expect(search.total).toBe(search.items.length);
     });
 
     it('can still be deleted by the owner', async () => {

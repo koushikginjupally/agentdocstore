@@ -23,6 +23,9 @@ versions may contain breaking changes; they will be called out under
   REST and MCP. Previously they stayed readable, searchable and editable until
   the once-a-minute sweep ran — and indefinitely under `agentdocstore mcp`,
   which runs no sweep.
+- Search `total` no longer counts expired documents. `SearchDoc` gains an
+  optional `expiresAt`, which the built-in providers now pass; third-party
+  providers can add it without breaking existing code.
 - The web UI no longer says "No documents yet" when a search matches nothing;
   it names the search and suggests clearing it.
 - Empty and error states use theme-coloured SVG icons instead of emoji, which
