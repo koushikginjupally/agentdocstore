@@ -3,7 +3,7 @@ import { api, CredentialScanError } from '../api.js';
 import type { ApiDocument } from '../api.js';
 import { navigate, href } from '../router.js';
 import { buildTitle, emptyListMessage } from '../constants.js';
-import { formatDate, LANGUAGES } from '../dom.js';
+import { formatDate, LANGUAGES, markFieldInvalid } from '../dom.js';
 import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
 import { showRedactionModal } from '../redaction-modal.js';
@@ -208,6 +208,7 @@ async function handleCreate(
 
   if (!content) {
     showToast('Content is required', 'error');
+    markFieldInvalid(contentArea);
     return;
   }
 

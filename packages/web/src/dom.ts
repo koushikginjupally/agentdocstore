@@ -79,6 +79,20 @@ export function focusPageHeading(root: ParentNode): void {
   heading.focus({ preventScroll: true });
 }
 
+/**
+ * Point the user at a form field that failed validation.
+ *
+ * A toast alone disappears after a few seconds and does not say which field is
+ * wrong. This marks the field (aria-invalid, which screen readers announce and
+ * the stylesheet outlines) and moves focus into it; the mark clears as soon as
+ * the user edits the field.
+ */
+export function markFieldInvalid(field: HTMLInputElement | HTMLTextAreaElement): void {
+  field.setAttribute('aria-invalid', 'true');
+  field.addEventListener('input', () => field.removeAttribute('aria-invalid'), { once: true });
+  field.focus();
+}
+
 /** Format ISO date for display. */
 export function formatDate(iso: string): string {
   try {

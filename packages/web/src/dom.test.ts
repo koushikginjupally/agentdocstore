@@ -1,6 +1,22 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
-import { focusPageHeading } from './dom.js';
+import { focusPageHeading, markFieldInvalid } from './dom.js';
+
+describe('markFieldInvalid', () => {
+  it('flags and focuses the field, then clears the flag once the user types', () => {
+    document.body.innerHTML = '<textarea id="c"></textarea><button>Create</button>';
+    const field = document.getElementById('c') as HTMLTextAreaElement;
+    (document.querySelector('button') as HTMLButtonElement).focus();
+
+    markFieldInvalid(field);
+    expect(field.getAttribute('aria-invalid')).toBe('true');
+    expect(document.activeElement).toBe(field);
+
+    field.value = 'x';
+    field.dispatchEvent(new Event('input'));
+    expect(field.hasAttribute('aria-invalid')).toBe(false);
+  });
+});
 
 describe('focusPageHeading', () => {
   let main: HTMLElement;

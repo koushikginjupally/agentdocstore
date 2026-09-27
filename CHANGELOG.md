@@ -41,6 +41,8 @@ versions may contain breaking changes; they will be called out under
 - Moving between pages in the web UI now puts keyboard focus on the new page's
   heading, instead of dropping it to the top of the document, so screen
   readers announce the page and Tab continues from there.
+- Submitting the create form with no content now moves focus to the Content
+  field and marks it invalid, instead of only showing a short-lived toast.
 - The web UI no longer says "No documents yet" when a search matches nothing;
   it names the search and suggests clearing it.
 - Empty and error states use theme-coloured SVG icons instead of emoji, which
