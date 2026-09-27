@@ -78,6 +78,12 @@ export async function renderViewPage(
     // The document's last-updated time belongs to the latest version; beside
     // an old version it would read as that version's date.
     if (!isOldVersion) metaDiv.appendChild(dateBadge);
+    if (!isOldVersion && doc.expiresAt) {
+      const expiryBadge = document.createElement('span');
+      expiryBadge.className = 'text-muted text-sm';
+      expiryBadge.textContent = `Expires ${formatDate(doc.expiresAt)}`;
+      metaDiv.appendChild(expiryBadge);
+    }
     metaDiv.appendChild(authorBadge);
     left.appendChild(metaDiv);
 

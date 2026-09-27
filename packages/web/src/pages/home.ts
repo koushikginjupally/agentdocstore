@@ -3,7 +3,7 @@ import { api, CredentialScanError } from '../api.js';
 import type { ApiDocument } from '../api.js';
 import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '../router.js';
 import { buildTitle, emptyListMessage } from '../constants.js';
-import { formatDate, LANGUAGES, markFieldInvalid } from '../dom.js';
+import { expiryField, formatDate, LANGUAGES, markFieldInvalid } from '../dom.js';
 import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
 import { showRedactionModal } from '../redaction-modal.js';
@@ -78,6 +78,8 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
 
   rowDiv.appendChild(langGroup);
   rowDiv.appendChild(visGroup);
+  const expiry = expiryField('doc-expiry', [{ value: '', label: 'Never' }]);
+  rowDiv.appendChild(expiry.group);
   formCard.appendChild(rowDiv);
 
   // Content textarea
@@ -100,7 +102,8 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   createBtn.textContent = 'Create Document';
   createBtn.addEventListener(
     'click',
-    () => void handleCreate(titleInput, langSelect, visSelect, contentArea, createBtn),
+    () =>
+      void handleCreate(titleInput, langSelect, visSelect, contentArea, expiry.select, createBtn),
   );
   formCard.appendChild(createBtn);
 
@@ -201,12 +204,15 @@ async function handleCreate(
   langSelect: HTMLSelectElement,
   visSelect: HTMLSelectElement,
   contentArea: HTMLTextAreaElement,
+  expirySelect: HTMLSelectElement,
   createBtn: HTMLButtonElement,
 ): Promise<void> {
   const title = titleInput.value.trim() || 'Untitled';
   const content = contentArea.value;
   const language = langSelect.value;
   const visibility = visSelect.value;
+  // '' is "Never"; any other value is a number of days.
+  const expiry = expirySelect.value ? { expiresInDays: Number(expirySelect.value) } : {};
 
   if (!content) {
     showToast('Content is required', 'error');
@@ -216,7 +222,7 @@ async function handleCreate(
 
   createBtn.disabled = true;
   try {
-    const doc = await api.createDocument({ title, content, language, visibility });
+    const doc = await api.createDocument({ title, content, language, visibility, ...expiry });
     setUnsavedChangesCheck(null);
     navigate(`/d/${doc.id}`);
     showToast('Document created!', 'success');
@@ -230,6 +236,7 @@ async function handleCreate(
             content,
             language,
             visibility,
+            ...expiry,
             redactionPolicy: choice.policy,
           });
           setUnsavedChangesCheck(null);

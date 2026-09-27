@@ -159,3 +159,24 @@ describe('downloading a document', () => {
     expect(saved).toEqual([{ text: '# First draft', name: 'Shared notes v1.md' }]);
   });
 });
+
+describe('document expiry on the page', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  async function renderWith(expiresAt?: string): Promise<string> {
+    vi.spyOn(api, 'getDocument').mockResolvedValue({ ...doc, ...(expiresAt ? { expiresAt } : {}) });
+    vi.spyOn(api, 'getComments').mockResolvedValue([]);
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '';
+    await renderViewPage('d1', document.body);
+    return document.querySelector('.flex-between')?.textContent ?? '';
+  }
+
+  it('says when the document expires', async () => {
+    expect(await renderWith('2026-10-04T12:00:00.000Z')).toMatch(/Expires \w{3} \d{1,2}, 2026/);
+  });
+
+  it('says nothing about expiry when it never expires', async () => {
+    expect(await renderWith()).not.toContain('Expires');
+  });
+});

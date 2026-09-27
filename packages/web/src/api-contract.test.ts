@@ -170,3 +170,19 @@ describe('web API client against the real server: errors', () => {
     });
   });
 });
+
+describe('web API client against the real server: expiry', () => {
+  it('sets an expiry on create and clears it with null on update', async () => {
+    const created = await api.createDocument({
+      title: 'Temp',
+      content: 'x',
+      language: 'plaintext',
+      expiresInDays: 7,
+    });
+    const soon = Date.parse((await api.getDocument(created.id)).expiresAt ?? '');
+    expect(soon - Date.now()).toBeGreaterThan(6 * 24 * 3600 * 1000);
+
+    await api.updateDocument(created.id, { expiresInDays: null });
+    expect((await api.getDocument(created.id)).expiresAt).toBeUndefined();
+  });
+});

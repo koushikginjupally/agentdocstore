@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- Expiry can be set from the web UI. The create form has an "Expires" choice
+  (Never, 1, 7, 30 or 90 days, 1 year); the edit form can keep the current
+  expiry, remove it, or set a new one from now; and the document page says
+  when a document expires. The API already supported `expiresInDays`.
 - A Download button on the document page saves the shown version as a file
   named after the document, with the extension for its language (for
   example `Release notes.md`). It is built in the browser; nothing is

@@ -175,7 +175,8 @@ export const api = {
       language?: string;
       editMessage?: string;
       visibility?: string;
-      expiresInDays?: number;
+      /** Days from now; `null` removes the expiry. */
+      expiresInDays?: number | null;
       redactionPolicy?: string;
     },
   ): Promise<ApiDocument> {

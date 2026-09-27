@@ -3,7 +3,7 @@ import { api, ApiError, CredentialScanError, resolveViewer } from '../api.js';
 import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
 import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '../router.js';
 import { buildTitle } from '../constants.js';
-import { LANGUAGES } from '../dom.js';
+import { expiryField, formatDate, LANGUAGES } from '../dom.js';
 import { showToast } from '../toast.js';
 import { showRedactionModal } from '../redaction-modal.js';
 
@@ -92,6 +92,16 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
 
     rowDiv.appendChild(langGroup);
     rowDiv.appendChild(visGroup);
+    // "keep" leaves the expiry untouched, so saving an unrelated edit never
+    // changes it; "never" removes it; a number sets it that many days from now.
+    const expiry = expiryField('edit-expiry', [
+      {
+        value: 'keep',
+        label: doc.expiresAt ? `Keep: ${formatDate(doc.expiresAt)}` : 'Keep: never expires',
+      },
+      ...(doc.expiresAt ? [{ value: 'never', label: 'Never' }] : []),
+    ]);
+    rowDiv.appendChild(expiry.group);
     card.appendChild(rowDiv);
 
     // Content
@@ -139,7 +149,17 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
 
     saveBtn.addEventListener(
       'click',
-      () => void handleSave(id, titleInput, langSelect, visSelect, contentArea, msgInput, saveBtn),
+      () =>
+        void handleSave(
+          id,
+          titleInput,
+          langSelect,
+          visSelect,
+          contentArea,
+          msgInput,
+          expiry.select,
+          saveBtn,
+        ),
     );
 
     btnRow.appendChild(saveBtn);
@@ -148,7 +168,14 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
 
     container.appendChild(card);
     // Cancel, the header link or Back would otherwise drop edits silently.
-    watchForUnsavedChanges([titleInput, langSelect, visSelect, contentArea, msgInput]);
+    watchForUnsavedChanges([
+      titleInput,
+      langSelect,
+      visSelect,
+      expiry.select,
+      contentArea,
+      msgInput,
+    ]);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) {
       document.title = buildTitle('Not Found');
@@ -203,17 +230,28 @@ async function handleSave(
   visSelect: HTMLSelectElement,
   contentArea: HTMLTextAreaElement,
   msgInput: HTMLInputElement,
+  expirySelect: HTMLSelectElement,
   saveBtn: HTMLButtonElement,
 ): Promise<void> {
   saveBtn.disabled = true;
 
-  const input: Record<string, string | undefined> = {};
-  input.title = titleInput.value.trim();
-  input.language = langSelect.value;
-  input.visibility = visSelect.value;
-  input.content = contentArea.value;
+  const input: {
+    title: string;
+    language: string;
+    visibility: string;
+    content: string;
+    editMessage?: string;
+    expiresInDays?: number | null;
+  } = {
+    title: titleInput.value.trim(),
+    language: langSelect.value,
+    visibility: visSelect.value,
+    content: contentArea.value,
+  };
   const editMsg = msgInput.value.trim();
   if (editMsg) input.editMessage = editMsg;
+  if (expirySelect.value === 'never') input.expiresInDays = null;
+  else if (expirySelect.value !== 'keep') input.expiresInDays = Number(expirySelect.value);
 
   try {
     await api.updateDocument(id, input);

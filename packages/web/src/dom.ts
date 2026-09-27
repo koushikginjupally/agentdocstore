@@ -110,6 +110,48 @@ export function formatDate(iso: string): string {
 }
 
 /** Copy text to clipboard and show feedback. */
+/** "Expires in" choices offered in the create and edit forms, in days. */
+export const EXPIRY_CHOICES: ReadonlyArray<{ readonly days: number; readonly label: string }> = [
+  { days: 1, label: 'In 1 day' },
+  { days: 7, label: 'In 7 days' },
+  { days: 30, label: 'In 30 days' },
+  { days: 90, label: 'In 90 days' },
+  { days: 365, label: 'In 1 year' },
+];
+
+/**
+ * A labelled "Expires" select for a form row. `leading` options come first
+ * (for example "Never", or "Keep" on the edit page); then one option per
+ * EXPIRY_CHOICES entry, whose value is the number of days.
+ */
+export function expiryField(
+  id: string,
+  leading: ReadonlyArray<{ readonly value: string; readonly label: string }>,
+): { group: HTMLDivElement; select: HTMLSelectElement } {
+  const group = document.createElement('div');
+  group.className = 'form-group';
+  group.style.flex = '1';
+  group.style.minWidth = '150px';
+  const label = document.createElement('label');
+  label.setAttribute('for', id);
+  label.textContent = 'Expires';
+  const select = document.createElement('select');
+  select.id = id;
+  const options = [
+    ...leading,
+    ...EXPIRY_CHOICES.map((c) => ({ value: String(c.days), label: c.label })),
+  ];
+  for (const { value, label: text } of options) {
+    const opt = document.createElement('option');
+    opt.value = value;
+    opt.textContent = text;
+    select.appendChild(opt);
+  }
+  group.appendChild(label);
+  group.appendChild(select);
+  return { group, select };
+}
+
 /** File extension for each document language, for downloads. */
 const FILE_EXTENSIONS: Readonly<Record<string, string>> = {
   markdown: 'md',

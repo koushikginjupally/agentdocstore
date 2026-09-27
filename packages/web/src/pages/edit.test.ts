@@ -101,3 +101,60 @@ describe('edit page unsaved changes', () => {
     expect(hasUnsavedChanges()).toBe(true);
   });
 });
+
+describe('edit form expiry', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  async function saveWith(
+    current: string | undefined,
+    choice: string,
+  ): Promise<{ page: HTMLElement; sent: Record<string, unknown> }> {
+    vi.spyOn(api, 'getDocument').mockResolvedValue({
+      ...doc,
+      ...(current ? { expiresAt: current } : {}),
+    });
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '<main></main>';
+    const page = document.querySelector('main')!;
+    await renderEditPage('d1', page);
+    page.querySelector<HTMLSelectElement>('#edit-expiry')!.value = choice;
+    const update = vi.spyOn(api, 'updateDocument').mockResolvedValue(doc);
+    (saveButton(page) as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(update).toHaveBeenCalled());
+    return { page, sent: update.mock.calls[0]![1] as Record<string, unknown> };
+  }
+
+  it('keeps the current expiry unless another choice is made', async () => {
+    const { sent } = await saveWith('2026-10-04T00:00:00.000Z', 'keep');
+    expect(sent).not.toHaveProperty('expiresInDays');
+  });
+
+  it('removes the expiry with Never', async () => {
+    const { sent } = await saveWith('2026-10-04T00:00:00.000Z', 'never');
+    expect(sent).toMatchObject({ expiresInDays: null });
+  });
+
+  it('sets a new expiry from now', async () => {
+    const { sent } = await saveWith(undefined, '30');
+    expect(sent).toMatchObject({ expiresInDays: 30 });
+  });
+
+  it('names the current expiry and offers Never only when there is one', async () => {
+    const withExpiry = await editPageAs('alice');
+    expect(
+      [...withExpiry.querySelector<HTMLSelectElement>('#edit-expiry')!.options].map((o) => o.value),
+    ).toEqual(['keep', '1', '7', '30', '90', '365']);
+    vi.restoreAllMocks();
+    vi.spyOn(api, 'getDocument').mockResolvedValue({ ...doc, expiresAt: '2026-10-04T00:00:00Z' });
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '<main></main>';
+    const page = document.querySelector('main')!;
+    await renderEditPage('d1', page);
+    const select = page.querySelector<HTMLSelectElement>('#edit-expiry')!;
+    expect(select.options[0]!.textContent).toMatch(/^Keep: /);
+    expect(select.options[1]!.value).toBe('never');
+  });
+});
