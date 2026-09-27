@@ -104,6 +104,9 @@ versions may contain breaking changes; they will be called out under
   ids so they can be linked to.
 - Deleting a comment now asks for confirmation, like deleting a document.
   One click used to delete it for good.
+- The version diff no longer shows its file header as changes: `--- v1` and
+  `+++ v2` rendered as a removed and an added line. Comparing two versions
+  with the same content now says so instead of showing an empty box.
 - Code documents are syntax-highlighted again, in both themes. The token
   colours came from a bundled stylesheet that the page never loaded, so code
   always rendered in one colour; they now follow the light/dark theme.

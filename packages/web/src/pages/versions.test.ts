@@ -44,3 +44,53 @@ describe('versions page', () => {
     ]);
   });
 });
+
+describe('comparing two versions', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  async function compare(diff: string): Promise<HTMLElement> {
+    vi.spyOn(api, 'getDocument').mockResolvedValue(doc);
+    vi.spyOn(api, 'getVersions').mockResolvedValue([version(1), version(2)]);
+    vi.spyOn(api, 'getDiff').mockResolvedValue({ diff });
+    document.body.innerHTML = '';
+    await renderVersionsPage('d1', document.body);
+    for (const box of document.querySelectorAll<HTMLInputElement>('.version-checkbox')) box.click();
+    [...document.querySelectorAll('button')]
+      .find((b) => b.textContent === 'Compare Selected')!
+      .click();
+    await vi.waitFor(() => expect(document.querySelector('#diff-output h3')).not.toBeNull());
+    return document.querySelector<HTMLElement>('#diff-output')!;
+  }
+
+  it('shows the changes without the file header lines, which are not changes', async () => {
+    const output = await compare(
+      [
+        '===================================================================',
+        '--- v1',
+        '+++ v2',
+        '@@ -1,2 +1,2 @@',
+        ' line one',
+        '-line two',
+        '+line 2',
+        '',
+      ].join('\n'),
+    );
+    const rows = [...output.querySelectorAll('.diff-container > div')].map((el) => [
+      el.className,
+      el.textContent,
+    ]);
+    expect(rows).toEqual([
+      ['diff-hunk', '@@ -1,2 +1,2 @@'],
+      ['diff-line', ' line one'],
+      ['diff-line diff-del', '-line two'],
+      ['diff-line diff-add', '+line 2'],
+      ['diff-line', ''],
+    ]);
+  });
+
+  it('says so when the two versions have the same content', async () => {
+    const output = await compare('');
+    expect(output.querySelector('.diff-container')).toBeNull();
+    expect(output.textContent).toContain('These versions have the same content.');
+  });
+});

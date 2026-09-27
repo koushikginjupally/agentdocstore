@@ -172,11 +172,23 @@ async function showDiff(
     title.textContent = `Diff: v${from} → v${to}`;
     container.appendChild(title);
 
+    if (result.diff === '') {
+      const same = document.createElement('p');
+      same.className = 'text-muted';
+      same.textContent = 'These versions have the same content.';
+      container.appendChild(same);
+      return;
+    }
+
     const diffDiv = document.createElement('div');
     diffDiv.className = 'diff-container';
 
+    // The diff opens with a file header ("=====", "--- vN", "+++ vM") that
+    // repeats the title above; "--- vN" and "+++ vM" would otherwise show as a
+    // removed and an added line. Rendering starts at the first hunk.
     const lines = result.diff.split('\n');
-    for (const line of lines) {
+    const firstHunk = lines.findIndex((line) => line.startsWith('@@'));
+    for (const line of lines.slice(Math.max(firstHunk, 0))) {
       const lineEl = document.createElement('div');
       lineEl.className = 'diff-line';
 
