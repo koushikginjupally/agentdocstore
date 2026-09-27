@@ -126,4 +126,40 @@ describe('import', () => {
     expect(existsSync(join(idle, '.agentdocstore.lock'))).toBe(false);
     expect(existsSync(join(idle, 'documents', source.id, 'meta.json'))).toBe(true);
   });
+
+  it('leaves every document searchable after importing over existing data', async () => {
+    const other = join(root, 'other');
+    const source = await runningDataDir(other); // "Backup me", content "important notes"
+    const archive = join(root, 'other.tgz');
+    runExport(archive, other);
+    await source.provider.close();
+
+    const target = join(root, 'target');
+    const local = await createFsProvider({ dataDir: target });
+    await local.repository.create({
+      title: 'Written here',
+      language: 'markdown',
+      visibility: 'PRIVATE',
+      content: 'local roadmap',
+      createdBy: 'alice',
+    });
+    await local.close();
+
+    await runImport(archive, target, true);
+
+    const provider = await createFsProvider({ dataDir: target });
+    try {
+      const titles = async (q: string): Promise<string[]> => {
+        const out: string[] = [];
+        for (const hit of provider.search.query(q, 'alice').hits) {
+          out.push((await provider.repository.get(hit.documentId))?.title ?? '(missing)');
+        }
+        return out;
+      };
+      expect(await titles('roadmap')).toEqual(['Written here']);
+      expect(await titles('important')).toEqual(['Backup me']);
+    } finally {
+      await provider.close();
+    }
+  });
 });

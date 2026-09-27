@@ -5,9 +5,9 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BOOT_LOCK_DIR, acquireBootLock } from '@agentdocstore/provider-fs';
+import { BOOT_LOCK_DIR, acquireBootLock, indexSnapshotPath } from '@agentdocstore/provider-fs';
 import type { BootLock } from '@agentdocstore/provider-fs';
 
 /**
@@ -77,6 +77,10 @@ export async function runImport(file: string, dataDir: string, force: boolean): 
   try {
     console.log(`Importing data from ${archivePath} to ${dir} ...`);
     execFileSync('tar', ['-xzf', archivePath, EXCLUDE_LOCK, '-C', dir], { stdio: 'inherit' });
+    // The search index is derived data. The archive's snapshot covers only the
+    // archive's documents (not ones already here), so drop it: the next start
+    // rebuilds the index from the documents on disk.
+    rmSync(indexSnapshotPath(dir), { force: true });
   } finally {
     await lock.release();
   }

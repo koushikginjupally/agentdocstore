@@ -85,6 +85,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- After `agentdocstore import --force` into a data directory that already had
+  documents, search finds those documents again. The archive's search index
+  replaced the local one, so they were listed but matched no search. Import
+  now removes the index snapshot, and the next start rebuilds it.
 - `agentdocstore import --force` no longer extracts into a data directory a
   running server or MCP process is using; it stops with the "already locked"
   error. Before, it wrote over the live instance's files.

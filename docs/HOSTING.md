@@ -62,7 +62,9 @@ npx agentdocstore import backup.tgz --data /new/path
 
 Neither carries the instance lock (`.agentdocstore.lock/`), so a copy restored
 from an export taken while the server was running starts normally. Import
-refuses a data directory that a running instance is using; stop it first.
+refuses a data directory that a running instance is using; stop it first. It
+also removes the search index snapshot, so the next start rebuilds the index
+from the documents it finds.
 
 ## Runtime modes
 
