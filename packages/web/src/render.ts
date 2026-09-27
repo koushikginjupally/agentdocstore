@@ -92,7 +92,46 @@ async function renderMarkdown(content: string, container: HTMLElement): Promise<
   });
   container.innerHTML = `<div class="markdown-body">${clean}</div>`;
   addHeadingIds(container);
+  addTableOfContents(container);
   container.addEventListener('click', followInDocumentLink);
+}
+
+/** How many h1–h3 headings a document needs before it gets a contents list. */
+const CONTENTS_MIN_HEADINGS = 3;
+
+/**
+ * A "Contents" list of the h1–h3 headings at the top of a longer document,
+ * closed until opened. It sits inside the rendered container, so its links
+ * jump to the heading like any `#heading` link in the text. Heading text is
+ * copied as text, never as markup.
+ */
+function addTableOfContents(container: HTMLElement): void {
+  const headings = [
+    ...container.querySelectorAll<HTMLElement>(
+      '.markdown-body h1[id], .markdown-body h2[id], .markdown-body h3[id]',
+    ),
+  ];
+  if (headings.length < CONTENTS_MIN_HEADINGS) return;
+
+  const list = document.createElement('ol');
+  for (const heading of headings) {
+    const link = document.createElement('a');
+    link.href = `#${heading.id}`;
+    link.textContent = heading.textContent ?? '';
+    const item = document.createElement('li');
+    item.className = `toc-${heading.tagName.toLowerCase()}`;
+    item.append(link);
+    list.append(item);
+  }
+  const summary = document.createElement('summary');
+  summary.textContent = `Contents (${headings.length})`;
+  const details = document.createElement('details');
+  details.append(summary, list);
+  const nav = document.createElement('nav');
+  nav.className = 'doc-toc';
+  nav.setAttribute('aria-label', 'Contents');
+  nav.append(details);
+  container.prepend(nav);
 }
 
 /**

@@ -86,3 +86,70 @@ describe('in-document links', () => {
     expect(cancelledByRenderer).toBe(false);
   });
 });
+
+describe('contents list for long documents', () => {
+  const long = '# Runbook\n\nIntro\n\n## Deploy\n\nSteps\n\n### Roll back\n\nMore\n\n## Checks\n';
+
+  it('lists the h1-h3 headings in order, closed until opened, as a labelled navigation', async () => {
+    const page = await renderMarkdown(long);
+    const nav = page.querySelector('nav[aria-label="Contents"]')!;
+    expect(nav).not.toBeNull();
+    const details = nav.querySelector('details')!;
+    expect(details.open).toBe(false);
+    expect(details.querySelector('summary')!.textContent).toBe('Contents (4)');
+    const links = [...nav.querySelectorAll('a')];
+    expect(links.map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
+      ['Runbook', '#user-content-runbook'],
+      ['Deploy', '#user-content-deploy'],
+      ['Roll back', '#user-content-roll-back'],
+      ['Checks', '#user-content-checks'],
+    ]);
+    expect(links.map((a) => a.parentElement!.className)).toEqual([
+      'toc-h1',
+      'toc-h2',
+      'toc-h3',
+      'toc-h2',
+    ]);
+  });
+
+  it('is left out of a short document', async () => {
+    const page = await renderMarkdown('# Notes\n\n## One\n\nText');
+    expect(page.querySelector('nav')).toBeNull();
+  });
+
+  it('does not count h4 and smaller headings', async () => {
+    const page = await renderMarkdown('# Notes\n\n#### A\n\n#### B\n\n##### C');
+    expect(page.querySelector('nav')).toBeNull();
+  });
+
+  it('shows heading text only, never markup from the document', async () => {
+    const page = await renderMarkdown('# A <em>b</em>\n\n## C\n\n## D');
+    const first = page.querySelector('nav a')!;
+    expect(first.textContent).toBe('A b');
+    expect(first.querySelector('em')).toBeNull();
+  });
+
+  it('jumps to the heading within the document', async () => {
+    const page = await renderMarkdown(long);
+    document.body.appendChild(page);
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this);
+    };
+    try {
+      const before = window.location.hash;
+      const link = [...page.querySelectorAll('nav a')].find((a) => a.textContent === 'Checks')!;
+      const event = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+      link.dispatchEvent(event);
+      expect(event.defaultPrevented).toBe(true);
+      expect(window.location.hash).toBe(before);
+      const heading = page.querySelector('#user-content-checks')!;
+      expect(scrolled).toEqual([heading]);
+      expect(document.activeElement).toBe(heading);
+    } finally {
+      Element.prototype.scrollIntoView = original;
+      page.remove();
+    }
+  });
+});

@@ -309,6 +309,20 @@ textarea {
 .code-block .hljs-built_in, .code-block .hljs-type, .code-block .hljs-params .hljs-type { color: var(--syntax-type); }
 
 /* ===== Markdown rendering ===== */
+/* The contents list at the top of a longer document. */
+.doc-toc {
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.doc-toc summary { cursor: pointer; font-weight: 500; color: var(--text-secondary); }
+.doc-toc ol { list-style: none; margin: 8px 0 4px; padding: 0; }
+.doc-toc li { margin: 2px 0; }
+.doc-toc .toc-h2 { padding-left: 16px; }
+.doc-toc .toc-h3 { padding-left: 32px; }
 .markdown-body {
   line-height: 1.7;
   /* Long URLs and hashes in text wrap; code blocks keep white-space: pre and

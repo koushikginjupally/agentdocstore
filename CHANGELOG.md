@@ -10,6 +10,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- A markdown document with three or more h1–h3 headings starts with a
+  Contents list, closed until opened; its links jump to each heading within
+  the page. It shows in the Preview too.
 - The create and edit forms can load a text file, with a Load File button or
   by dropping the file on the text box. It is read in the browser. Its name
   fills an empty title and picks the language from the extension; replacing
