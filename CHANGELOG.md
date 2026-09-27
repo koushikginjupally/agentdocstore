@@ -29,6 +29,9 @@ versions may contain breaking changes; they will be called out under
 - `agentdocstore init-provider` scaffolds a working `CoreSearchIndex` instead of
   an empty stub that made the first document create fail with a 500, and
   documents keeping the index current (including `expiresAt`).
+- The "Credentials Detected" dialog keeps keyboard focus inside it, returns
+  focus to the Create/Save button when it closes, and no longer leaves a stray
+  key listener behind after each use.
 - The web UI no longer says "No documents yet" when a search matches nothing;
   it names the search and suggests clearing it.
 - Empty and error states use theme-coloured SVG icons instead of emoji, which

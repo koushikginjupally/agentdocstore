@@ -218,7 +218,7 @@ async function handleCreate(
     showToast('Document created!', 'success');
   } catch (err) {
     if (err instanceof CredentialScanError) {
-      const choice = await showRedactionModal(err.detected);
+      const choice = await showRedactionModal(err.detected, createBtn);
       if (choice) {
         try {
           const doc = await api.createDocument({

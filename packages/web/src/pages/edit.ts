@@ -181,7 +181,7 @@ async function handleSave(
     showToast('Document updated!', 'success');
   } catch (err) {
     if (err instanceof CredentialScanError) {
-      const choice = await showRedactionModal(err.detected);
+      const choice = await showRedactionModal(err.detected, saveBtn);
       if (choice) {
         try {
           await api.updateDocument(id, { ...input, redactionPolicy: choice.policy });

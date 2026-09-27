@@ -13,8 +13,20 @@ export interface RedactionChoice {
  * Show the redaction modal and return the user's choice.
  * Returns null if cancelled.
  */
-export function showRedactionModal(detected: string[]): Promise<RedactionChoice | null> {
+export function showRedactionModal(
+  detected: string[],
+  returnFocusTo?: HTMLElement,
+): Promise<RedactionChoice | null> {
   return new Promise((resolve) => {
+    // Focus goes back here when the dialog closes, so keyboard users land
+    // where they were rather than at the top of the page. Callers pass the
+    // triggering button explicitly: they disable it before the request, and a
+    // browser moves focus off a button when it is disabled, so
+    // document.activeElement is usually <body> by the time this runs.
+    const current = document.activeElement;
+    const opener =
+      returnFocusTo ??
+      (current instanceof HTMLElement && current !== document.body ? current : null);
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.setAttribute('role', 'dialog');
@@ -57,26 +69,17 @@ export function showRedactionModal(detected: string[]): Promise<RedactionChoice 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'btn';
     cancelBtn.textContent = 'Cancel';
-    cancelBtn.addEventListener('click', () => {
-      overlay.remove();
-      resolve(null);
-    });
+    cancelBtn.addEventListener('click', () => close(null));
 
     const skipBtn = document.createElement('button');
     skipBtn.className = 'btn btn-danger';
     skipBtn.textContent = 'Save Anyway';
-    skipBtn.addEventListener('click', () => {
-      overlay.remove();
-      resolve({ policy: 'skip' });
-    });
+    skipBtn.addEventListener('click', () => close({ policy: 'skip' }));
 
     const redactBtn = document.createElement('button');
     redactBtn.className = 'btn btn-primary';
     redactBtn.textContent = 'Redact & Save';
-    redactBtn.addEventListener('click', () => {
-      overlay.remove();
-      resolve({ policy: 'redact' });
-    });
+    redactBtn.addEventListener('click', () => close({ policy: 'redact' }));
 
     actions.appendChild(cancelBtn);
     actions.appendChild(skipBtn);
@@ -87,22 +90,42 @@ export function showRedactionModal(detected: string[]): Promise<RedactionChoice 
     modal.appendChild(actions);
     overlay.appendChild(modal);
 
-    // Close on overlay click
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        overlay.remove();
-        resolve(null);
-      }
-    });
+    const focusable = [cancelBtn, skipBtn, redactBtn];
 
-    // Close on Escape
-    const onKey = (e: KeyboardEvent) => {
+    // Every way out goes through here, so the keydown listener is always
+    // removed and focus always returns to the opener.
+    function close(choice: RedactionChoice | null): void {
+      document.removeEventListener('keydown', onKey);
+      overlay.remove();
+      resolve(choice);
+      // Callers disable the button that opened the dialog while the request is
+      // in flight and re-enable it in a finally block, and focus() on a
+      // disabled button is a no-op. Restore focus on the next task, after that
+      // finally has run.
+      setTimeout(() => {
+        if (opener?.isConnected) opener.focus();
+      }, 0);
+    }
+
+    // Escape closes; Tab and Shift+Tab cycle within the dialog (aria-modal
+    // alone does not stop focus reaching the page behind it).
+    function onKey(e: KeyboardEvent): void {
       if (e.key === 'Escape') {
-        overlay.remove();
-        document.removeEventListener('keydown', onKey);
-        resolve(null);
+        e.preventDefault();
+        close(null);
+        return;
       }
-    };
+      if (e.key !== 'Tab') return;
+      const index = focusable.indexOf(document.activeElement as HTMLButtonElement);
+      const step = e.shiftKey ? -1 : 1;
+      const next = focusable[(index + step + focusable.length) % focusable.length];
+      e.preventDefault();
+      next?.focus();
+    }
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close(null);
+    });
     document.addEventListener('keydown', onKey);
 
     document.body.appendChild(overlay);
