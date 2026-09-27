@@ -8,7 +8,7 @@
  * PRIVATE search isolation, size limits, expiry listing, and delete cascade.
  *
  * These checks are a SMOKE subset, deliberately runner-free so they work in any
- * install. The authoritative gate is the full 57-case suite in
+ * install. The authoritative gate is the full conformance suite in
  * `@agentdocstore/provider-tests`, which a provider author runs from their own
  * vitest — doctor prints how. A provider that fails doctor cannot pass that
  * suite; passing doctor is necessary, not sufficient.

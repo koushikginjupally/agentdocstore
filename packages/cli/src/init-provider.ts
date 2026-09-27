@@ -124,7 +124,12 @@ import type {
   CommentStore,
   SearchIndex,
 } from '@agentdocstore/core';
-import { NotFoundError, VersionConflictError, ContentTooLargeError } from '@agentdocstore/core';
+import {
+  CoreSearchIndex,
+  NotFoundError,
+  VersionConflictError,
+  ContentTooLargeError,
+} from '@agentdocstore/core';
 
 export interface ${pascal(name)}Options {
   /** TODO: your connection settings, e.g. a URL or a table name. */
@@ -150,7 +155,7 @@ export const providerName = '${name}';
 
 class ${pascal(name)}Provider implements Provider {
   readonly capabilities: Capabilities = {
-    // 'core-fallback' lets core wrap MiniSearch around your repository.
+    // 'core-fallback': this provider uses the in-memory CoreSearchIndex below.
     // Switch to 'native' only once your own index enforces visibility.
     search: 'core-fallback',
     // true only if the STORE expires rows itself (e.g. DynamoDB TTL).
@@ -170,9 +175,15 @@ class ${pascal(name)}Provider implements Provider {
   //  - Mutations of an unknown id throw NotFoundError.
   //  - Reject content over LIMITS.MAX_CONTENT_BYTES with ContentTooLargeError
   //    at WRITE time.
+  //  - Keep \`search\` current: after every create, appendVersion, updateMeta
+  //    and setVisibility call \`this.search.update({ documentId, owner,
+  //    visibility, title, content, expiresAt })\` with the latest content, and
+  //    \`this.search.remove(id)\` on delete. Pass expiresAt so expired documents
+  //    drop out of search results. CoreSearchIndex is in-memory: rebuild it
+  //    from your store when the provider starts.
   readonly repository = {} as DocumentRepository;
   readonly comments = {} as CommentStore;
-  readonly search = {} as SearchIndex;
+  readonly search: SearchIndex = new CoreSearchIndex();
 
   /** Optional: surfaced on /healthz and by \`agentdocstore doctor\`. Never throws. */
   async healthCheck(): Promise<ProviderHealth> {
@@ -212,7 +223,7 @@ function conformanceTest(name: string): string {
 import { createProvider } from './index.js';
 
 /**
- * The authoritative gate: all 57 SPI contract cases against a REAL instance of
+ * The authoritative gate: every SPI contract case against a REAL instance of
  * this provider. Point it at a disposable store — the suite creates and deletes
  * documents freely.
  */
@@ -256,7 +267,7 @@ deliberately.
 
 \`\`\`bash
 npm run doctor   # fast smoke checks against the live store
-npm test         # the full 57-case conformance suite
+npm test         # the full conformance suite
 \`\`\`
 
 Both must pass before this provider is safe to point at real data.
