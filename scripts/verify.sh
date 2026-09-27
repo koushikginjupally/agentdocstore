@@ -42,6 +42,22 @@ record() {
   printf "[%s] %s — %s\n" "$status" "$criterion" "$detail"
 }
 
+# Run a command with a time limit. GNU `timeout` is absent on stock macOS, and
+# a missing binary here would be swallowed by the callers' `|| true`, making a
+# check fail with a misleading message. Fall back to Homebrew's `gtimeout`,
+# then to a perl alarm (perl ships with macOS): the alarm survives exec, so the
+# command is killed by SIGALRM when the limit is reached.
+run_with_timeout() {
+  local secs="$1"; shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$secs" "$@"
+  elif command -v gtimeout >/dev/null 2>&1; then
+    gtimeout "$secs" "$@"
+  else
+    perl -e 'alarm shift; exec @ARGV or die "exec failed: $!\n"' "$secs" "$@"
+  fi
+}
+
 # Port-picking helper.
 pick_port() {
   local port
@@ -449,7 +465,7 @@ else
 
   # Send all requests and capture output.
   MCP_OUTPUT=$(printf '%s\n%s\n%s\n%s\n%s\n' "$INIT_REQ" "$INIT_NOTIF" "$TOOLS_REQ" "$CREATE_REQ" "$SCAN_REQ" \
-    | timeout 15 node "$MCP_STDIO" --user verify-user 2>/dev/null || true)
+    | run_with_timeout 15 node "$MCP_STDIO" --user verify-user 2>/dev/null || true)
 
   if [[ -z "$MCP_OUTPUT" ]]; then
     S4_STATUS="FAIL"; S4_DETAIL="MCP stdio returned no output"
@@ -1120,7 +1136,7 @@ elif [[ "${S9_IMAGE_READY:-false}" != "true" ]]; then
   S15_STATUS="SKIP"
   S15_DETAIL="no image from S9 to run air-gapped"
 else
-  S15_OUT="$(AIRGAP_IMAGE=agentdocstore-verify timeout 300 bash "$REPO_ROOT/scripts/airgap-test.sh" --no-build 2>&1)"
+  S15_OUT="$(AIRGAP_IMAGE=agentdocstore-verify run_with_timeout 300 bash "$REPO_ROOT/scripts/airgap-test.sh" --no-build 2>&1)"
   S15_CODE=$?
   S15_RESULT="$(grep -oE 'RESULT: [0-9]+ passed, [0-9]+ failed' <<<"$S15_OUT" | tail -1)"
   if [[ $S15_CODE -eq 0 ]]; then
