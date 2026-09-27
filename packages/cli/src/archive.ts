@@ -5,9 +5,10 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, mkdirSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BOOT_LOCK_DIR } from '@agentdocstore/provider-fs';
+import { BOOT_LOCK_DIR, acquireBootLock } from '@agentdocstore/provider-fs';
+import type { BootLock } from '@agentdocstore/provider-fs';
 
 /**
  * The boot lock belongs to the instance holding it, not to the data. Exported
@@ -47,7 +48,7 @@ export function isDirNonEmpty(dir: string): boolean {
   return entries.length > 0;
 }
 
-export function runImport(file: string, dataDir: string, force: boolean): void {
+export async function runImport(file: string, dataDir: string, force: boolean): Promise<void> {
   const dir = resolve(dataDir);
   const archivePath = resolve(file);
 
@@ -63,9 +64,21 @@ export function runImport(file: string, dataDir: string, force: boolean): void {
     process.exit(1);
   }
 
-  mkdirSync(dir, { recursive: true });
-  console.log(`Importing data from ${archivePath} to ${dir} ...`);
-
-  execFileSync('tar', ['-xzf', archivePath, EXCLUDE_LOCK, '-C', dir], { stdio: 'inherit' });
+  // Hold the data dir's lock while extracting. A running instance holds it,
+  // and files extracted under a live server would be overwritten by its writes
+  // or mixed with them.
+  let lock: BootLock;
+  try {
+    lock = await acquireBootLock(dir);
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+  try {
+    console.log(`Importing data from ${archivePath} to ${dir} ...`);
+    execFileSync('tar', ['-xzf', archivePath, EXCLUDE_LOCK, '-C', dir], { stdio: 'inherit' });
+  } finally {
+    await lock.release();
+  }
   console.log('Import complete.');
 }

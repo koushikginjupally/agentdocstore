@@ -79,9 +79,51 @@ describe('import', () => {
     expect(archiveEntries(archive)).toContain('./.agentdocstore.lock/');
 
     const restored = join(root, 'restored');
-    runImport(archive, restored, false);
+    await runImport(archive, restored, false);
 
     expect(existsSync(join(restored, '.agentdocstore.lock'))).toBe(false);
     expect(await titlesIn(restored)).toEqual(['Backup me']);
+  });
+
+  it('refuses a data dir that a running instance is using, and writes nothing', async () => {
+    const other = join(root, 'other');
+    const source = await runningDataDir(other);
+    const archive = join(root, 'other.tgz');
+    runExport(archive, other);
+    await source.provider.close();
+
+    const live = join(root, 'live');
+    const running = await runningDataDir(live);
+    const exit = vi.spyOn(process, 'exit').mockImplementation((code) => {
+      throw new Error(`exit ${String(code)}`);
+    });
+    const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      await expect(Promise.resolve().then(() => runImport(archive, live, true))).rejects.toThrow(
+        'exit 1',
+      );
+      expect(exit).toHaveBeenCalledWith(1);
+      expect(errors.mock.calls.join('\n')).toContain('already locked');
+      expect(existsSync(join(live, 'documents', source.id))).toBe(false);
+    } finally {
+      await running.provider.close();
+    }
+  });
+
+  it('still imports over an idle data dir with --force, and leaves no lock', async () => {
+    const other = join(root, 'other');
+    const source = await runningDataDir(other);
+    const archive = join(root, 'other.tgz');
+    runExport(archive, other);
+    await source.provider.close();
+
+    const idle = join(root, 'idle');
+    const previous = await runningDataDir(idle);
+    await previous.provider.close();
+
+    await runImport(archive, idle, true);
+
+    expect(existsSync(join(idle, '.agentdocstore.lock'))).toBe(false);
+    expect(existsSync(join(idle, 'documents', source.id, 'meta.json'))).toBe(true);
   });
 });

@@ -85,6 +85,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- `agentdocstore import --force` no longer extracts into a data directory a
+  running server or MCP process is using; it stops with the "already locked"
+  error. Before, it wrote over the live instance's files.
 - A data directory restored with `agentdocstore import` now starts. An export
   taken while the server ran included its lock (`.agentdocstore.lock/`), so
   the restored copy failed with "already locked". Exports now leave the lock

@@ -378,7 +378,7 @@ async function main(): Promise<void> {
         process.exit(1);
       }
       const { runImport } = await import('./archive.js');
-      runImport(file, config.dataDir, parsed.force);
+      await runImport(file, config.dataDir, parsed.force);
       break;
     }
     default:
