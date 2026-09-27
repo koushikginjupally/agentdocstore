@@ -18,6 +18,23 @@ async function homePage(): Promise<HTMLElement> {
 const createButton = (root: HTMLElement): HTMLButtonElement =>
   [...root.querySelectorAll('button')].find((b) => b.textContent === 'Create Document')!;
 
+/** Heading levels in document order, e.g. [1, 2, 2]. */
+const headingLevels = (root: ParentNode): number[] =>
+  [...root.querySelectorAll('h1, h2, h3, h4, h5, h6')].map((h) => Number(h.tagName[1]));
+
+describe('home page headings', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('has one h1 for the page, above the two panel headings', async () => {
+    const main = await homePage();
+    expect(headingLevels(main)).toEqual([1, 2, 2]);
+    const h1 = main.querySelector('h1')!;
+    expect(h1.textContent).toBe('Documents');
+    // Screen readers get the page heading; the two panels keep their look.
+    expect(h1.classList.contains('sr-only')).toBe(true);
+  });
+});
+
 describe('home page unsaved changes', () => {
   afterEach(() => {
     vi.restoreAllMocks();

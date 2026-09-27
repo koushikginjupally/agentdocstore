@@ -30,7 +30,7 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     const card = document.createElement('div');
     card.className = 'card';
 
-    const heading = document.createElement('h2');
+    const heading = document.createElement('h1');
     heading.className = 'panel-title';
     heading.textContent = 'Edit Document';
     card.appendChild(heading);
@@ -224,7 +224,7 @@ function renderNotOwner(id: string, title: string, owner: string, container: HTM
   const card = document.createElement('div');
   card.className = 'card';
 
-  const heading = document.createElement('h2');
+  const heading = document.createElement('h1');
   heading.className = 'panel-title';
   heading.textContent = 'Only the owner can edit this document';
 

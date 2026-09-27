@@ -41,11 +41,17 @@ describe('edit page access', () => {
     expect(saveButton(page)).toBeDefined();
   });
 
+  it('titles the edit form with the page h1', async () => {
+    const page = await editPageAs('alice');
+    expect([...page.querySelectorAll('h1, h2, h3')].map((h) => h.tagName)).toEqual(['H1']);
+    expect(page.querySelector('h1')?.textContent).toBe('Edit Document');
+  });
+
   it('tells another viewer only the owner can edit, with a way back', async () => {
     const page = await editPageAs('bob');
     expect(page.querySelector('#edit-content')).toBeNull();
     expect(saveButton(page)).toBeUndefined();
-    expect(page.querySelector('h2')?.textContent).toBe('Only the owner can edit this document');
+    expect(page.querySelector('h1')?.textContent).toBe('Only the owner can edit this document');
     expect(page.textContent).toContain('This document belongs to alice.');
     const back = page.querySelector<HTMLAnchorElement>('a.btn');
     expect(back?.textContent).toBe('Back to document');

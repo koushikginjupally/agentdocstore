@@ -85,6 +85,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- Every page of the web UI now has one main heading (`h1`), and its headings
+  no longer skip a level. The home, edit and not-found pages had no `h1`, and
+  the Comments and diff headings jumped from `h1` to `h3`, so screen reader
+  users who move by heading got a broken outline. The pages look the same.
 - After `agentdocstore import --force` into a data directory that already had
   documents, search finds those documents again. The archive's search index
   replaced the local one, so they were listed but matched no search. Import

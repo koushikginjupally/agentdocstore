@@ -39,6 +39,20 @@ async function deletableAs(viewer: string | Error, owner: string): Promise<strin
     .map((item) => item.querySelector('.comment-body')?.textContent ?? '');
 }
 
+describe('comment panel heading', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('is an h2, one level under the document title', async () => {
+    vi.spyOn(api, 'getComments').mockResolvedValue([]);
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '';
+    renderCommentPanel('d1', document.body, 'alice');
+    await vi.waitFor(() => expect(api.getComments).toHaveBeenCalled());
+    const headings = [...document.body.querySelectorAll('h1, h2, h3, h4, h5, h6')];
+    expect(headings.map((h) => `${h.tagName} ${h.textContent}`)).toEqual(['H2 Comments']);
+  });
+});
+
 describe('comment Delete button', () => {
   afterEach(() => vi.restoreAllMocks());
 

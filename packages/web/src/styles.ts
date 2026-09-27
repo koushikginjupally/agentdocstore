@@ -544,6 +544,9 @@ textarea {
 }
 .empty-state .icon { margin-bottom: 12px; line-height: 0; }
 .empty-state .state-icon { width: 40px; height: 40px; }
+/* The page heading of an empty state (for example Page Not Found) keeps the
+   size it had as an h2. */
+.empty-state h1 { font-size: 1.5em; }
 
 /* ===== JSON pretty toggle ===== */
 .json-toggle {

@@ -15,6 +15,13 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   document.title = buildTitle();
   container.innerHTML = '';
 
+  // The page's h1, for screen readers: the two panels below are its sections,
+  // and they keep their own look.
+  const pageTitle = document.createElement('h1');
+  pageTitle.className = 'sr-only';
+  pageTitle.textContent = 'Documents';
+  container.appendChild(pageTitle);
+
   // Create form card
   const formCard = document.createElement('div');
   formCard.className = 'card mb-16';

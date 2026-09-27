@@ -34,7 +34,7 @@ export function renderCommentPanel(
   const panel = document.createElement('div');
   panel.className = 'comment-panel';
 
-  const title = document.createElement('h3');
+  const title = document.createElement('h2');
   title.className = 'panel-title';
   title.textContent = 'Comments';
   panel.appendChild(title);

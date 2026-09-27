@@ -58,9 +58,17 @@ describe('comparing two versions', () => {
     [...document.querySelectorAll('button')]
       .find((b) => b.textContent === 'Compare Selected')!
       .click();
-    await vi.waitFor(() => expect(document.querySelector('#diff-output h3')).not.toBeNull());
+    await vi.waitFor(() => expect(document.querySelector('#diff-output h2')).not.toBeNull());
     return document.querySelector<HTMLElement>('#diff-output')!;
   }
+
+  it('puts the diff heading one level under the page h1', async () => {
+    await compare('@@ -1 +1 @@\n-a\n+b\n');
+    expect([...document.querySelectorAll('h1, h2, h3, h4, h5, h6')].map((h) => h.tagName)).toEqual([
+      'H1',
+      'H2',
+    ]);
+  });
 
   it('shows the changes without the file header lines, which are not changes', async () => {
     const output = await compare(

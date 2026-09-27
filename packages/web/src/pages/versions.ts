@@ -167,7 +167,7 @@ async function showDiff(
     const result = await api.getDiff(documentId, from, to);
     container.innerHTML = '';
 
-    const title = document.createElement('h3');
+    const title = document.createElement('h2');
     title.className = 'panel-title';
     title.textContent = `Diff: v${from} → v${to}`;
     container.appendChild(title);
