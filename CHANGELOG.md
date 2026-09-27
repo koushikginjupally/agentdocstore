@@ -10,6 +10,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- In the content box of a markdown document, Ctrl+B and Ctrl+I (Cmd on a Mac)
+  make the selected text bold or italic, or take that off again, on both the
+  create and edit forms. Other languages keep the keys as they were.
 - A document can be read full screen: Full Screen on the document page shows
   it across the whole screen with a readable line length. The arrow, Page and
   Space keys scroll it; Exit Full Screen or Escape returns. The button only

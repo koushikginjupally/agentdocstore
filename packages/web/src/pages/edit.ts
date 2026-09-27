@@ -5,6 +5,7 @@ import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '
 import { buildTitle } from '../constants.js';
 import { expiryField, formatDate, LANGUAGES } from '../dom.js';
 import { contentPreview } from '../preview.js';
+import { addMarkdownShortcuts } from '../markdown-shortcuts.js';
 import { fileLoader } from '../file-load.js';
 import { showToast } from '../toast.js';
 import { showRedactionModal } from '../redaction-modal.js';
@@ -116,6 +117,7 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     contentArea.id = 'edit-content';
     contentArea.value = doc.content;
     contentArea.rows = 20;
+    addMarkdownShortcuts(contentArea, langSelect);
     const preview = contentPreview(contentArea, langSelect);
     const loader = fileLoader({
       contentArea,

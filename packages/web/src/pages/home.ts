@@ -7,6 +7,7 @@ import { expiryField, formatDate, LANGUAGES, markFieldInvalid } from '../dom.js'
 import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
 import { contentPreview } from '../preview.js';
+import { addMarkdownShortcuts } from '../markdown-shortcuts.js';
 import { fileLoader } from '../file-load.js';
 import { takeNewDocumentDraft } from '../new-document-draft.js';
 import { showRedactionModal } from '../redaction-modal.js';
@@ -102,6 +103,7 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   contentArea.id = 'doc-content';
   contentArea.placeholder = 'Write or paste your content here...';
   contentArea.rows = 15;
+  addMarkdownShortcuts(contentArea, langSelect);
   const preview = contentPreview(contentArea, langSelect);
   const loader = fileLoader({
     contentArea,

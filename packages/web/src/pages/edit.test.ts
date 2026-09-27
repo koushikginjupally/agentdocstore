@@ -182,6 +182,15 @@ describe('preview while editing', () => {
     return { page, box, toggle: previewButton(page) };
   }
 
+  it('bolds the selection with Ctrl+B when the document is markdown', async () => {
+    const { box } = await editing('Ship it.', 'markdown');
+    box.setSelectionRange(0, 4);
+    box.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'b', ctrlKey: true, bubbles: true, cancelable: true }),
+    );
+    expect(box.value).toBe('**Ship** it.');
+  });
+
   it('shows the text as the document page will, then the text again', async () => {
     const { page, box, toggle } = await editing('# Plan\n\nShip it.', 'markdown');
     expect(toggle.getAttribute('aria-pressed')).toBe('false');

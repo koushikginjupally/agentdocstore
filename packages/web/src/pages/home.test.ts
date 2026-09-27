@@ -22,6 +22,25 @@ const createButton = (root: HTMLElement): HTMLButtonElement =>
 const headingLevels = (root: ParentNode): number[] =>
   [...root.querySelectorAll('h1, h2, h3, h4, h5, h6')].map((h) => Number(h.tagName[1]));
 
+describe('create form markdown shortcuts', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  it('makes the selection italic with Ctrl+I, markdown being the default language', async () => {
+    const main = await homePage();
+    expect(main.querySelector<HTMLSelectElement>('#doc-language')!.value).toBe('markdown');
+    const box = main.querySelector<HTMLTextAreaElement>('#doc-content')!;
+    box.value = 'Ship it.';
+    box.setSelectionRange(0, 4);
+    box.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'i', ctrlKey: true, bubbles: true, cancelable: true }),
+    );
+    expect(box.value).toBe('*Ship* it.');
+  });
+});
+
 describe('home page search landmark', () => {
   afterEach(() => vi.restoreAllMocks());
 
