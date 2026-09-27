@@ -285,16 +285,20 @@ flowchart BT
   srv -. serves .-> web
 ```
 
-| Package                          | Role                                                        | Published |
-| -------------------------------- | ----------------------------------------------------------- | :-------: |
-| `@agentdocstore/core`            | Domain model, provider SPI, authorization, scanner, diff    |    ✅     |
-| `@agentdocstore/provider-tests`  | Conformance suite for any provider (vitest peer dependency) |    ✅     |
-| `@agentdocstore/provider-fs`     | Filesystem store: atomic writes, lockfile, persisted index  |     —     |
-| `@agentdocstore/provider-memory` | In-memory store for tests and `--ephemeral`                 |     —     |
-| `@agentdocstore/server`          | Hono HTTP server: REST, static UI, MCP-over-HTTP            |     —     |
-| `@agentdocstore/mcp`             | The 16 MCP tools and the stdio transport                    |     —     |
-| `@agentdocstore/web`             | Frontend, vanilla TS, bundled into one file                 |     —     |
-| `@agentdocstore/cli`             | The `agentdocstore` binary and the network fuse             |     —     |
+| Package                          | Role                                                        | npm distribution       |
+| -------------------------------- | ----------------------------------------------------------- | ---------------------- |
+| `@agentdocstore/core`            | Domain model, provider SPI, authorization, scanner, diff    | Planned public package |
+| `@agentdocstore/provider-tests`  | Conformance suite for any provider (vitest peer dependency) | Planned public package |
+| `@agentdocstore/provider-fs`     | Filesystem store: atomic writes, lockfile, persisted index  | Bundled internally     |
+| `@agentdocstore/provider-memory` | In-memory store for tests and `--ephemeral`                 | Bundled internally     |
+| `@agentdocstore/server`          | Hono HTTP server: REST, static UI, MCP-over-HTTP            | Bundled internally     |
+| `@agentdocstore/mcp`             | The 16 MCP tools and the stdio transport                    | Bundled internally     |
+| `@agentdocstore/web`             | Frontend, vanilla TS, bundled into one file                 | Bundled internally     |
+| `@agentdocstore/cli`             | The `agentdocstore` binary and the network fuse             | Bundled internally     |
+
+All eight packages are open source in this repository. The distribution column
+describes npm packaging, not source availability; no AgentDocStore package has
+been published to npm yet.
 
 ### Writing a document
 
@@ -589,9 +593,6 @@ Planned, and good first contributions:
 - [ ] OIDC identity provider
 - [ ] At-rest encryption as a provider wrapper
 - [ ] Prebuilt multi-arch container image
-
-Out of scope by design: telemetry, analytics, and any feature that needs a
-network call to work.
 
 ## Documentation
 
