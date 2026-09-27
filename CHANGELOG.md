@@ -80,6 +80,9 @@ versions may contain breaking changes; they will be called out under
   also HTTP 409) no longer fails silently. The web UI treated every 409 as
   detected credentials, so the edit page showed no dialog and no message; it
   now reports the conflict.
+- Opening a document's edit page as someone other than its owner now says
+  only the owner can edit it, with a link back, instead of showing a form
+  whose Save always failed.
 
 ## [0.1.0] - 2026-09-26
 

@@ -1,5 +1,5 @@
 /** Edit doc page: update content, title, language, visibility. */
-import { api, ApiError, CredentialScanError } from '../api.js';
+import { api, ApiError, CredentialScanError, resolveViewer } from '../api.js';
 import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
 import { navigate, href } from '../router.js';
 import { buildTitle } from '../constants.js';
@@ -11,7 +11,16 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
   container.innerHTML = '<div class="loading-state"><span class="spinner"></span> Loading...</div>';
 
   try {
-    const doc = await api.getDocument(id);
+    const [doc, viewer] = await Promise.all([api.getDocument(id), resolveViewer()]);
+
+    // Only the owner may update (core canWrite), so a form would only fail on
+    // Save. An unknown viewer still gets the form: the server enforces the
+    // rule, and a failed lookup must not tell the real owner they cannot edit.
+    if (viewer !== null && viewer !== '' && viewer !== doc.createdBy) {
+      renderNotOwner(id, doc.title, doc.createdBy, container);
+      return;
+    }
+
     document.title = buildTitle(`Editing: ${doc.title}`);
 
     container.innerHTML = '';
@@ -156,6 +165,33 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
       container.innerHTML = `<div class="empty-state"><div class="icon">${ICON_ERROR}</div><div>Failed to load doc</div></div>`;
     }
   }
+}
+
+/** What a signed-in non-owner sees at /d/:id/edit instead of the form. */
+function renderNotOwner(id: string, title: string, owner: string, container: HTMLElement): void {
+  document.title = buildTitle(title);
+  container.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const heading = document.createElement('h2');
+  heading.className = 'panel-title';
+  heading.textContent = 'Only the owner can edit this document';
+
+  const note = document.createElement('p');
+  note.className = 'text-muted mb-16';
+  note.textContent = `This document belongs to ${owner}.`;
+
+  const back = document.createElement('a');
+  back.className = 'btn';
+  back.href = href(`/d/${id}`);
+  back.textContent = 'Back to document';
+
+  card.appendChild(heading);
+  card.appendChild(note);
+  card.appendChild(back);
+  container.appendChild(card);
 }
 
 async function handleSave(
