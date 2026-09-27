@@ -565,6 +565,12 @@ textarea {
   from { transform: translateY(10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+/* On a phone the bottom of the screen is where the button just tapped (Save,
+   Comment) usually is; put toasts under the sticky header so they never
+   cover it. */
+@media (max-width: 600px) {
+  .toast-container { top: 64px; bottom: auto; left: 12px; right: 12px; }
+}
 
 /* ===== HTML iframe ===== */
 .html-frame {

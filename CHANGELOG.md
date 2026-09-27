@@ -74,6 +74,8 @@ versions may contain breaking changes; they will be called out under
   "wastebasket Delete").
 - On phone-width screens the document action buttons wrap instead of pushing
   "Delete" off the edge of the page.
+- On phone-width screens toasts appear under the header instead of in the
+  bottom corner, where they covered the Save and Cancel buttons.
 - The document page shows Edit and Delete only to the document's owner. Other
   viewers were offered both, and the server rejected them.
 - Web UI error messages now include the server's reason (for example "Title
