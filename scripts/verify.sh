@@ -24,6 +24,17 @@ if [[ ! "$NODE_MAJOR" =~ ^[0-9]+$ ]] || (( NODE_MAJOR < 20 )); then
   exit 1
 fi
 
+# Tools the checks call directly. Missing ones used to surface as unrelated
+# check failures (for example S11 reporting mode "missing"), so name them here.
+MISSING_TOOLS=()
+for tool in curl jq; do
+  command -v "$tool" &>/dev/null || MISSING_TOOLS+=("$tool")
+done
+if (( ${#MISSING_TOOLS[@]} > 0 )); then
+  echo "FATAL: npm run verify needs: ${MISSING_TOOLS[*]} (install and re-run)" >&2
+  exit 1
+fi
+
 PASS=0
 FAIL=0
 SKIP=0
@@ -59,9 +70,12 @@ run_with_timeout() {
 }
 
 # Port-picking helper.
+# Uses node (already required above) rather than python3, which is not a
+# declared prerequisite: without it every server check failed as "could not
+# pick a free port".
 pick_port() {
   local port
-  port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()' 2>/dev/null)
+  port=$(node -e 'const s=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})' 2>/dev/null)
   echo "${port:-0}"
 }
 

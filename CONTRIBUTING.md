@@ -4,7 +4,8 @@
 
 - **Node.js >= 20** (`.nvmrc` recommends 24; any 20 or newer works).
 - npm (ships with Node).
-- Optional: `docker` for container builds; `jq` for richer verify output.
+- For `npm run verify`: `curl` and `jq`. Optional: `docker` for the container
+  and air-gap checks, which skip without it.
 
 By participating, you agree to the [Code of Conduct](CODE_OF_CONDUCT.md).
 Report vulnerabilities through the private process in [SECURITY.md](SECURITY.md),
