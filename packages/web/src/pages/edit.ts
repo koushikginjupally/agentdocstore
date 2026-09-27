@@ -5,6 +5,7 @@ import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '
 import { buildTitle } from '../constants.js';
 import { expiryField, formatDate, LANGUAGES } from '../dom.js';
 import { contentPreview } from '../preview.js';
+import { fileLoader } from '../file-load.js';
 import { showToast } from '../toast.js';
 import { showRedactionModal } from '../redaction-modal.js';
 
@@ -116,12 +117,25 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     contentArea.value = doc.content;
     contentArea.rows = 20;
     const preview = contentPreview(contentArea, langSelect);
+    const loader = fileLoader({
+      contentArea,
+      titleInput,
+      languageSelect: langSelect,
+      // Show what was loaded, not a preview of what was there before.
+      onLoaded: () => {
+        if (preview.toggle.getAttribute('aria-pressed') === 'true') preview.toggle.click();
+      },
+    });
+    const contentTools = document.createElement('div');
+    contentTools.className = 'flex-row';
+    contentTools.append(loader.button, preview.toggle);
     const contentHeader = document.createElement('div');
     contentHeader.className = 'flex-between';
-    contentHeader.append(contentLabel, preview.toggle);
+    contentHeader.append(contentLabel, contentTools);
     contentGroup.appendChild(contentHeader);
     contentGroup.appendChild(contentArea);
     contentGroup.appendChild(preview.panel);
+    contentGroup.appendChild(loader.input);
     card.appendChild(contentGroup);
 
     // Edit message

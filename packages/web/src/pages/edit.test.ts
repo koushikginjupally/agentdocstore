@@ -217,3 +217,26 @@ describe('preview while editing', () => {
     expect(hasUnsavedChanges()).toBe(true);
   });
 });
+
+describe('loading a file on the edit page', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  it('replaces the content after asking, and keeps the title', async () => {
+    const page = await editPageAs('alice');
+    const ask = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const input = page.querySelector<HTMLInputElement>('input[type="file"]')!;
+    Object.defineProperty(input, 'files', {
+      value: [new File(['print("v2")\n'], 'script.py')],
+      configurable: true,
+    });
+    input.dispatchEvent(new Event('change'));
+    const content = page.querySelector<HTMLTextAreaElement>('#edit-content')!;
+    await vi.waitFor(() => expect(content.value).toBe('print("v2")\n'));
+    expect(ask).toHaveBeenCalled();
+    expect(page.querySelector<HTMLInputElement>('#edit-title')!.value).toBe('Shared notes');
+    expect(page.querySelector<HTMLSelectElement>('#edit-language')!.value).toBe('python');
+  });
+});

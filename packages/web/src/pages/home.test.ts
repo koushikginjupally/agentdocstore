@@ -3,6 +3,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { api, type ApiDocument } from '../api.js';
 import { emptyListMessage } from '../constants.js';
 import { offerNewDocumentDraft, takeNewDocumentDraft } from '../new-document-draft.js';
+import * as toast from '../toast.js';
 import { hasUnsavedChanges, setUnsavedChangesCheck } from '../router.js';
 import { renderHomePage } from './home.js';
 
@@ -326,5 +327,78 @@ describe('create form from a copy', () => {
     expect(page.querySelector<HTMLInputElement>('#doc-title')!.value).toBe('');
     expect(page.textContent).not.toContain('This copy is not saved yet.');
     expect(hasUnsavedChanges()).toBe(false);
+  });
+});
+
+describe('loading a file into the create form', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  function choose(page: HTMLElement, file: File): void {
+    const input = page.querySelector<HTMLInputElement>('input[type="file"]')!;
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    input.dispatchEvent(new Event('change'));
+  }
+
+  const notes = (): File => new File(['# Release notes\n\n- Faster search\n'], 'Release notes.md');
+
+  it('is started from a labelled button', async () => {
+    const page = await homePage();
+    const button = [...page.querySelectorAll('button')].find((b) => b.textContent === 'Load File');
+    expect(button).toBeDefined();
+    expect(page.querySelector('input[type="file"]')?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('fills the content, the title and the language from the file', async () => {
+    const page = await homePage();
+    choose(page, notes());
+    const content = page.querySelector<HTMLTextAreaElement>('#doc-content')!;
+    await vi.waitFor(() => expect(content.value).toBe('# Release notes\n\n- Faster search\n'));
+    expect(page.querySelector<HTMLInputElement>('#doc-title')!.value).toBe('Release notes');
+    expect(page.querySelector<HTMLSelectElement>('#doc-language')!.value).toBe('markdown');
+    expect(hasUnsavedChanges()).toBe(true);
+  });
+
+  it('keeps a title that was already typed', async () => {
+    const page = await homePage();
+    page.querySelector<HTMLInputElement>('#doc-title')!.value = 'My title';
+    choose(page, notes());
+    await vi.waitFor(() =>
+      expect(page.querySelector<HTMLTextAreaElement>('#doc-content')!.value).not.toBe(''),
+    );
+    expect(page.querySelector<HTMLInputElement>('#doc-title')!.value).toBe('My title');
+  });
+
+  it('asks before replacing text already in the box, and keeps it when declined', async () => {
+    const page = await homePage();
+    const content = page.querySelector<HTMLTextAreaElement>('#doc-content')!;
+    content.value = 'typed by hand';
+    const ask = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    choose(page, notes());
+    await vi.waitFor(() => expect(ask).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(content.value).toBe('typed by hand');
+  });
+
+  it('loads a file dropped on the text box', async () => {
+    const page = await homePage();
+    const content = page.querySelector<HTMLTextAreaElement>('#doc-content')!;
+    const drop = new Event('drop', { bubbles: true, cancelable: true });
+    Object.defineProperty(drop, 'dataTransfer', { value: { files: [notes()] } });
+    content.dispatchEvent(drop);
+    expect(drop.defaultPrevented).toBe(true);
+    await vi.waitFor(() => expect(content.value).toContain('Faster search'));
+  });
+
+  it('says why a file cannot be loaded, and changes nothing', async () => {
+    const page = await homePage();
+    const shown = vi.spyOn(toast, 'showToast');
+    choose(page, new File([new Uint8Array([0x00, 0x01])], 'logo.png'));
+    await vi.waitFor(() =>
+      expect(shown).toHaveBeenCalledWith('logo.png does not look like a text file.', 'error'),
+    );
+    expect(page.querySelector<HTMLTextAreaElement>('#doc-content')!.value).toBe('');
   });
 });

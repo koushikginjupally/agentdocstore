@@ -7,6 +7,7 @@ import { expiryField, formatDate, LANGUAGES, markFieldInvalid } from '../dom.js'
 import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
 import { contentPreview } from '../preview.js';
+import { fileLoader } from '../file-load.js';
 import { takeNewDocumentDraft } from '../new-document-draft.js';
 import { showRedactionModal } from '../redaction-modal.js';
 
@@ -95,12 +96,25 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   contentArea.placeholder = 'Write or paste your content here...';
   contentArea.rows = 15;
   const preview = contentPreview(contentArea, langSelect);
+  const loader = fileLoader({
+    contentArea,
+    titleInput,
+    languageSelect: langSelect,
+    // Show what was loaded, not a preview of what was there before.
+    onLoaded: () => {
+      if (preview.toggle.getAttribute('aria-pressed') === 'true') preview.toggle.click();
+    },
+  });
+  const contentTools = document.createElement('div');
+  contentTools.className = 'flex-row';
+  contentTools.append(loader.button, preview.toggle);
   const contentHeader = document.createElement('div');
   contentHeader.className = 'flex-between';
-  contentHeader.append(contentLabel, preview.toggle);
+  contentHeader.append(contentLabel, contentTools);
   contentGroup.appendChild(contentHeader);
   contentGroup.appendChild(contentArea);
   contentGroup.appendChild(preview.panel);
+  contentGroup.appendChild(loader.input);
   formCard.appendChild(contentGroup);
 
   // Submit button

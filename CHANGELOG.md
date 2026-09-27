@@ -10,6 +10,11 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- The create and edit forms can load a text file, with a Load File button or
+  by dropping the file on the text box. It is read in the browser. Its name
+  fills an empty title and picks the language from the extension; replacing
+  text already in the box asks first; a file over the content limit, or one
+  that is not text, is refused with the reason.
 - A Make a Copy button on the document page opens the create form filled with
   the shown version — title "Copy of …", language, visibility (a private
   document's copy stays private) and content. Nothing is saved until the copy
