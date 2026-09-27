@@ -70,6 +70,12 @@ export const BUTTON_ICONS = {
     '<rect x="8" y="8" width="12" height="12" rx="2"/>' +
       '<path d="M4 16V6a2 2 0 0 1 2-2h10"/><path d="M14 11v6M11 14h6"/>',
   ),
+  expand: buttonIcon(
+    '<path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/>',
+  ),
+  collapse: buttonIcon(
+    '<path d="M9 4v5H4"/><path d="M15 4v5h5"/><path d="M9 20v-5H4"/><path d="M15 20v-5h5"/>',
+  ),
 } as const;
 
 export type ButtonIcon = keyof typeof BUTTON_ICONS;

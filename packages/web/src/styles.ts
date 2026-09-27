@@ -231,6 +231,28 @@ textarea {
   box-shadow: var(--shadow);
 }
 
+/* ===== Full screen reading ===== */
+/* The document card fills the screen and scrolls; its text keeps a readable
+   width. The exit bar stays at the top and only shows in full screen. */
+.card:fullscreen {
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 16px max(20px, calc((100% - 960px) / 2)) 48px;
+  background: var(--bg-primary);
+}
+.fullscreen-bar { display: none; }
+.card:fullscreen > .fullscreen-bar {
+  display: flex;
+  justify-content: flex-end;
+  position: sticky;
+  top: 0;
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+.card:fullscreen > .fullscreen-bar .btn { pointer-events: auto; }
+
 .panel-title {
   font-size: 1.1rem;
   font-weight: 600;

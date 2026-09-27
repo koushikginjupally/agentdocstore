@@ -57,6 +57,27 @@ describe('view page document actions', () => {
     ]);
   });
 
+  it('offers Full Screen after Download where the browser can show it', async () => {
+    Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+      configurable: true,
+      value: () => Promise.resolve(),
+    });
+    try {
+      expect(await actionsAs('bob')).toEqual([
+        'Copy Link',
+        'Copy Raw',
+        'Download',
+        'Full Screen',
+        'Make a Copy',
+        'Versions',
+      ]);
+    } finally {
+      delete (document as unknown as Record<string, unknown>)['fullscreenEnabled'];
+      delete (HTMLElement.prototype as unknown as Record<string, unknown>)['requestFullscreen'];
+    }
+  });
+
   it('hides Edit and Delete when the viewer is unknown', async () => {
     expect(await actionsAs(new Error('offline'))).toEqual([
       'Copy Link',

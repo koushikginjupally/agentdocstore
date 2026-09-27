@@ -4,6 +4,7 @@ import { ICON_ERROR, ICON_SEARCH, iconLabelHtml } from '../icons.js';
 import { href, navigate } from '../router.js';
 import { buildTitle } from '../constants.js';
 import { renderContent } from '../render.js';
+import { fullScreenButton } from '../fullscreen.js';
 import { formatDate, copyToClipboard, downloadFileName, downloadText, onClick } from '../dom.js';
 import { showToast } from '../toast.js';
 import { renderCommentPanel } from '../comments.js';
@@ -190,6 +191,8 @@ export async function renderViewPage(
     contentDiv.className = 'card';
     container.appendChild(contentDiv);
     await renderContent(doc.language, doc.content, contentDiv);
+    const fullScreen = fullScreenButton(contentDiv);
+    if (fullScreen !== null) actions.insertBefore(fullScreen, makeCopyBtn);
 
     // Comment panel
     if (!isOldVersion) renderCommentPanel(id, container, doc.createdBy, viewerLookup);

@@ -86,6 +86,26 @@ describe('long unbroken words', () => {
   );
 });
 
+describe('full screen reading', () => {
+  const ruleFor = (selector: string): CSSStyleRule | undefined => {
+    injectStyles();
+    const sheet = document.querySelector('style')?.sheet;
+    return Array.from(sheet?.cssRules ?? []).find(
+      (r): r is CSSStyleRule => r instanceof CSSStyleRule && r.selectorText === selector,
+    );
+  };
+
+  it('hides the exit bar outside full screen', () => {
+    expect(ruleFor('.fullscreen-bar')?.style.display).toBe('none');
+  });
+
+  it('lets the full-screen document scroll, on the theme background', () => {
+    const rule = ruleFor('.card:fullscreen');
+    expect(rule?.style.overflow).toBe('auto');
+    expect(rule?.style.getPropertyValue('background')).toBe('var(--bg-primary)');
+  });
+});
+
 describe('toggle buttons', () => {
   it('look pressed while on, in theme colours', () => {
     injectStyles();

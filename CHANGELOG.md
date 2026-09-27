@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- A document can be read full screen: Full Screen on the document page shows
+  it across the whole screen with a readable line length. The arrow, Page and
+  Space keys scroll it; Exit Full Screen or Escape returns. The button only
+  appears in browsers that can do this (not iPhone Safari).
 - MCP `list_documents` takes a `query` and then searches, like the REST API's
   `?query=`: `PUBLIC` documents and the caller's own `PRIVATE` ones, best
   match first, with `total` and a `nextCursor` for the next page. Agents
