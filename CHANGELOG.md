@@ -85,6 +85,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- A data directory restored with `agentdocstore import` now starts. An export
+  taken while the server ran included its lock (`.agentdocstore.lock/`), so
+  the restored copy failed with "already locked". Exports now leave the lock
+  out, and imports skip one found in an older archive.
 - `agentdocstore mcp` now shuts down cleanly when its MCP client disconnects
   (closes the server's stdin): it finishes the requests it has already
   received, then releases the data directory. Before, it exited without

@@ -34,8 +34,9 @@ The filesystem provider stores all data under a single directory (default:
 The data directory is self-contained. To back up:
 
 ```bash
-# Stop the server first (or accept a point-in-time snapshot)
-tar czf agentdocstore-backup-$(date +%Y%m%d).tar.gz ~/.agentdocstore/data
+# Stop the server first (or accept a point-in-time snapshot). Leave out the
+# running instance's lock, or the restored copy will report "already locked".
+tar czf agentdocstore-backup-$(date +%Y%m%d).tar.gz --exclude=.agentdocstore.lock ~/.agentdocstore/data
 ```
 
 To restore:
@@ -58,6 +59,9 @@ npx agentdocstore export backup.tgz
 # Import into a new data directory
 npx agentdocstore import backup.tgz --data /new/path
 ```
+
+Neither carries the instance lock (`.agentdocstore.lock/`), so a copy restored
+from an export taken while the server was running starts normally.
 
 ## Runtime modes
 

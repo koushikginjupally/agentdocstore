@@ -30,6 +30,9 @@ export interface BootLock {
   release(): Promise<void>;
 }
 
+/** Name of the boot lock directory inside a data dir. */
+export const BOOT_LOCK_DIR = '.agentdocstore.lock';
+
 /**
  * Acquire an advisory lock on `dataDir` by atomically creating a lock
  * directory. `mkdir` is atomic and fails with EEXIST if the directory already
@@ -39,7 +42,7 @@ export interface BootLock {
  */
 export async function acquireBootLock(dataDir: string): Promise<BootLock> {
   await fs.mkdir(dataDir, { recursive: true });
-  const lockDir = path.join(dataDir, '.agentdocstore.lock');
+  const lockDir = path.join(dataDir, BOOT_LOCK_DIR);
   try {
     await fs.mkdir(lockDir);
   } catch (err) {
