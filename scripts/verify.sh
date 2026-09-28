@@ -112,18 +112,20 @@ if [[ "$S1_STATUS" == "PASS" ]]; then
 fi
 
 if [[ "$S1_STATUS" == "PASS" ]]; then
-  ROOT_CLI=$(node -e "const p=require('./package.json'); process.stdout.write(p.bin?.agentdocstore ?? '')")
-  if [[ "$ROOT_CLI" != "./packages/cli/dist/index.js" ]]; then
+  # The `agentdocstore` command comes from the CLI package, whose bin is the
+  # bundle the build makes; `npx agentdocstore` in a clone must run it.
+  CLI_BIN=$(node -e "const p=require('./packages/cli/package.json'); process.stdout.write(p.bin?.agentdocstore ?? '')")
+  if [[ "$CLI_BIN" != "./bundle/index.js" ]]; then
     S1_STATUS="FAIL"
-    S1_DETAIL="$S1_DETAIL, root agentdocstore bin mapping missing"
-  elif [[ ! -x "$REPO_ROOT/${ROOT_CLI#./}" ]]; then
+    S1_DETAIL="$S1_DETAIL, agentdocstore bin mapping missing from packages/cli/package.json"
+  elif [[ ! -x "$REPO_ROOT/packages/cli/${CLI_BIN#./}" ]]; then
     S1_STATUS="FAIL"
-    S1_DETAIL="$S1_DETAIL, root CLI target is not executable"
+    S1_DETAIL="$S1_DETAIL, CLI bundle is not executable"
   elif npx --no-install agentdocstore --version >/dev/null 2>&1; then
-    S1_DETAIL="$S1_DETAIL, root npx CLI OK"
+    S1_DETAIL="$S1_DETAIL, npx CLI OK"
   else
     S1_STATUS="FAIL"
-    S1_DETAIL="$S1_DETAIL, root npx CLI FAILED"
+    S1_DETAIL="$S1_DETAIL, npx CLI FAILED"
   fi
 fi
 
