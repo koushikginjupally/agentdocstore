@@ -1,6 +1,6 @@
 {
   "name": "agentdocstore",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Offline-first, self-hosted store for the documents AI agents write: a web UI, a REST API and an MCP server over one versioned store.",
   "homepage": "https://github.com/koushikginjupally/agentdocstore#readme",
   "bugs": {
@@ -45,7 +45,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@agentdocstore/core": "^0.2.1",
+    "@agentdocstore/core": "^0.3.0",
     "@hono/node-server": "^1.13.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "hono": "^4.6.0",

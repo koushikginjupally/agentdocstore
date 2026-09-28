@@ -8,9 +8,12 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-28
+
 ### Added
 
-- The CLI is ready to publish on npm as `agentdocstore`. `npm run build` now
+- The CLI is on npm as `agentdocstore`, so `npx agentdocstore serve` and the MCP
+  configs in the README and MCP guide work without a clone. `npm run build`
   bundles it, with the server, the MCP tools and the built-in storage
   providers, into `packages/cli/bundle/`, beside a copy of the web UI. The
   build fails if the bundle imports a package the CLI does not declare, or the
@@ -24,6 +27,9 @@ versions may contain breaking changes; they will be called out under
   the private root package `agentdocstore-monorepo`.
 - `serve` looks for the web UI beside the running CLI before looking in
   `packages/web/dist/`.
+- The Quickstart and the MCP guide start from the npm package. The generic
+  stdio MCP config runs `agentdocstore mcp` instead of the in-memory test entry
+  point.
 
 ## [0.2.1] - 2026-09-28
 
@@ -377,7 +383,8 @@ First public release.
 - `trusted-header` mode is tested with synthetic headers, not against a real
   reverse proxy.
 
-[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/koushikginjupally/agentdocstore/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/koushikginjupally/agentdocstore/releases/tag/v0.1.0

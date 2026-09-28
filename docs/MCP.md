@@ -19,6 +19,11 @@ npx agentdocstore mcp --ephemeral           # throwaway in-memory store
 npx agentdocstore mcp --provider @acme/agentdocstore-provider-pg --networked
 ```
 
+These run the `agentdocstore` package from npm. On a machine without network
+access, install it once with `npm install -g agentdocstore` and drop the `npx`.
+A provider such as `@acme/agentdocstore-provider-pg` is loaded from the
+directory you run the command in, so install it there.
+
 Identity defaults to the **OS login**, matching what `single-user` REST resolves
 to, so a document created here is owned by the same user the web UI shows on the same
 data directory.
@@ -65,7 +70,7 @@ to initialize a new one.
   "mcpServers": {
     "agentdocstore": {
       "command": "npx",
-      "args": ["agentdocstore", "mcp"]
+      "args": ["-y", "agentdocstore", "mcp"]
     }
   }
 }
@@ -80,7 +85,7 @@ to initialize a new one.
   "mcpServers": {
     "agentdocstore": {
       "command": "npx",
-      "args": ["agentdocstore", "mcp"]
+      "args": ["-y", "agentdocstore", "mcp"]
     }
   }
 }
@@ -95,7 +100,7 @@ to initialize a new one.
   "mcpServers": {
     "agentdocstore": {
       "command": "npx",
-      "args": ["agentdocstore", "mcp"]
+      "args": ["-y", "agentdocstore", "mcp"]
     }
   }
 }
@@ -105,8 +110,8 @@ to initialize a new one.
 
 ```json
 {
-  "command": "node",
-  "args": ["packages/mcp/dist/stdio.js", "--user", "your-name"]
+  "command": "npx",
+  "args": ["-y", "agentdocstore", "mcp", "--user", "your-name"]
 }
 ```
 

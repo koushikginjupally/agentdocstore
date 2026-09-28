@@ -84,7 +84,7 @@ export function createMcpServer(opts: McpServerOptions): McpServer {
   const { provider, getViewer } = opts;
 
   const mcp = new McpServer(
-    { name: 'agentdocstore', version: '0.2.1' },
+    { name: 'agentdocstore', version: '0.3.0' },
     { capabilities: { tools: {} } },
   );
 

@@ -133,16 +133,24 @@ AgentDocStore is the local alternative:
 
 ## Quickstart
 
-**Prerequisites:** Node.js 20 or newer (`.nvmrc` pins 24). Docker is optional.
+**Prerequisites:** Node.js 20 or newer. Docker is optional.
+
+```bash
+npx agentdocstore serve                 # persistent, stored in ~/.agentdocstore/data
+npx agentdocstore serve --ephemeral     # in-memory, gone on exit
+```
+
+`npx` fetches the `agentdocstore` package from npm when it starts. On a machine
+without network access, install it once with `npm install -g agentdocstore` and
+run `agentdocstore serve`. To work on AgentDocStore itself, build it from a clone
+(`.nvmrc` pins Node 24):
 
 ```bash
 git clone https://github.com/koushikginjupally/agentdocstore.git
 cd agentdocstore
 npm ci
 npm run build
-
-npx agentdocstore serve                 # persistent, stored in ~/.agentdocstore/data
-npx agentdocstore serve --ephemeral     # in-memory, gone on exit
+npx agentdocstore serve                 # runs this clone's build
 ```
 
 Open <http://127.0.0.1:8787>. Or use the API directly:
@@ -179,11 +187,15 @@ server, no port, full access to the same data directory the web UI uses.
   "mcpServers": {
     "agentdocstore": {
       "command": "npx",
-      "args": ["agentdocstore", "mcp"]
+      "args": ["-y", "agentdocstore", "mcp"]
     }
   }
 }
 ```
+
+With a global install (`npm install -g agentdocstore`), use
+`"command": "agentdocstore"` and `"args": ["mcp"]` instead: it starts faster and
+needs no network.
 
 | Client         | Config file                                                       |
 | -------------- | ----------------------------------------------------------------- |
@@ -297,14 +309,12 @@ flowchart BT
 | `@agentdocstore/server`          | Hono HTTP server: REST, static UI, MCP-over-HTTP            | Ships inside `agentdocstore` |
 | `@agentdocstore/mcp`             | The 16 MCP tools and the stdio transport                    | Ships inside `agentdocstore` |
 | `@agentdocstore/web`             | Frontend, vanilla TS, bundled into one file                 | Ships inside `agentdocstore` |
-| `agentdocstore`                  | The `agentdocstore` binary and the network fuse             | Planned public package       |
+| `agentdocstore`                  | The `agentdocstore` binary and the network fuse             | Published on npm             |
 
 All eight packages are open source in this repository. The distribution column
 describes npm packaging, not source availability. The CLI package,
 `agentdocstore`, carries the server, the MCP tools, both built-in providers and
-the web UI inside it. Only `@agentdocstore/core` and
-`@agentdocstore/provider-tests` are on npm so far; until `agentdocstore` is, the
-rest run from a clone of this repository.
+the web UI inside it, so those five are not published on their own.
 
 ### Writing a document
 
@@ -587,7 +597,7 @@ a change.
 
 ## Project status and roadmap
 
-AgentDocStore is **v0.2.1** — feature-complete for single-machine and small-team
+AgentDocStore is **v0.3.0** — feature-complete for single-machine and small-team
 use, with a stable provider SPI. See [CHANGELOG.md](CHANGELOG.md).
 
 Planned, and good first contributions:
