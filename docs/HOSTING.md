@@ -26,8 +26,10 @@ The filesystem provider stores all data under a single directory (default:
   missing or corrupt).
 - **.agentdocstore.lock/** — advisory lock directory (prevents two instances from
   sharing one data dir). It is removed when the instance stops, including when
-  an MCP client disconnects from `agentdocstore mcp`. After a hard kill (for
-  example `kill -9`) it stays; remove it by hand once no instance is running.
+  an MCP client disconnects from `agentdocstore mcp` and when `serve` fails to
+  start (for example because the port is already in use). After a hard kill
+  (for example `kill -9`) it stays; remove it by hand once no instance is
+  running.
 
 ### Backup
 

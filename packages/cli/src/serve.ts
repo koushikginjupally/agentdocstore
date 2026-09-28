@@ -2,7 +2,7 @@
  * `agentdocstore serve` — start the HTTP server with static web UI + MCP handler.
  */
 
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -66,12 +66,18 @@ function findWebDist(): string {
 // serve command
 // ---------------------------------------------------------------------------
 
-export async function runServe(config: ResolvedConfig): Promise<void> {
+export async function runServe(config: ResolvedConfig): Promise<ServerHandle> {
   // Offline mode: arm the fuse BEFORE constructing anything, so a provider or
   // dependency that tries to reach the network during startup is caught too.
   if (config.mode === 'offline') {
     installNetworkFuse();
   }
+
+  // Build the auth mode, then ONE identity provider shared by REST and /mcp.
+  // This comes before the store is opened: a missing or bad tokens file is a
+  // configuration error and should not touch, or lock, the data dir.
+  const auth: ServerAuthMode = buildAuthMode(config);
+  const identity: IdentityProvider = resolveIdentityProvider(auth);
 
   // Load the configured provider. This also enforces the mode policy (loopback
   // bind, local-only store) and aborts startup on a violation.
@@ -92,18 +98,24 @@ export async function runServe(config: ResolvedConfig): Promise<void> {
     console.log(`Provider: ${loaded.name} (${loaded.module})`);
   }
 
-  // Build the auth mode, then ONE identity provider shared by REST and /mcp.
-  const auth: ServerAuthMode = buildAuthMode(config);
-  const identity: IdentityProvider = resolveIdentityProvider(auth);
-
-  const handle: ServerHandle = startServer({
-    provider,
-    auth,
-    port: config.port,
-    host: config.host,
-    mode: config.mode,
-    providerName: loaded.name,
-  });
+  // From here the provider holds the data dir (the fs provider's lock), so a
+  // start that fails must close it again. Otherwise every later start reports
+  // "already locked" until someone removes the lock by hand.
+  let handle: ServerHandle;
+  try {
+    handle = startServer({
+      provider,
+      auth,
+      port: config.port,
+      host: config.host,
+      mode: config.mode,
+      providerName: loaded.name,
+    });
+  } catch (err) {
+    // listen() refuses a port out of range synchronously.
+    await provider.close().catch(() => undefined);
+    throw err;
+  }
 
   // Mount MCP-over-HTTP on /mcp, authenticating every request through the same
   // identity provider the REST API uses. Anything else would make /mcp a way
@@ -187,6 +199,14 @@ export async function runServe(config: ResolvedConfig): Promise<void> {
     }
   });
 
+  try {
+    await whenListening(handle.server, config.host, config.port);
+  } catch (err) {
+    // handle.close() also stops the expiry sweep and closes the provider.
+    await handle.close().catch(() => undefined);
+    throw err;
+  }
+
   console.log(describeMode(config, loaded.name));
   console.log(`AgentDocStore ready at http://${config.host}:${config.port}`);
 
@@ -213,11 +233,50 @@ export async function runServe(config: ResolvedConfig): Promise<void> {
   };
   process.on('SIGINT', () => void shutdown('SIGINT'));
   process.on('SIGTERM', () => void shutdown('SIGTERM'));
+  return handle;
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Resolve once `server` is listening; reject with a plain message when it
+ * cannot bind. listen() reports a busy or forbidden port as an 'error' event,
+ * and with no listener for it the process crashed with a stack trace, after
+ * already saying it was ready.
+ */
+function whenListening(server: Server, host: string, port: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (server.listening) {
+      resolve();
+      return;
+    }
+    const onListening = (): void => {
+      server.off('error', onError);
+      resolve();
+    };
+    const onError = (err: NodeJS.ErrnoException): void => {
+      server.off('listening', onListening);
+      reject(new Error(`Cannot listen on ${host}:${port}: ${listenFailure(err)}`));
+    };
+    server.once('listening', onListening);
+    server.once('error', onError);
+  });
+}
+
+function listenFailure(err: NodeJS.ErrnoException): string {
+  switch (err.code) {
+    case 'EADDRINUSE':
+      return 'the port is already in use (EADDRINUSE). Stop the other process, or choose another port with --port.';
+    case 'EACCES':
+      return 'permission denied (EACCES). Ports below 1024 usually need extra privileges; choose another port with --port.';
+    case 'EADDRNOTAVAIL':
+      return 'that address does not belong to this machine (EADDRNOTAVAIL). Check --host.';
+    default:
+      return err.message;
+  }
+}
 
 /**
  * One line the operator can read to know exactly what they are running. Worth

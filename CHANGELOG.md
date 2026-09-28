@@ -96,6 +96,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- `agentdocstore serve` no longer leaves the data directory locked when it
+  cannot start: a port already in use, a port out of range, or token auth
+  without a tokens file. A busy port gets a one-line error instead of a crash,
+  and "ready" is printed only once the port is open.
 - A version number in `?version=`, or a diff's `from` and `to`, must be a
   whole number: `1.5` or `2abc` get `400` instead of quietly answering with
   version 1 or 2.
