@@ -1,11 +1,8 @@
 {
-  "name": "agentdocstore",
+  "name": "agentdocstore-monorepo",
   "version": "0.2.1",
   "private": true,
   "type": "module",
-  "bin": {
-    "agentdocstore": "./packages/cli/dist/index.js"
-  },
   "description": "Offline-first, self-hostable artifact sharing with a web UI, REST API, and MCP server.",
   "keywords": [
     "artifact-sharing",
@@ -32,9 +29,10 @@
   ],
   "scripts": {
     "clean": "node scripts/clean.mjs",
-    "build": "npm run clean && tsc -b && node scripts/finalize-build.mjs && npm run build --workspace @agentdocstore/web",
+    "build": "npm run clean && tsc -b && node scripts/finalize-build.mjs && npm run build --workspace @agentdocstore/web && node scripts/bundle-cli.mjs",
     "typecheck": "tsc -b",
     "test": "vitest run",
+    "smoke:cli": "node scripts/smoke-cli-package.mjs",
     "docs:check": "node scripts/check-docs.mjs",
     "lint": "eslint . && prettier --check .",
     "lint:fix": "eslint . --fix && prettier --write .",

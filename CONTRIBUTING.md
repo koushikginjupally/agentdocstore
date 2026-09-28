@@ -59,7 +59,7 @@ web   (standalone esbuild bundle, no server-side import)
 
 ```bash
 npm ci                # install (use ci for reproducible builds)
-npm run build         # clean output, type-check/compile packages, bundle the web UI
+npm run build         # clean output, type-check/compile packages, bundle the web UI and the CLI
 ```
 
 TypeScript is configured as a **solution file** (`tsconfig.json` at root with
@@ -71,6 +71,19 @@ The `web` package has its own esbuild step (`node packages/web/build.mjs`) that
 bundles the frontend into `packages/web/dist/`. Its normal build is minified and
 omits source maps; use `npm run build:dev --workspace @agentdocstore/web` for an
 unminified bundle with source maps.
+
+The last build step, `scripts/bundle-cli.mjs`, bundles the CLI with the server,
+the MCP tools and both built-in providers into `packages/cli/bundle/`, and copies
+the web UI beside it. That folder is what the `agentdocstore` npm package ships.
+`@agentdocstore/core` stays a separate dependency: the server recognises core's
+errors with `instanceof`, and a third-party provider throws them from its own
+import of core. The step fails if the bundle imports a package that
+`packages/cli/package.json` does not list in `dependencies`, or if that list has
+a package the bundle never imports.
+
+`npm run smoke:cli` packs core and the CLI, installs both in an empty folder
+outside the repository, and checks `--version`, `serve` and `mcp`. It needs
+network access for the third-party dependencies; CI runs it on Node 24.
 
 ## Test
 

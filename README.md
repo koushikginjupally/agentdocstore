@@ -288,21 +288,23 @@ flowchart BT
   srv -. serves .-> web
 ```
 
-| Package                          | Role                                                        | npm distribution   |
-| -------------------------------- | ----------------------------------------------------------- | ------------------ |
-| `@agentdocstore/core`            | Domain model, provider SPI, authorization, scanner, diff    | Published on npm   |
-| `@agentdocstore/provider-tests`  | Conformance suite for any provider (vitest peer dependency) | Published on npm   |
-| `@agentdocstore/provider-fs`     | Filesystem store: atomic writes, lockfile, persisted index  | Bundled internally |
-| `@agentdocstore/provider-memory` | In-memory store for tests and `--ephemeral`                 | Bundled internally |
-| `@agentdocstore/server`          | Hono HTTP server: REST, static UI, MCP-over-HTTP            | Bundled internally |
-| `@agentdocstore/mcp`             | The 16 MCP tools and the stdio transport                    | Bundled internally |
-| `@agentdocstore/web`             | Frontend, vanilla TS, bundled into one file                 | Bundled internally |
-| `@agentdocstore/cli`             | The `agentdocstore` binary and the network fuse             | Bundled internally |
+| Package                          | Role                                                        | npm distribution             |
+| -------------------------------- | ----------------------------------------------------------- | ---------------------------- |
+| `@agentdocstore/core`            | Domain model, provider SPI, authorization, scanner, diff    | Published on npm             |
+| `@agentdocstore/provider-tests`  | Conformance suite for any provider (vitest peer dependency) | Published on npm             |
+| `@agentdocstore/provider-fs`     | Filesystem store: atomic writes, lockfile, persisted index  | Ships inside `agentdocstore` |
+| `@agentdocstore/provider-memory` | In-memory store for tests and `--ephemeral`                 | Ships inside `agentdocstore` |
+| `@agentdocstore/server`          | Hono HTTP server: REST, static UI, MCP-over-HTTP            | Ships inside `agentdocstore` |
+| `@agentdocstore/mcp`             | The 16 MCP tools and the stdio transport                    | Ships inside `agentdocstore` |
+| `@agentdocstore/web`             | Frontend, vanilla TS, bundled into one file                 | Ships inside `agentdocstore` |
+| `agentdocstore`                  | The `agentdocstore` binary and the network fuse             | Planned public package       |
 
 All eight packages are open source in this repository. The distribution column
-describes npm packaging, not source availability. Only `@agentdocstore/core` and
-`@agentdocstore/provider-tests` are on npm so far; the rest run from a clone of
-this repository.
+describes npm packaging, not source availability. The CLI package,
+`agentdocstore`, carries the server, the MCP tools, both built-in providers and
+the web UI inside it. Only `@agentdocstore/core` and
+`@agentdocstore/provider-tests` are on npm so far; until `agentdocstore` is, the
+rest run from a clone of this repository.
 
 ### Writing a document
 

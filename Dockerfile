@@ -20,6 +20,7 @@ RUN npm ci --ignore-scripts
 COPY packages/ packages/
 COPY scripts/clean.mjs scripts/clean.mjs
 COPY scripts/finalize-build.mjs scripts/finalize-build.mjs
+COPY scripts/bundle-cli.mjs scripts/bundle-cli.mjs
 
 # Build everything (TypeScript + web bundle).
 RUN npm run build

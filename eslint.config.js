@@ -24,7 +24,14 @@ import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.log', '.kiro/**'],
+    ignores: [
+      '**/dist/**',
+      'packages/cli/bundle/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      '**/*.log',
+      '.kiro/**',
+    ],
   },
 
   js.configs.recommended,

@@ -39,6 +39,9 @@ jobs:
         run: |
           npm pack --dry-run --workspace @agentdocstore/core
           npm pack --dry-run --workspace @agentdocstore/provider-tests
+      - name: Smoke-test the CLI package
+        if: matrix.node == 24
+        run: npm run smoke:cli
 
   docker:
     name: Docker smoke test

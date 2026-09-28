@@ -8,6 +8,23 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+### Added
+
+- The CLI is ready to publish on npm as `agentdocstore`. `npm run build` now
+  bundles it, with the server, the MCP tools and the built-in storage
+  providers, into `packages/cli/bundle/`, beside a copy of the web UI. The
+  build fails if the bundle imports a package the CLI does not declare, or the
+  CLI declares one the bundle never imports. `npm run smoke:cli` installs the
+  packed package outside the repository and checks `serve` and `mcp`; CI runs
+  it on Node 24.
+
+### Changed
+
+- The CLI workspace is named `agentdocstore` (was `@agentdocstore/cli`), and
+  the private root package `agentdocstore-monorepo`.
+- `serve` looks for the web UI beside the running CLI before looking in
+  `packages/web/dist/`.
+
 ## [0.2.1] - 2026-09-28
 
 ### Fixed

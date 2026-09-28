@@ -1,6 +1,7 @@
 # Build output and installed dependencies.
 dist/
 **/dist/
+packages/cli/bundle/
 node_modules/
 coverage/
 *.log

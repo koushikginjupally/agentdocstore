@@ -4,7 +4,7 @@
 
 import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import { readFileSync, existsSync, statSync } from 'node:fs';
-import { join, extname } from 'node:path';
+import { dirname, join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { startServer, resolveIdentityProvider } from '@agentdocstore/server';
@@ -49,17 +49,20 @@ function mimeFor(file: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Locate the `packages/web/dist/` directory. We walk up from this file
- * to find the monorepo root, then resolve packages/web/dist.
+ * Find the web UI. In the npm package the CLI bundle keeps a copy beside
+ * itself, in `bundle/web/`; in the repository it is `packages/web/dist/`.
+ * Returns the directory holding `index.html`, or undefined when neither has it.
  */
-function findWebDist(): string {
-  // At runtime: packages/cli/dist/serve.js → up 3 → repo root
-  const thisFile = fileURLToPath(import.meta.url);
-  const cliDist = join(thisFile, '..'); // packages/cli/dist
-  const cliPkg = join(cliDist, '..'); // packages/cli
-  const packages = join(cliPkg, '..'); // packages
-  const repoRoot = join(packages, '..'); // repo root
-  return join(repoRoot, 'packages', 'web', 'dist');
+export function findWebDist(
+  fromFile: string = fileURLToPath(import.meta.url),
+  exists: (path: string) => boolean = existsSync,
+): string | undefined {
+  const here = dirname(fromFile);
+  const candidates = [
+    join(here, 'web'), // npm package: bundle/index.js → bundle/web
+    join(here, '..', '..', 'web', 'dist'), // repository: packages/cli/dist → packages/web/dist
+  ];
+  return candidates.find((dir) => exists(join(dir, 'index.html')));
 }
 
 // ---------------------------------------------------------------------------
@@ -135,10 +138,11 @@ export async function runServe(config: ResolvedConfig): Promise<ServerHandle> {
   // We need to intercept requests before Hono to serve static files
   // and the MCP endpoint. Wrap the underlying HTTP server.
   const webDistDir = findWebDist();
-  const hasWebDist = existsSync(join(webDistDir, 'index.html'));
 
-  if (!hasWebDist) {
-    console.warn('Web UI not found at packages/web/dist/ — only API routes will be available.');
+  if (webDistDir === undefined) {
+    console.warn(
+      'Web UI not found beside the CLI or in packages/web/dist/ — only API routes will be available.',
+    );
   }
 
   // The server from @hono/node-server already has its own request listener.
@@ -162,7 +166,7 @@ export async function runServe(config: ResolvedConfig): Promise<ServerHandle> {
     }
 
     // Static file serving — only for GET on root-level paths
-    if (hasWebDist && req.method === 'GET') {
+    if (webDistDir !== undefined && req.method === 'GET') {
       // Serve known static files
       const fileName = pathname === '/' ? 'index.html' : pathname.slice(1);
       // Prevent directory traversal

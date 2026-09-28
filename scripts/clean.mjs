@@ -19,6 +19,7 @@ for (const packageRoot of packageRoots) {
     throw new Error(`Refusing to clean outside packages/: ${packageRoot}`);
   }
   rmSync(join(packageRoot, 'dist'), { recursive: true, force: true });
+  rmSync(join(packageRoot, 'bundle'), { recursive: true, force: true });
   rmSync(join(packageRoot, 'tsconfig.tsbuildinfo'), { force: true });
 }
 

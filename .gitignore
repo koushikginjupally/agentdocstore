@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 dist/
+packages/cli/bundle/
 *.tsbuildinfo
 
 # Test and coverage

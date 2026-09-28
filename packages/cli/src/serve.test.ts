@@ -17,7 +17,7 @@ import { BOOT_LOCK_DIR } from '@agentdocstore/provider-fs';
 
 import { resolveConfig } from './config.js';
 import type { ResolvedConfig } from './config.js';
-import { httpUrl, runServe } from './serve.js';
+import { findWebDist, httpUrl, runServe } from './serve.js';
 
 const dirs: string[] = [];
 const signalListeners = {
@@ -131,5 +131,41 @@ describe('httpUrl', () => {
     expect(httpUrl('127.0.0.1', 8787)).toBe('http://127.0.0.1:8787');
     expect(httpUrl('localhost', 3000)).toBe('http://localhost:3000');
     expect(httpUrl('[::1]', 8787)).toBe('http://[::1]:8787');
+  });
+});
+
+describe('findWebDist', () => {
+  // A fake filesystem: only the listed files exist.
+  const having =
+    (...files: string[]) =>
+    (path: string): boolean =>
+      files.includes(path);
+
+  it('uses the copy beside the bundle in the npm package', () => {
+    const bundle = '/app/node_modules/agentdocstore/bundle/index.js';
+    const web = '/app/node_modules/agentdocstore/bundle/web';
+    expect(findWebDist(bundle, having(`${web}/index.html`))).toBe(web);
+  });
+
+  it('falls back to packages/web/dist in the repository', () => {
+    const built = '/repo/packages/cli/dist/serve.js';
+    expect(findWebDist(built, having('/repo/packages/web/dist/index.html'))).toBe(
+      '/repo/packages/web/dist',
+    );
+  });
+
+  it('prefers the bundled copy when both exist', () => {
+    const bundle = '/repo/packages/cli/bundle/index.js';
+    const found = findWebDist(
+      bundle,
+      having('/repo/packages/cli/bundle/web/index.html', '/repo/packages/web/dist/index.html'),
+    );
+    expect(found).toBe('/repo/packages/cli/bundle/web');
+  });
+
+  it('returns undefined when neither place has index.html', () => {
+    expect(
+      findWebDist('/app/node_modules/agentdocstore/bundle/index.js', having()),
+    ).toBeUndefined();
   });
 });
