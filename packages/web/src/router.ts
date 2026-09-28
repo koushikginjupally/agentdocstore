@@ -113,6 +113,7 @@ export function onRoute(handler: RouteHandler): void {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const link = event.target instanceof Element ? event.target.closest('a[href^="#/"]') : null;
       if (!link || link.getAttribute('href') === (window.location.hash || '#/')) return;
+      if (link.getAttribute('target') === '_blank') return; // opens a new tab; this page stays
       if (!hasUnsavedChanges()) return;
       if (window.confirm(LEAVE_PROMPT)) {
         unsavedCheck = null; // Leaving was confirmed; hashchange must not ask again.

@@ -619,6 +619,8 @@ textarea {
   background: var(--bg-secondary);
   color: var(--text-secondary);
 }
+.version-conflict { border-left-color: var(--warning); }
+.version-conflict .flex-row { flex-wrap: wrap; }
 .version-checkbox { accent-color: var(--accent); }
 
 /* ===== Loading spinner ===== */

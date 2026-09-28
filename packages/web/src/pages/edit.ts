@@ -246,6 +246,56 @@ function renderNotOwner(id: string, title: string, owner: string, container: HTM
   container.appendChild(card);
 }
 
+/**
+ * Say, in the form, that a newer version was saved while this page was open.
+ * The typed text stays where it is. The notice links to the newer version in a
+ * new tab, to compare, and offers to save this text as the version after it:
+ * nothing is lost, since the newer version stays in the history.
+ */
+async function showVersionConflict(
+  id: string,
+  saveBtn: HTMLButtonElement,
+  saveOver: (latestVersion: number) => Promise<void>,
+): Promise<void> {
+  const { latestVersion } = await api.getDocument(id);
+  const buttons = saveBtn.parentElement!;
+  buttons.parentElement?.querySelector('.version-conflict')?.remove();
+
+  const notice = document.createElement('div');
+  notice.className = 'version-notice version-conflict mb-16';
+  notice.setAttribute('role', 'alert');
+  const text = document.createElement('p');
+  text.textContent =
+    `This document was saved as version ${latestVersion} while you were editing, ` +
+    `so your changes are not saved yet. They are still here.`;
+
+  const actions = document.createElement('div');
+  actions.className = 'flex-row mt-8';
+  const open = document.createElement('a');
+  open.className = 'btn btn-sm';
+  open.href = href(`/d/${id}/v/${latestVersion}`);
+  open.target = '_blank';
+  open.rel = 'noopener';
+  open.textContent = `Open version ${latestVersion} in a new tab`;
+  const over = document.createElement('button');
+  over.type = 'button';
+  over.className = 'btn btn-sm';
+  over.textContent = `Save mine as version ${latestVersion + 1}`;
+  over.title = `Version ${latestVersion} stays in the history`;
+  over.addEventListener('click', () => {
+    notice.remove();
+    void saveOver(latestVersion);
+  });
+  actions.append(open, over);
+
+  notice.append(text, actions);
+  buttons.before(notice);
+  // The Save button lost focus while it was disabled; put it on the notice so
+  // the next Tab reaches its two choices. Focusable by script, not a Tab stop.
+  notice.tabIndex = -1;
+  notice.focus();
+}
+
 async function handleSave(
   id: string,
   loadedVersion: number,
@@ -299,6 +349,23 @@ async function handleSave(
           showToast(`Failed: ${err2 instanceof Error ? err2.message : 'Unknown error'}`, 'error');
         }
       }
+    } else if (err instanceof ApiError && err.status === 409) {
+      // Someone saved a newer version since this page loaded it.
+      await showVersionConflict(id, saveBtn, (latest) =>
+        handleSave(
+          id,
+          latest,
+          titleInput,
+          langSelect,
+          visSelect,
+          contentArea,
+          msgInput,
+          expirySelect,
+          saveBtn,
+        ),
+      ).catch(() =>
+        showToast(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error'),
+      );
     } else {
       showToast(`Failed: ${err instanceof Error ? err.message : 'Unknown error'}`, 'error');
     }

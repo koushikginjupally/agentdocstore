@@ -80,9 +80,10 @@ describe('leaving a page with unsaved changes', () => {
 
 describe('clicking an in-app link with unsaved changes', () => {
   /** Click a fresh `#…` link; return whether the router cancelled the navigation. */
-  function clickLink(target: string, init: MouseEventInit = {}): boolean {
+  function clickLink(target: string, init: MouseEventInit = {}, opensIn?: string): boolean {
     const link = document.createElement('a');
     link.href = target;
+    if (opensIn !== undefined) link.target = opensIn;
     link.textContent = 'Go';
     document.body.appendChild(link);
     // Runs after the router's capture-phase listener: read its decision, then
@@ -124,6 +125,13 @@ describe('clicking an in-app link with unsaved changes', () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
     expect(clickLink('#/', { ctrlKey: true })).toBe(false);
     expect(clickLink('#/', { metaKey: true })).toBe(false);
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
+  it('does not ask for a link that opens in a new tab', () => {
+    setUnsavedChangesCheck(() => true);
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    expect(clickLink('#/d/d1/v/2', {}, '_blank')).toBe(false);
     expect(confirm).not.toHaveBeenCalled();
   });
 

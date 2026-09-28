@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { api } from '../api.js';
+import { api, ApiError } from '../api.js';
+import * as toastModule from '../toast.js';
 import { hasUnsavedChanges, setUnsavedChangesCheck } from '../router.js';
 import { renderEditPage } from './edit.js';
 
@@ -262,5 +263,73 @@ describe('loading a file on the edit page', () => {
     expect(ask).toHaveBeenCalled();
     expect(page.querySelector<HTMLInputElement>('#edit-title')!.value).toBe('Shared notes');
     expect(page.querySelector<HTMLSelectElement>('#edit-language')!.value).toBe('python');
+  });
+});
+
+describe('saving after someone else saved', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  const reason =
+    'This document changed since you loaded it: you have version 1, the latest is version 2';
+
+  /** The page loaded version 1; version 2 is saved before this page saves. */
+  async function conflicted() {
+    const page = await editPageAs('alice');
+    vi.mocked(api.getDocument).mockResolvedValue({ ...doc, latestVersion: 2, version: 2 });
+    const box = page.querySelector<HTMLTextAreaElement>('#edit-content')!;
+    box.value = 'my rewrite';
+    const toast = vi.spyOn(toastModule, 'showToast').mockImplementation(() => undefined);
+    const save = vi
+      .spyOn(api, 'updateDocument')
+      .mockRejectedValueOnce(new ApiError(`API error 409: ${reason}`, 409, { error: reason }));
+    (saveButton(page) as HTMLButtonElement).click();
+    const notice = await vi.waitFor(() => {
+      const found = page.querySelector<HTMLElement>('.version-conflict');
+      expect(found).not.toBeNull();
+      return found!;
+    });
+    return { page, box, save, toast, notice };
+  }
+
+  it('says so in the form, keeps the text, and offers the newer version in a new tab', async () => {
+    const { box, notice, toast } = await conflicted();
+    expect(notice.getAttribute('role')).toBe('alert');
+    // Focus goes to the notice (the Save button lost it while disabled), so
+    // the next Tab reaches its two choices.
+    expect(document.activeElement).toBe(notice);
+    expect(notice.getAttribute('tabindex')).toBe('-1');
+    expect(notice.textContent).toContain('saved as version 2 while you were editing');
+    expect(box.value).toBe('my rewrite');
+    expect(hasUnsavedChanges()).toBe(true);
+    const link = notice.querySelector<HTMLAnchorElement>('a')!;
+    expect(link.textContent).toBe('Open version 2 in a new tab');
+    expect(link.getAttribute('href')).toBe('#/d/d1/v/2');
+    expect(link.target).toBe('_blank');
+    expect(link.rel).toContain('noopener');
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('saves the text as the next version on request, keeping version 2 in the history', async () => {
+    const { notice, save } = await conflicted();
+    save.mockResolvedValueOnce({ ...doc, latestVersion: 3 });
+    const again = [...notice.querySelectorAll('button')].find(
+      (b) => b.textContent === 'Save mine as version 3',
+    )!;
+    again.click();
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    expect(save.mock.calls[1]![1]).toMatchObject({ content: 'my rewrite', latestVersion: 2 });
+    await vi.waitFor(() => expect(hasUnsavedChanges()).toBe(false));
+  });
+
+  it('shows one notice, not a pile, when the save conflicts again', async () => {
+    const { page, save } = await conflicted();
+    save.mockRejectedValueOnce(new ApiError(`API error 409: ${reason}`, 409, { error: reason }));
+    (saveButton(page) as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(page.querySelectorAll('.version-conflict')).toHaveLength(1);
   });
 });

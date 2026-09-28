@@ -10,6 +10,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- When a save is refused because a newer version was saved meanwhile, the edit
+  page says so in the form and keeps what you typed. It links to the newer
+  version, opening in a new tab so you can compare, and offers to save your
+  text as the next version; the newer one stays in the history.
 - In the content box of a markdown document, Ctrl+B and Ctrl+I (Cmd on a Mac)
   make the selected text bold or italic, or take that off again, on both the
   create and edit forms. Other languages keep the keys as they were.
