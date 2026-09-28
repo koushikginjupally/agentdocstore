@@ -92,6 +92,11 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- Saving from the edit page no longer overwrites a change that someone else,
+  or an agent, saved while the page was open. The page now sends the version
+  it loaded, and `PUT /api/documents/:id` takes it as `latestVersion`: a save
+  made from an older version gets a `409` saying so, and nothing is saved.
+  Before, the last save silently won.
 - MCP over HTTP answers `404 Session not found` to a request whose
   `mcp-session-id` it does not hold, for example after the server restarted
   or the session was closed, so the client starts a new session. It answered

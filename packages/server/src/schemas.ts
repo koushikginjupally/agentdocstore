@@ -27,6 +27,8 @@ export const UpdateDocumentSchema = z.object({
   visibility: z.enum(['PUBLIC', 'PRIVATE']).optional(),
   expiresInDays: z.number().int().positive().nullish(),
   redactionPolicy: z.enum(['redact', 'skip']).optional(),
+  /** The version the caller last saw; a save from an older one is a conflict. */
+  latestVersion: z.number().int().positive().optional(),
 });
 export type UpdateDocumentBody = z.infer<typeof UpdateDocumentSchema>;
 

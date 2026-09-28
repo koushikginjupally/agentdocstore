@@ -986,6 +986,58 @@ describe('server', () => {
       });
     });
 
+    it('refuses a save made from an older version (latestVersion), saving nothing', async () => {
+      const created = (await (
+        await post('/api/documents', { title: 'Plan', content: 'step 1', language: 'plaintext' })
+      ).json()) as { id: string };
+      // Someone else saves version 2 after this editor loaded version 1.
+      expect(
+        (await put(`/api/documents/${created.id}`, { content: 'step 1\nstep 2' })).status,
+      ).toBe(200);
+
+      const stale = await put(`/api/documents/${created.id}`, {
+        content: 'step 1 (edited)',
+        title: 'Renamed',
+        latestVersion: 1,
+      });
+      expect(stale.status).toBe(409);
+      expect(((await stale.json()) as { error: string }).error).toMatch(/version 2/);
+
+      const doc = (await (await get(`/api/documents/${created.id}`)).json()) as {
+        title: string;
+        latestVersion: number;
+        content: string;
+      };
+      expect(doc).toMatchObject({ title: 'Plan', latestVersion: 2, content: 'step 1\nstep 2' });
+    });
+
+    it('refuses a metadata-only change made from an older version too', async () => {
+      const created = (await (
+        await post('/api/documents', { title: 'Plan', content: 'v1', language: 'plaintext' })
+      ).json()) as { id: string };
+      await put(`/api/documents/${created.id}`, { content: 'v2' });
+      const stale = await put(`/api/documents/${created.id}`, {
+        visibility: 'PRIVATE',
+        latestVersion: 1,
+      });
+      expect(stale.status).toBe(409);
+      const doc = (await (await get(`/api/documents/${created.id}`)).json()) as {
+        visibility: string;
+      };
+      expect(doc.visibility).toBe('PUBLIC');
+    });
+
+    it('saves when latestVersion is the current version, and rejects a bad one', async () => {
+      const created = (await (
+        await post('/api/documents', { title: 'Plan', content: 'v1', language: 'plaintext' })
+      ).json()) as { id: string };
+      const ok = await put(`/api/documents/${created.id}`, { content: 'v2', latestVersion: 1 });
+      expect(ok.status).toBe(200);
+      expect(((await ok.json()) as { latestVersion: number }).latestVersion).toBe(2);
+      const bad = await put(`/api/documents/${created.id}`, { content: 'v3', latestVersion: 0 });
+      expect(bad.status).toBe(400);
+    });
+
     it('applies sequential updates without a conflict', async () => {
       const createRes = await post('/api/documents', {
         title: 'Conflict Test',

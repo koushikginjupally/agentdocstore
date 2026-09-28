@@ -174,6 +174,7 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
       () =>
         void handleSave(
           id,
+          doc.latestVersion,
           titleInput,
           langSelect,
           visSelect,
@@ -247,6 +248,7 @@ function renderNotOwner(id: string, title: string, owner: string, container: HTM
 
 async function handleSave(
   id: string,
+  loadedVersion: number,
   titleInput: HTMLInputElement,
   langSelect: HTMLSelectElement,
   visSelect: HTMLSelectElement,
@@ -264,11 +266,15 @@ async function handleSave(
     content: string;
     editMessage?: string;
     expiresInDays?: number | null;
+    latestVersion: number;
   } = {
     title: titleInput.value.trim(),
     language: langSelect.value,
     visibility: visSelect.value,
     content: contentArea.value,
+    // The version this page loaded: if someone saved since, the server refuses
+    // instead of this save overwriting theirs.
+    latestVersion: loadedVersion,
   };
   const editMsg = msgInput.value.trim();
   if (editMsg) input.editMessage = editMsg;

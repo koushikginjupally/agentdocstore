@@ -97,6 +97,15 @@ describe('edit page unsaved changes', () => {
     await vi.waitFor(() => expect(hasUnsavedChanges()).toBe(false));
   });
 
+  it('saves against the version it loaded, so a newer save is not overwritten', async () => {
+    const page = await editPageAs('alice');
+    page.querySelector<HTMLTextAreaElement>('#edit-content')!.value = 'rewritten';
+    const save = vi.spyOn(api, 'updateDocument').mockResolvedValue({ ...doc, latestVersion: 2 });
+    (saveButton(page) as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(save).toHaveBeenCalled());
+    expect(save.mock.calls[0]![1]).toMatchObject({ content: 'rewritten', latestVersion: 1 });
+  });
+
   it('keeps reporting them when the save fails', async () => {
     const page = await editPageAs('alice');
     page.querySelector<HTMLInputElement>('#edit-title')!.value = 'Renamed';

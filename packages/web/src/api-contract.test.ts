@@ -180,6 +180,22 @@ describe('web API client against the real server: errors', () => {
       message: 'API error 409: Version conflict: expected 1, found 2',
     });
   });
+
+  it('refuses a save made from an older version, saying why, and saves nothing', async () => {
+    const id = await newDocument();
+    await api.updateDocument(id, { content: 'v2 from someone else', latestVersion: 1 });
+    const err: unknown = await api
+      .updateDocument(id, { content: 'my edit of v1', latestVersion: 1 })
+      .catch((e: unknown) => e);
+    expect(err).toMatchObject({
+      name: 'ApiError',
+      status: 409,
+      message:
+        'API error 409: This document changed since you loaded it: ' +
+        'you have version 1, the latest is version 2',
+    });
+    expect((await api.getDocument(id)).content).toBe('v2 from someone else');
+  });
 });
 
 describe('web API client against the real server: expiry', () => {

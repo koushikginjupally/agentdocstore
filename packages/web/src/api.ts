@@ -180,6 +180,8 @@ export const api = {
       /** Days from now; `null` removes the expiry. */
       expiresInDays?: number | null;
       redactionPolicy?: string;
+      /** The version this save was made from; an older one than the latest is a 409. */
+      latestVersion?: number;
     },
   ): Promise<ApiDocument> {
     return request(`/api/documents/${encodeURIComponent(id)}`, {

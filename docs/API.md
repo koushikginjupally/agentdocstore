@@ -121,6 +121,11 @@ Any subset of `content`, `title`, `language`, `visibility`, `expiresInDays`
 (`null` clears expiry), `redactionPolicy`. Changing `content` appends a new
 version; metadata-only changes do not. Only the owner may update.
 
+`latestVersion` (optional) is the version the caller last loaded. When it is
+not the document's current version, someone else saved in between, and the
+update is refused with `409` rather than overwriting their change. Send it with
+every save made from a copy the caller has shown or edited; the web UI does.
+
 A `409` means nothing was saved: when credentials are detected, or when another
 save of the same document landed first (a version conflict), no field of the
 request is applied.

@@ -500,6 +500,18 @@ export function createServer(opts: CreateServerOptions): Hono {
     let updated = doc;
     const editMessage = normalizeEditMessage(body.editMessage);
 
+    // A save made from an older version would silently overwrite whatever was
+    // saved since. When the caller says which version it last saw, refuse that
+    // before anything else, as MCP update_document does.
+    if (body.latestVersion !== undefined && body.latestVersion !== doc.latestVersion) {
+      throw new VersionConflictError(
+        `This document changed since you loaded it: you have version ${body.latestVersion}, ` +
+          `the latest is version ${doc.latestVersion}`,
+        body.latestVersion,
+        doc.latestVersion,
+      );
+    }
+
     // Validate everything and settle the credential decision BEFORE writing.
     // A 409 means "nothing was saved", so no part of the request may be
     // applied first — otherwise a rejected update could still rename the
@@ -553,7 +565,7 @@ export function createServer(opts: CreateServerOptions): Hono {
         content,
         editedBy: user,
         ...(editMessage !== undefined ? { message: editMessage } : {}),
-        expect: { latestVersion: doc.latestVersion },
+        expect: { latestVersion: body.latestVersion ?? doc.latestVersion },
       });
     }
 
