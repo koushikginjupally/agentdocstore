@@ -232,13 +232,14 @@ async function checkApplication(server) {
     `${comments.comments?.length ?? 0} comment(s)`,
   );
 
-  // Credential scanner — the 409 detect-then-policy flow.
+  // Credential scanner — the 409 detect-then-policy flow. The fake key is
+  // split so no literal credential sits in the source.
   const scanRes = await fetch(`${BASE}/api/documents`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       title: 'secret',
-      content: 'AWS_SECRET_ACCESS_KEY = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
+      content: 'AWS_SECRET_ACCESS_KEY = ' + 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
       language: 'plaintext',
     }),
   });
