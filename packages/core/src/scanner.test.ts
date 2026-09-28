@@ -41,6 +41,32 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
 -----END PUBLIC KEY-----`;
     expectNone(pub, 'pem-private-key');
   });
+
+  it('takes a body of up to 16,384 characters, and ends at the first END line', () => {
+    const block = (body: string): string =>
+      `-----BEGIN PRIVATE KEY-----${body}-----END PRIVATE KEY-----`;
+    const atLimit = block('A'.repeat(16_384));
+    expect(expectOne(atLimit, 'pem-private-key').end).toBe(atLimit.length);
+    expectNone(block('A'.repeat(16_385)), 'pem-private-key');
+    expectNone(block(''), 'pem-private-key');
+    const two = `${block('\nAAAA\n')}\n${block('\nBBBB\n')}`;
+    const found = scan(two).filter((x) => x.type === 'pem-private-key');
+    expect(found.map((x) => two.slice(x.start, x.end))).toEqual([
+      block('\nAAAA\n'),
+      block('\nBBBB\n'),
+    ]);
+  });
+
+  // Regression: after every BEGIN line the pattern tried up to 16,384
+  // positions for an END line, so text made of BEGIN lines alone took about
+  // a second per megabyte (5 MB: 5.7 s) on the server's only thread.
+  it('scans a run of BEGIN lines with no END in linear time', () => {
+    const line = '-----BEGIN PRIVATE KEY-----\n';
+    const content = line.repeat(Math.floor((2 * 1024 * 1024) / line.length));
+    const start = Date.now();
+    expect(scan(content)).toEqual([]);
+    expect(Date.now() - start).toBeLessThan(1000);
+  });
 });
 
 // ---------------------------------------------------------------------------

@@ -81,14 +81,6 @@ function isPlaceholder(value: string): boolean {
 
 const PATTERNS: readonly PatternDef[] = [
   {
-    type: 'pem-private-key',
-    // Matches -----BEGIN (RSA|DSA|EC|OPENSSH|ENCRYPTED) PRIVATE KEY----- blocks.
-    // Base64 body limited to 16 KB of characters.
-    regex:
-      /-----BEGIN (?:RSA |DSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----[\s\S]{1,16384}?-----END (?:RSA |DSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----/g,
-    comment: 'PEM / OpenSSH private key blocks',
-  },
-  {
     type: 'aws-access-key',
     // AWS access key IDs start with AKIA (long-term) or ASIA (temporary/STS).
     // Followed by exactly 16 uppercase alphanumeric characters.
@@ -142,6 +134,47 @@ const PATTERNS: readonly PatternDef[] = [
     comment: 'Connection-string embedded passwords (scheme://user:password@host)',
   },
 ];
+
+/**
+ * PEM / OpenSSH private key blocks: a BEGIN line, 1 to 16,384 characters, then
+ * the first END line after them. The kind named on the two lines need not
+ * agree. This finds what
+ * `/-----BEGIN …PRIVATE KEY-----[\s\S]{1,16384}?-----END …PRIVATE KEY-----/g`
+ * finds, in one pass: that regex tried up to 16,384 positions for an END line
+ * after every BEGIN line, so text made of BEGIN lines alone took about a
+ * second per megabyte.
+ */
+const PEM_BEGIN_REGEX = /-----BEGIN (?:RSA |DSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----/g;
+const PEM_END_REGEX = /-----END (?:RSA |DSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----/g;
+const PEM_MAX_BODY = 16_384;
+
+function pemPrivateKeyBlocks(content: string): Array<{ start: number; end: number }> {
+  // Every place an END line starts, in order; overlapping ones included.
+  const ends: Array<{ start: number; end: number }> = [];
+  PEM_END_REGEX.lastIndex = 0;
+  for (let m = PEM_END_REGEX.exec(content); m !== null; m = PEM_END_REGEX.exec(content)) {
+    ends.push({ start: m.index, end: m.index + m[0].length });
+    PEM_END_REGEX.lastIndex = m.index + 1;
+  }
+
+  const blocks: Array<{ start: number; end: number }> = [];
+  let next = 0; // the first END line that could still close a block
+  PEM_BEGIN_REGEX.lastIndex = 0;
+  for (let m = PEM_BEGIN_REGEX.exec(content); m !== null; m = PEM_BEGIN_REGEX.exec(content)) {
+    const bodyStart = m.index + m[0].length;
+    // The body has at least one character, so an END must start after it.
+    while (next < ends.length && (ends[next]?.start ?? Infinity) <= bodyStart) next++;
+    const end = ends[next];
+    if (end !== undefined && end.start - bodyStart <= PEM_MAX_BODY) {
+      blocks.push({ start: m.index, end: end.end });
+      PEM_BEGIN_REGEX.lastIndex = end.end;
+    } else {
+      // As the regex did: look for the next block from one character on.
+      PEM_BEGIN_REGEX.lastIndex = m.index + 1;
+    }
+  }
+  return blocks;
+}
 
 /**
  * Generic assignment pattern built separately because it requires a
@@ -214,6 +247,10 @@ export function scan(content: string): readonly Finding[] {
   let newlines: number[] | undefined;
   const lineOf = (offset: number): number =>
     lineNumberAt((newlines ??= newlineOffsets(content)), offset);
+
+  for (const block of pemPrivateKeyBlocks(content)) {
+    raw.push({ type: 'pem-private-key', line: lineOf(block.start), ...block });
+  }
 
   // Run each fixed pattern.
   for (const pat of PATTERNS) {
