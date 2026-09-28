@@ -182,7 +182,8 @@ else gets `404`, the same answer as for a comment that does not exist.
 ### `POST /api/scan`
 
 `{ "content": "…" }` → `{ "findings": [ { "type", "line", "start", "end" } ] }`.
-Nothing is stored.
+Nothing is stored. Content over the 5 MiB content limit is refused with `413`,
+as a save would be.
 
 ### `GET /api/whoami`
 

@@ -280,7 +280,9 @@ Scan text for embedded credentials without storing anything.
 | --------- | ------ | -------- | ------------ |
 | `content` | string | yes      | Text to scan |
 
-Returns findings with type, line number, and byte offsets.
+Returns findings with type, line number, and byte offsets. Content over the
+5 MB content limit is refused with a "Content too large" error, as a save
+would be.
 
 ### get_help
 

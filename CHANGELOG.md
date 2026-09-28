@@ -135,6 +135,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- `POST /api/scan` and the MCP `scan_content` tool now refuse content over the
+  5 MB content limit with `413` (REST) or a "Content too large" error (MCP),
+  as a save would. They scanned anything up to the 11 MB request cap, which
+  doubled the longest scan one request could ask for.
 - Comparing two versions that are too large to compare now says so on the
   Versions page, with links to open each version in full. The page only said
   "Failed to compute diff.", and the reason flashed by in a toast.

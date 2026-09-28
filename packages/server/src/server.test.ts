@@ -334,6 +334,16 @@ describe('server', () => {
       const body = (await res.json()) as { findings: unknown[] };
       expect(body.findings).toHaveLength(0);
     });
+
+    // It scanned up to the 11 MB request cap, more than a save may store.
+    it('refuses content over the content limit, as a save does', async () => {
+      const size = LIMITS.MAX_CONTENT_BYTES + 1;
+      const res = await post('/api/scan', { content: 'x'.repeat(size) });
+      expect(res.status).toBe(413);
+      expect(await res.json()).toEqual({
+        error: `Content exceeds size cap (${size} bytes; the limit is ${LIMITS.MAX_CONTENT_BYTES} bytes)`,
+      });
+    });
   });
 
   // ========================================================================

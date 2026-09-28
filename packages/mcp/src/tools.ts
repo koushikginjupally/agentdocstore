@@ -21,10 +21,12 @@ import {
   validateTitle,
   NotFoundError,
   ValidationError,
+  ContentTooLargeError,
   LIMITS,
   LANGUAGES,
   scan,
   redact,
+  sizeOverLimit,
   unifiedDiff,
 } from '@agentdocstore/core';
 
@@ -466,6 +468,15 @@ export async function scanContent(
   _viewer: string | null,
   args: { content: string },
 ): Promise<CallToolResult> {
+  // Only what a save could store: the request cap alone let it scan 11 MB.
+  const size = Buffer.byteLength(args.content, 'utf8');
+  if (size > LIMITS.MAX_CONTENT_BYTES) {
+    throw new ContentTooLargeError(
+      `Content exceeds size cap (${sizeOverLimit(size, LIMITS.MAX_CONTENT_BYTES)})`,
+      LIMITS.MAX_CONTENT_BYTES,
+      size,
+    );
+  }
   const findings = scan(args.content);
   return jsonResult({
     findings: findings.map((f) => ({

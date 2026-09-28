@@ -156,6 +156,15 @@ describe('scan_content', () => {
       true,
     );
   });
+
+  it('refuses content over the content limit, as a save does', async () => {
+    const size = LIMITS.MAX_CONTENT_BYTES + 1;
+    const result = await callTool('scan_content', { content: 'x'.repeat(size) });
+    expect(result.isError).toBe(true);
+    expect(textOf(result)).toBe(
+      `Content too large: Content exceeds size cap (${size} bytes; the limit is ${LIMITS.MAX_CONTENT_BYTES} bytes)`,
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

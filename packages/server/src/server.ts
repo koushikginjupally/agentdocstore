@@ -354,6 +354,8 @@ export function createServer(opts: CreateServerOptions): Hono {
   // ====================================================================
   app.post('/api/scan', async (c) => {
     const body = await parseBody(c, ScanSchema);
+    // Only what a save could store: the request cap alone let it scan 11 MB.
+    validateContentSize(body.content);
     const findings = scan(body.content);
     return c.json({ findings });
   });
