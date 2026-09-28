@@ -19,7 +19,7 @@
   "dependencies": {
     "@agentdocstore/core": "*",
     "@hono/node-server": "^1.13.0",
-    "dompurify": "^3.1.7",
+    "dompurify": "^3.4.16",
     "hono": "^4.6.0",
     "jsdom": "^25.0.0",
     "marked": "^14.1.0",
