@@ -119,6 +119,28 @@ describe('parseCli', () => {
     );
   });
 
+  // parseInt dropped "abc" (so the server started on 8787) and read "8080abc"
+  // and "8080.9" as 8080: the server listened somewhere other than asked.
+  it('refuses a --port that is not a whole number from 0 to 65535, naming the flag', () => {
+    for (const port of ['abc', '8080abc', '8080.9', '1e3', ' 8080', '70000', '-1', '']) {
+      expect(() => parseCli(['serve', '--port', port]), `--port ${port}`).toThrow(
+        `Invalid port ${JSON.stringify(port)} from --port: use a whole number from 0 to 65535.`,
+      );
+    }
+    expect(() => parseCli(['serve', '-p', 'abc'])).toThrow(/Invalid port "abc" from --port/);
+  });
+
+  it('refuses --port without a value', () => {
+    expect(() => parseCli(['serve', '--port'])).toThrow(
+      '--port needs a value: use a whole number from 0 to 65535.',
+    );
+  });
+
+  it('accepts the whole range of ports', () => {
+    expect(parseCli(['serve', '--port', '0']).flags.port).toBe(0);
+    expect(parseCli(['serve', '--port', '65535']).flags.port).toBe(65535);
+  });
+
   it('uses short flags', () => {
     const result = parseCli(['serve', '-p', '3000', '-H', '0.0.0.0', '-e']);
     expect(result.flags.port).toBe(3000);
@@ -300,10 +322,33 @@ describe('resolveConfig', () => {
     }
   });
 
-  it('invalid AGENTDOCSTORE_PORT is ignored', () => {
-    const env: EnvVars = { AGENTDOCSTORE_PORT: 'abc' };
-    const config = resolveConfig({}, env, DEFAULT_DATA_DIR);
-    expect(config.port).toBe(8787);
+  it('refuses a malformed AGENTDOCSTORE_PORT, naming the variable', () => {
+    for (const port of ['abc', '8080xyz', '']) {
+      expect(() => resolveConfig({}, { AGENTDOCSTORE_PORT: port }, DEFAULT_DATA_DIR)).toThrow(
+        `Invalid port ${JSON.stringify(port)} from AGENTDOCSTORE_PORT: use a whole number from 0 to 65535.`,
+      );
+    }
+    expect(resolveConfig({}, { AGENTDOCSTORE_PORT: '4444' }, DEFAULT_DATA_DIR).port).toBe(4444);
+  });
+
+  // A non-numeric string from the config file reached listen(), which took it
+  // as a Unix socket path in the current directory.
+  it('refuses a malformed port in the config file, naming the file', () => {
+    const dir = tmpDir();
+    const cfgPath = join(dir, 'config.json');
+    try {
+      for (const port of ['80x80', 1.5, 70000, null]) {
+        writeFileSync(cfgPath, JSON.stringify({ port }));
+        expect(() => resolveConfig({ configFile: cfgPath }, {}, DEFAULT_DATA_DIR)).toThrow(
+          `Invalid port ${JSON.stringify(port)} from "port" in ${cfgPath}: use a whole number from 0 to 65535.`,
+        );
+      }
+      // A quoted number is still a port.
+      writeFileSync(cfgPath, JSON.stringify({ port: '5555' }));
+      expect(resolveConfig({ configFile: cfgPath }, {}, DEFAULT_DATA_DIR).port).toBe(5555);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 

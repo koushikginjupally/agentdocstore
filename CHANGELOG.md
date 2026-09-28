@@ -101,6 +101,12 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- A port that is not a whole number from 0 to 65535 (`--port`,
+  `AGENTDOCSTORE_PORT` or `port` in the config file) now stops startup with an
+  error naming where it came from. `--port abc` was dropped, so the server
+  started on 8787; `--port 8080abc` and `8080.9` started on 8080; and a
+  non-numeric `port` in the config file made the server listen on a Unix
+  socket in the current directory.
 - `agentdocstore serve` no longer leaves the data directory locked when it
   cannot start: a port already in use, a port out of range, or token auth
   without a tokens file. A busy port gets a one-line error instead of a crash,

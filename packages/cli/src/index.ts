@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { DEFAULT_DATA_DIR } from '@agentdocstore/provider-fs';
 import { OfflineViolationError } from '@agentdocstore/core';
 
-import { authModeFrom, resolveConfig, parseProviderOptions } from './config.js';
+import { authModeFrom, portFrom, resolveConfig, parseProviderOptions } from './config.js';
 import type { CliFlags } from './config.js';
 
 // ---------------------------------------------------------------------------
@@ -229,8 +229,10 @@ export function parseCli(argv: string[]): ParsedArgs {
 
   const flags: CliFlags = {};
   if (values.port !== undefined) {
-    const p = parseInt(values.port as string, 10);
-    if (!Number.isNaN(p)) flags.port = p;
+    if (typeof values.port !== 'string') {
+      throw new Error('--port needs a value: use a whole number from 0 to 65535.');
+    }
+    flags.port = portFrom(values.port, '--port');
   }
   if (values.host !== undefined) flags.host = values.host as string;
   if (values.data !== undefined) flags.dataDir = values.data as string;

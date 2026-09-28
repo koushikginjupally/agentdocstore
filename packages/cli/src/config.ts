@@ -181,8 +181,7 @@ export function extractEnvConfig(env: EnvVars): Partial<ResolvedConfig> {
   const result: Partial<ResolvedConfig> = {};
 
   if (env.AGENTDOCSTORE_PORT !== undefined) {
-    const p = parseInt(env.AGENTDOCSTORE_PORT, 10);
-    if (!Number.isNaN(p)) result.port = p;
+    result.port = portFrom(env.AGENTDOCSTORE_PORT, 'AGENTDOCSTORE_PORT');
   }
   if (env.AGENTDOCSTORE_HOST !== undefined) result.host = env.AGENTDOCSTORE_HOST;
   if (env.AGENTDOCSTORE_DATA_DIR !== undefined) result.dataDir = env.AGENTDOCSTORE_DATA_DIR;
@@ -270,9 +269,13 @@ export function resolveConfig(
     fileCfg.auth !== undefined
       ? authModeFrom(fileCfg.auth, `"auth" in ${configPath ?? 'the config file'}`)
       : undefined;
+  const filePort =
+    fileCfg.port !== undefined
+      ? portFrom(fileCfg.port, `"port" in ${configPath ?? 'the config file'}`)
+      : undefined;
 
   return {
-    port: flags.port ?? envCfg.port ?? fileCfg.port ?? defaults.port,
+    port: flags.port ?? envCfg.port ?? filePort ?? defaults.port,
     host: flags.host ?? envCfg.host ?? fileCfg.host ?? defaults.host,
     dataDir: flags.dataDir ?? envCfg.dataDir ?? fileCfg.dataDir ?? defaults.dataDir,
     auth: flags.auth ?? envCfg.auth ?? fileAuth ?? defaults.auth,
@@ -350,6 +353,26 @@ export function authModeFrom(value: unknown, source: string): AuthMode {
   throw new Error(
     `Unknown auth mode ${JSON.stringify(value)} from ${source}: ` +
       'use single-user, trusted-header or token.',
+  );
+}
+
+/**
+ * Check a port from `source`: a whole number from 0 (any free port) to 65535,
+ * written as digits or, in the config file, as a JSON number. parseInt used to
+ * drop "abc" (so the server started on 8787) and read "8080abc" as 8080, and a
+ * non-numeric string from the config file reached listen(), which took it as a
+ * Unix socket path.
+ */
+export function portFrom(value: unknown, source: string): number {
+  const port =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && /^\d+$/.test(value)
+        ? Number(value)
+        : NaN;
+  if (Number.isInteger(port) && port >= 0 && port <= 65535) return port;
+  throw new Error(
+    `Invalid port ${JSON.stringify(value)} from ${source}: use a whole number from 0 to 65535.`,
   );
 }
 
