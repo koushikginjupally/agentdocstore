@@ -1,0 +1,50 @@
+# Publishes the npm packages when a version tag (v*) is pushed.
+#
+# npm trusted publishing authenticates this job with a short-lived OIDC token,
+# so no npm token is stored anywhere, and npm attaches provenance to every
+# version. Each package's trusted publisher on npmjs.com names this repository,
+# this file (publish.yml) and the `npm` environment, with `npm publish` allowed.
+# scripts/publish-packages.mjs checks the tag against every package's version
+# and skips a version already on npm, so a failed run can be re-run.
+name: Publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    if: github.repository == 'koushikginjupally/agentdocstore'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # OIDC token for npm trusted publishing and provenance
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          # No dependency cache in a release build. setup-node v5 and later
+          # cache on their own when package.json names a packageManager, so
+          # add `package-manager-cache: false` when upgrading it.
+      - name: Check the tag against the package versions
+        run: node scripts/publish-packages.mjs "$GITHUB_REF_NAME" --check
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm run lint
+      - run: npm run smoke:cli
+      - name: Publish core, provider-tests and the CLI
+        run: node scripts/publish-packages.mjs "$GITHUB_REF_NAME"

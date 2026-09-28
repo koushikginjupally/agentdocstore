@@ -8,6 +8,15 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+### Added
+
+- Releases are published from GitHub Actions: pushing a `v*` tag runs
+  `.github/workflows/publish.yml`, which authenticates with npm trusted
+  publishing (no stored npm token), so every version carries provenance. It
+  refuses a tag that does not match the package versions, and runs the build,
+  tests, lint and CLI smoke test before publishing. CONTRIBUTING.md describes
+  the release steps.
+
 ### Fixed
 
 - An error thrown by a provider with its own copy of `@agentdocstore/core`, as

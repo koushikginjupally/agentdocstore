@@ -201,6 +201,33 @@ fix(server): handle malformed JSON body gracefully
 docs: add reverse-proxy recipe to HOSTING.md
 ```
 
+## Releasing
+
+All packages share one version. `.github/workflows/publish.yml` publishes the
+three public ones — `@agentdocstore/core`, `@agentdocstore/provider-tests` and
+`agentdocstore` — when a `v*` tag is pushed. npm trusted publishing
+authenticates the job, so no npm token is stored anywhere, and npm attaches
+provenance to each version.
+
+1. Move every `package.json` to the new version, set the `@agentdocstore/core`
+   range in `packages/cli` and `packages/provider-tests` to `^X.Y.Z`, update
+   the version in `packages/mcp/src/register.ts`, and give the release its own
+   section in `CHANGELOG.md`.
+2. Commit, push `main` and wait for CI.
+3. Tag and push: `git tag -a vX.Y.Z -m "AgentDocStore X.Y.Z"`, then
+   `git push origin vX.Y.Z`.
+
+The workflow runs `scripts/publish-packages.mjs`, which refuses a tag that does
+not match every version above, and then builds, tests, lints and runs the CLI
+smoke test before publishing the three packages in dependency order. A version
+already on npm is skipped, so a failed run can be re-run.
+`node scripts/publish-packages.mjs vX.Y.Z --check` runs the version checks
+locally.
+
+Each package's trusted publisher on npmjs.com (package **Settings** → **Trusted
+publisher**) names GitHub Actions, `koushikginjupally/agentdocstore`, the
+workflow `publish.yml` and the environment `npm`, with `npm publish` allowed.
+
 ## What NOT to do
 
 - Do not add a dependency that is not on the public npm registry.
