@@ -8,8 +8,12 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-28
+
 ### Added
 
+- First npm release: `@agentdocstore/core` and `@agentdocstore/provider-tests`
+  are published as public packages.
 - Bold and Italic buttons above the content box on the create and edit forms,
   for markdown documents. They make the same edits as Ctrl+B and Ctrl+I (Cmd on
   a Mac), and their tooltips name those keys.
@@ -349,5 +353,6 @@ First public release.
 - `trusted-header` mode is tested with synthetic headers, not against a real
   reverse proxy.
 
-[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/koushikginjupally/agentdocstore/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/koushikginjupally/agentdocstore/releases/tag/v0.1.0
