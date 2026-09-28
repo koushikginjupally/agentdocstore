@@ -48,7 +48,7 @@
     "@agentdocstore/core": "^0.3.1",
     "@hono/node-server": "^1.13.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "hono": "^4.6.0",
+    "hono": "^4.13.9",
     "zod": "^4.6.5"
   },
   "devDependencies": {
