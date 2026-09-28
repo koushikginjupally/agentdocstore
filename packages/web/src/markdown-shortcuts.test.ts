@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
-import { addMarkdownShortcuts } from './markdown-shortcuts.js';
+import { addMarkdownShortcuts, markdownFormatButtons } from './markdown-shortcuts.js';
 
 function editor(value: string, language = 'markdown') {
   document.body.innerHTML = `
@@ -120,5 +120,83 @@ describe('markdown shortcuts', () => {
     select.value = 'python';
     select.dispatchEvent(new Event('change'));
     expect(area.hasAttribute('aria-keyshortcuts')).toBe(false);
+  });
+});
+
+describe('Bold and Italic buttons', () => {
+  function withButtons(value: string, language = 'markdown') {
+    const { area, select } = editor(value, language);
+    const group = markdownFormatButtons(area, select);
+    document.body.appendChild(group);
+    const button = (name: string): HTMLButtonElement =>
+      group.querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`)!;
+    return { area, select, group, bold: button('Bold'), italic: button('Italic') };
+  }
+
+  it('offers Bold and Italic for markdown, named for screen readers', () => {
+    const { group, bold, italic } = withButtons('fix');
+    expect(group.getAttribute('role')).toBe('group');
+    expect(group.getAttribute('aria-label')).toBe('Formatting');
+    expect(group.hidden).toBe(false);
+    expect([bold.textContent, italic.textContent]).toEqual(['B', 'I']);
+    expect([bold.type, italic.type]).toEqual(['button', 'button']);
+    expect(bold.title).toMatch(/^Bold \((Ctrl\+|⌘)B\)$/);
+    expect(italic.title).toMatch(/^Italic \((Ctrl\+|⌘)I\)$/);
+  });
+
+  it('shows them only while the language is markdown', () => {
+    const { select, group } = withButtons('fix', 'python');
+    expect(group.hidden).toBe(true);
+    select.value = 'markdown';
+    select.dispatchEvent(new Event('change'));
+    expect(group.hidden).toBe(false);
+    select.value = 'python';
+    select.dispatchEvent(new Event('change'));
+    expect(group.hidden).toBe(true);
+  });
+
+  it('Bold makes the selection bold and puts the cursor back in the box', () => {
+    const { area, bold } = withButtons('ship the fix today');
+    area.setSelectionRange(9, 12); // "fix"
+    bold.focus();
+    bold.click();
+    expect(area.value).toBe('ship the **fix** today');
+    expect(selected(area)).toBe('fix');
+    expect(document.activeElement).toBe(area);
+  });
+
+  it('pressing Bold again takes it off, and the two combine', () => {
+    const { area, bold, italic } = withButtons('fix');
+    area.setSelectionRange(0, 3);
+    bold.click();
+    italic.click();
+    expect(area.value).toBe('***fix***');
+    bold.click();
+    expect(area.value).toBe('*fix*');
+    expect(selected(area)).toBe('fix');
+  });
+
+  it('Italic with nothing selected puts the markers in with the cursor between', () => {
+    const { area, italic } = withButtons('a');
+    area.setSelectionRange(1, 1);
+    italic.click();
+    expect(area.value).toBe('a**');
+    expect([area.selectionStart, area.selectionEnd]).toEqual([2, 2]);
+  });
+
+  it('a mouse press keeps the focus, and so the selection, in the box', () => {
+    const { bold } = withButtons('fix');
+    const press = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+    expect(bold.dispatchEvent(press)).toBe(false);
+  });
+
+  it('hides them while the box is hidden for a preview', async () => {
+    const { area, group } = withButtons('fix');
+    area.hidden = true;
+    await Promise.resolve();
+    expect(group.hidden).toBe(true);
+    area.hidden = false;
+    await Promise.resolve();
+    expect(group.hidden).toBe(false);
   });
 });

@@ -6,7 +6,7 @@ import { buildTitle } from '../constants.js';
 import { expiryField, formatDate, LANGUAGES } from '../dom.js';
 import { contentPreview } from '../preview.js';
 import { contentSizeNote } from '../content-size.js';
-import { addMarkdownShortcuts } from '../markdown-shortcuts.js';
+import { addMarkdownShortcuts, markdownFormatButtons } from '../markdown-shortcuts.js';
 import { fileLoader } from '../file-load.js';
 import { showToast } from '../toast.js';
 import { showRedactionModal } from '../redaction-modal.js';
@@ -133,7 +133,11 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     });
     const contentTools = document.createElement('div');
     contentTools.className = 'flex-row';
-    contentTools.append(loader.button, preview.toggle);
+    contentTools.append(
+      markdownFormatButtons(contentArea, langSelect),
+      loader.button,
+      preview.toggle,
+    );
     const contentHeader = document.createElement('div');
     contentHeader.className = 'flex-between';
     contentHeader.append(contentLabel, contentTools);

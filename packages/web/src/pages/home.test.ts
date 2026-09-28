@@ -41,6 +41,34 @@ describe('create form markdown shortcuts', () => {
   });
 });
 
+describe('create form formatting buttons', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  it('offers Bold and Italic ahead of Load File and Preview', async () => {
+    const main = await homePage();
+    const tools = main
+      .querySelector('#doc-content')!
+      .parentElement!.querySelector('.flex-between')!;
+    expect(
+      [...tools.querySelectorAll('button')].map(
+        (b) => b.getAttribute('aria-label') ?? b.textContent,
+      ),
+    ).toEqual(['Bold', 'Italic', 'Load File', 'Preview']);
+  });
+
+  it('makes the selection bold', async () => {
+    const main = await homePage();
+    const box = main.querySelector<HTMLTextAreaElement>('#doc-content')!;
+    box.value = 'Ship it.';
+    box.setSelectionRange(0, 4);
+    main.querySelector<HTMLButtonElement>('button[aria-label="Bold"]')!.click();
+    expect(box.value).toBe('**Ship** it.');
+  });
+});
+
 describe('create form content size', () => {
   afterEach(() => {
     vi.restoreAllMocks();

@@ -160,6 +160,12 @@ textarea[aria-invalid="true"]:focus { border-color: var(--danger); }
 .btn-danger:hover { background: rgba(255, 0, 68, 0.1); }
 
 .btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+/* Bold and Italic above the content box; hidden outside markdown. */
+.format-buttons { display: inline-flex; gap: 4px; margin-right: 4px; }
+.format-buttons[hidden] { display: none; }
+.format-buttons .btn { min-width: 30px; justify-content: center; }
+.format-bold { font-weight: 700; }
+.format-italic { font-style: italic; }
 /* A toggle button that is on (Preview while previewing). */
 .btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
 .btn-icon {

@@ -35,6 +35,52 @@ export function addMarkdownShortcuts(
   });
 }
 
+/**
+ * Bold and Italic buttons that make the same edits as the shortcuts, so the
+ * formatting can be found without knowing the keys; their tooltips name them.
+ * Shown only while the language is markdown and the box itself is showing
+ * (Preview hides it, leaving nothing to format).
+ */
+export function markdownFormatButtons(
+  contentArea: HTMLTextAreaElement,
+  languageSelect: HTMLSelectElement,
+): HTMLElement {
+  const group = document.createElement('div');
+  group.className = 'format-buttons';
+  group.setAttribute('role', 'group');
+  group.setAttribute('aria-label', 'Formatting');
+
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+  const button = (name: string, key: 'B' | 'I', stars: 1 | 2): HTMLButtonElement => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `btn btn-sm format-${name.toLowerCase()}`;
+    b.textContent = key;
+    b.setAttribute('aria-label', name);
+    b.setAttribute('aria-keyshortcuts', `Control+${key} Meta+${key}`);
+    b.title = `${name} (${mac ? '⌘' : 'Ctrl+'}${key})`;
+    // A mouse press would take the focus, and with it the selection, from the box.
+    b.addEventListener('mousedown', (e) => e.preventDefault());
+    b.addEventListener('click', () => {
+      contentArea.focus();
+      toggleEmphasis(contentArea, stars);
+    });
+    return b;
+  };
+  group.append(button('Bold', 'B', 2), button('Italic', 'I', 1));
+
+  const sync = (): void => {
+    group.hidden = languageSelect.value !== 'markdown' || contentArea.hidden;
+  };
+  sync();
+  languageSelect.addEventListener('change', sync);
+  new MutationObserver(sync).observe(contentArea, {
+    attributes: true,
+    attributeFilter: ['hidden'],
+  });
+  return group;
+}
+
 /** Asterisks in a row ending just before `from` (step -1) or starting at it (step 1). */
 function runOfStars(text: string, from: number, step: 1 | -1): number {
   let count = 0;

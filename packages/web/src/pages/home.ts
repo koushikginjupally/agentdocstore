@@ -8,7 +8,7 @@ import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
 import { contentPreview } from '../preview.js';
 import { contentSizeNote } from '../content-size.js';
-import { addMarkdownShortcuts } from '../markdown-shortcuts.js';
+import { addMarkdownShortcuts, markdownFormatButtons } from '../markdown-shortcuts.js';
 import { fileLoader } from '../file-load.js';
 import { takeNewDocumentDraft } from '../new-document-draft.js';
 import { showRedactionModal } from '../redaction-modal.js';
@@ -119,7 +119,11 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   });
   const contentTools = document.createElement('div');
   contentTools.className = 'flex-row';
-  contentTools.append(loader.button, preview.toggle);
+  contentTools.append(
+    markdownFormatButtons(contentArea, langSelect),
+    loader.button,
+    preview.toggle,
+  );
   const contentHeader = document.createElement('div');
   contentHeader.className = 'flex-between';
   contentHeader.append(contentLabel, contentTools);

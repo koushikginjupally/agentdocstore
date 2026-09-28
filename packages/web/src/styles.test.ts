@@ -106,6 +106,20 @@ describe('full screen reading', () => {
   });
 });
 
+describe('formatting buttons', () => {
+  // The group lays out with display: inline-flex, which beats the hidden
+  // attribute's own display: none; without its own rule it would never hide.
+  it('are hidden when the group is hidden', () => {
+    injectStyles();
+    const sheet = document.querySelector('style')?.sheet;
+    const rule = Array.from(sheet?.cssRules ?? []).find(
+      (r): r is CSSStyleRule =>
+        r instanceof CSSStyleRule && r.selectorText === '.format-buttons[hidden]',
+    );
+    expect(rule?.style.getPropertyValue('display')).toBe('none');
+  });
+});
+
 describe('toggle buttons', () => {
   it('look pressed while on, in theme colours', () => {
     injectStyles();

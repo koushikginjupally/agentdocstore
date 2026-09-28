@@ -10,6 +10,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- Bold and Italic buttons above the content box on the create and edit forms,
+  for markdown documents. They make the same edits as Ctrl+B and Ctrl+I (Cmd on
+  a Mac), and their tooltips name those keys.
 - The create and edit forms show the content's size under the box once it is
   within 10% of the 5 MB limit, and how much to cut once it is over, so a
   large document is trimmed before saving rather than refused after.

@@ -33,6 +33,23 @@ async function editPageAs(viewer: string | Error): Promise<HTMLElement> {
 const saveButton = (root: HTMLElement): Element | undefined =>
   [...root.querySelectorAll('button')].find((b) => b.textContent === 'Save Changes');
 
+describe('edit form formatting buttons', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  it('hides Bold and Italic for a plaintext document until markdown is chosen', async () => {
+    const page = await editPageAs('alice'); // the fixture document is plaintext
+    const group = page.querySelector<HTMLElement>('.format-buttons')!;
+    expect(group.hidden).toBe(true);
+    const language = page.querySelector<HTMLSelectElement>('#edit-language')!;
+    language.value = 'markdown';
+    language.dispatchEvent(new Event('change'));
+    expect(group.hidden).toBe(false);
+  });
+});
+
 describe('edit form content size', () => {
   afterEach(() => {
     vi.restoreAllMocks();
