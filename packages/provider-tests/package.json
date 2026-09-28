@@ -24,7 +24,8 @@
   "files": [
     "dist",
     "!dist/**/*.map",
-    "!dist/self-check.*"
+    "!dist/self-check.*",
+    "NOTICE"
   ],
   "publishConfig": {
     "access": "public",

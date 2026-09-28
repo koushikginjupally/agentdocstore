@@ -23,7 +23,8 @@
   },
   "files": [
     "dist",
-    "!dist/**/*.map"
+    "!dist/**/*.map",
+    "NOTICE"
   ],
   "publishConfig": {
     "access": "public",
