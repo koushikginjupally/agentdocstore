@@ -5,9 +5,9 @@
  * @agentdocstore/provider-tests, then agentdocstore (the CLI, which depends on
  * core). Run by .github/workflows/publish.yml for a pushed v* tag.
  *
- *   node scripts/publish-packages.mjs v0.3.1 --check    # checks only
- *   node scripts/publish-packages.mjs v0.3.1 --dry-run  # checks, then npm publish --dry-run
- *   node scripts/publish-packages.mjs v0.3.1            # checks, then publishes
+ *   node scripts/publish-packages.mjs v0.4.0 --check    # checks only
+ *   node scripts/publish-packages.mjs v0.4.0 --dry-run  # checks, then npm publish --dry-run
+ *   node scripts/publish-packages.mjs v0.4.0            # checks, then publishes
  *
  * It refuses to publish unless the tag names the version every package has,
  * the CLI and provider-tests ask for exactly that core (`^X.Y.Z`), the MCP

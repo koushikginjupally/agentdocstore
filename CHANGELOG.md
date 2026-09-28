@@ -8,6 +8,8 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-28
+
 ### Added
 
 - A Codex plugin: `.codex-plugin/plugin.json` and `.mcp.json` make the repo
@@ -29,6 +31,10 @@ versions may contain breaking changes; they will be called out under
   - `expiresInDays: Too big: expected number to be <=36500`
 
   Enum errors are unchanged (`must be one of ...`).
+
+- Dependency updates: nanoid 6 (core), @hono/node-server 2 and hono 4.13.9
+  (server, CLI), marked 18 and dompurify 3.4.16 (server, web), and the MCP SDK
+  1.30.1. None changes the REST API or the MCP tools.
 
 ## [0.3.1] - 2026-09-28
 
@@ -426,7 +432,8 @@ First public release.
 - `trusted-header` mode is tested with synthetic headers, not against a real
   reverse proxy.
 
-[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/koushikginjupally/agentdocstore/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/koushikginjupally/agentdocstore/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.0...v0.2.1
