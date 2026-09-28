@@ -22,7 +22,7 @@
     "dompurify": "^3.4.16",
     "hono": "^4.13.9",
     "jsdom": "^25.0.0",
-    "marked": "^14.1.0",
+    "marked": "^18.0.14",
     "zod": "^4.6.5"
   },
   "devDependencies": {
