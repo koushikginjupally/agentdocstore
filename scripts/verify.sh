@@ -19,8 +19,8 @@ fi
 NODE_VERSION="$(node -v)"
 NODE_MAJOR="${NODE_VERSION#v}"
 NODE_MAJOR="${NODE_MAJOR%%.*}"
-if [[ ! "$NODE_MAJOR" =~ ^[0-9]+$ ]] || (( NODE_MAJOR < 20 )); then
-  echo "FATAL: AgentDocStore requires Node.js >= 20; found $NODE_VERSION" >&2
+if [[ ! "$NODE_MAJOR" =~ ^[0-9]+$ ]] || (( NODE_MAJOR < 22 )); then
+  echo "FATAL: AgentDocStore requires Node.js >= 22; found $NODE_VERSION" >&2
   exit 1
 fi
 

@@ -4,7 +4,7 @@ An offline-first, self-hosted store for the documents AI agents write: plans,
 reviews, runbooks, diagrams and logs. One versioned store behind a web UI, a
 REST API and an MCP server. Nothing leaves your machine unless you say so.
 
-Requires Node.js 20 or newer.
+Requires Node.js 22 or newer.
 
 ## Run it
 

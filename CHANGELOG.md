@@ -8,6 +8,12 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+### Changed
+
+- **Breaking:** Node.js 22 or newer is now required; Node 20 reached end of
+  life on 2026-04-30. `engines` says `>=22` in every published package, CI
+  tests Node 22 and 24, and the CLI bundle targets Node 22.
+
 ## [0.3.1] - 2026-09-28
 
 ### Added

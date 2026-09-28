@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **Node.js >= 20** (`.nvmrc` recommends 24; any 20 or newer works).
+- **Node.js >= 22** (`.nvmrc` recommends 24; any 22 or newer works).
 - npm (ships with Node).
 - For `npm run verify`: `curl` and `jq`. Optional: `docker` for the container
   and air-gap checks, which skip without it.

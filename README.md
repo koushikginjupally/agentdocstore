@@ -8,7 +8,7 @@ API, and a first-class MCP server for AI assistants.**
 [![CI](https://github.com/koushikginjupally/agentdocstore/actions/workflows/ci.yml/badge.svg)](https://github.com/koushikginjupally/agentdocstore/actions/workflows/ci.yml)
 [![Plugin scan](https://github.com/koushikginjupally/agentdocstore/actions/workflows/plugin-scan.yml/badge.svg)](https://github.com/koushikginjupally/agentdocstore/actions/workflows/plugin-scan.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Node.js >= 20](https://img.shields.io/badge/node-%3E%3D20-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org)
+[![Node.js >= 22](https://img.shields.io/badge/node-%3E%3D22-339933.svg?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6.svg?logo=typescript&logoColor=white)](tsconfig.base.json)
 [![MCP: 16 tools](https://img.shields.io/badge/MCP-16%20tools-7C5CFF.svg)](docs/MCP.md)
 [![Egress: fused](https://img.shields.io/badge/egress-fused%20by%20default-success.svg)](docs/SECURITY.md#runtime-modes-offline-is-enforced-not-documented)
@@ -133,7 +133,7 @@ AgentDocStore is the local alternative:
 
 ## Quickstart
 
-**Prerequisites:** Node.js 20 or newer. Docker is optional.
+**Prerequisites:** Node.js 22 or newer. Docker is optional.
 
 ```bash
 npx agentdocstore serve                 # persistent, stored in ~/.agentdocstore/data

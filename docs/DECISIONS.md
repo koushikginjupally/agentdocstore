@@ -6,8 +6,9 @@ contributor would question.
 
 ## Toolchain
 
-- **Node >= 20 required; `.nvmrc` recommends 24.** Strict ESM and `NodeNext`
-  resolution need it. CI tests 20, 22 and 24.
+- **Node >= 22 required; `.nvmrc` recommends 24.** Strict ESM and `NodeNext`
+  resolution need it. Node 20 was dropped in 0.4.0: it reached end of life on
+  2026-04-30, and current jsdom and nanoid need 22. CI tests 22 and 24.
 - **`packages/core/tsconfig.json` extends `tsconfig.base.json`** rather than inlining its
   compiler options. The inlined version omitted `composite: true`, which TypeScript
   requires of any project referenced by another (`error TS6306`), so `tsc -b` could not
