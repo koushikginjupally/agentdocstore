@@ -7,6 +7,7 @@ import { expiryField, formatDate, LANGUAGES, markFieldInvalid } from '../dom.js'
 import { showToast } from '../toast.js';
 import { ICON_DOCUMENTS, ICON_SEARCH } from '../icons.js';
 import { contentPreview } from '../preview.js';
+import { contentSizeNote } from '../content-size.js';
 import { addMarkdownShortcuts } from '../markdown-shortcuts.js';
 import { fileLoader } from '../file-load.js';
 import { takeNewDocumentDraft } from '../new-document-draft.js';
@@ -105,12 +106,14 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   contentArea.rows = 15;
   addMarkdownShortcuts(contentArea, langSelect);
   const preview = contentPreview(contentArea, langSelect);
+  const size = contentSizeNote(contentArea);
   const loader = fileLoader({
     contentArea,
     titleInput,
     languageSelect: langSelect,
     // Show what was loaded, not a preview of what was there before.
     onLoaded: () => {
+      size.update();
       if (preview.toggle.getAttribute('aria-pressed') === 'true') preview.toggle.click();
     },
   });
@@ -122,6 +125,7 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
   contentHeader.append(contentLabel, contentTools);
   contentGroup.appendChild(contentHeader);
   contentGroup.appendChild(contentArea);
+  contentGroup.appendChild(size.note);
   contentGroup.appendChild(preview.panel);
   contentGroup.appendChild(loader.input);
   formCard.appendChild(contentGroup);
@@ -149,6 +153,7 @@ export async function renderHomePage(container: HTMLElement): Promise<void> {
     langSelect.value = draft.language;
     visSelect.value = draft.visibility;
     contentArea.value = draft.content;
+    size.update();
     const note = document.createElement('p');
     note.className = 'text-sm text-muted mb-16';
     note.textContent = 'This copy is not saved yet. Change what you need, then create it.';

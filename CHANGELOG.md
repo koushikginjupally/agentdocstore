@@ -10,6 +10,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Added
 
+- The create and edit forms show the content's size under the box once it is
+  within 10% of the 5 MB limit, and how much to cut once it is over, so a
+  large document is trimmed before saving rather than refused after.
 - When a save is refused because a newer version was saved meanwhile, the edit
   page says so in the form and keeps what you typed. It links to the newer
   version, opening in a new tab so you can compare, and offers to save your

@@ -12,6 +12,7 @@ import {
   emptyListMessage,
   searchCountMessage,
   commentSizeMessage,
+  contentSizeMessage,
   MAX_COMMENT_BYTES,
   MAX_TITLE_BYTES,
   utf8Bytes,
@@ -424,6 +425,27 @@ describe('comment size', () => {
     );
     expect(commentSizeMessage(10_001)).toBe(
       '10,001 of 10,000 bytes. Shorten the comment by 1 byte to post it.',
+    );
+  });
+});
+
+describe('the content size note', () => {
+  it('says nothing until the content is close to the limit', () => {
+    expect(contentSizeMessage(0)).toBe('');
+    expect(contentSizeMessage(4_718_591)).toBe('');
+  });
+
+  it('shows the size from 90% of the limit, and up to it', () => {
+    expect(contentSizeMessage(4_718_592)).toBe('4,718,592 of 5,242,880 bytes');
+    expect(contentSizeMessage(5_242_880)).toBe('5,242,880 of 5,242,880 bytes');
+  });
+
+  it('says how much to cut once over the limit', () => {
+    expect(contentSizeMessage(5_242_885)).toBe(
+      '5,242,885 of 5,242,880 bytes. Shorten the content by 5 bytes to save it.',
+    );
+    expect(contentSizeMessage(5_242_881)).toBe(
+      '5,242,881 of 5,242,880 bytes. Shorten the content by 1 byte to save it.',
     );
   });
 });

@@ -5,6 +5,7 @@ import { navigate, href, setUnsavedChangesCheck, watchForUnsavedChanges } from '
 import { buildTitle } from '../constants.js';
 import { expiryField, formatDate, LANGUAGES } from '../dom.js';
 import { contentPreview } from '../preview.js';
+import { contentSizeNote } from '../content-size.js';
 import { addMarkdownShortcuts } from '../markdown-shortcuts.js';
 import { fileLoader } from '../file-load.js';
 import { showToast } from '../toast.js';
@@ -119,12 +120,14 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     contentArea.rows = 20;
     addMarkdownShortcuts(contentArea, langSelect);
     const preview = contentPreview(contentArea, langSelect);
+    const size = contentSizeNote(contentArea);
     const loader = fileLoader({
       contentArea,
       titleInput,
       languageSelect: langSelect,
       // Show what was loaded, not a preview of what was there before.
       onLoaded: () => {
+        size.update();
         if (preview.toggle.getAttribute('aria-pressed') === 'true') preview.toggle.click();
       },
     });
@@ -136,6 +139,7 @@ export async function renderEditPage(id: string, container: HTMLElement): Promis
     contentHeader.append(contentLabel, contentTools);
     contentGroup.appendChild(contentHeader);
     contentGroup.appendChild(contentArea);
+    contentGroup.appendChild(size.note);
     contentGroup.appendChild(preview.panel);
     contentGroup.appendChild(loader.input);
     card.appendChild(contentGroup);

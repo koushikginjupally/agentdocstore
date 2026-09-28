@@ -41,6 +41,37 @@ describe('create form markdown shortcuts', () => {
   });
 });
 
+describe('create form content size', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  it('shows the size under the content box once it nears the limit', async () => {
+    const main = await homePage();
+    const box = main.querySelector<HTMLTextAreaElement>('#doc-content')!;
+    const note = main.querySelector('#doc-content-size')!;
+    expect(box.getAttribute('aria-describedby')).toContain('doc-content-size');
+    expect(note.textContent).toBe('');
+    box.value = 'x'.repeat(4_800_000);
+    box.dispatchEvent(new Event('input'));
+    expect(note.textContent).toBe('4,800,000 of 5,242,880 bytes');
+  });
+
+  it('shows it straight away for a copy that is near the limit', async () => {
+    offerNewDocumentDraft({
+      title: 'Copy of Big log',
+      language: 'plaintext',
+      visibility: 'PUBLIC',
+      content: 'x'.repeat(5_000_000),
+    });
+    const main = await homePage();
+    expect(main.querySelector('#doc-content-size')!.textContent).toBe(
+      '5,000,000 of 5,242,880 bytes',
+    );
+  });
+});
+
 describe('home page search landmark', () => {
   afterEach(() => vi.restoreAllMocks());
 

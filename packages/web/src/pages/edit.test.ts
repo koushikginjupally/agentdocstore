@@ -33,6 +33,26 @@ async function editPageAs(viewer: string | Error): Promise<HTMLElement> {
 const saveButton = (root: HTMLElement): Element | undefined =>
   [...root.querySelectorAll('button')].find((b) => b.textContent === 'Save Changes');
 
+describe('edit form content size', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    setUnsavedChangesCheck(null);
+  });
+
+  it('shows the size of a document near the limit as soon as the form opens', async () => {
+    vi.spyOn(api, 'getDocument').mockResolvedValue({ ...doc, content: 'x'.repeat(5_100_000) });
+    vi.spyOn(api, 'whoami').mockResolvedValue({ user: 'alice' });
+    document.body.innerHTML = '<main></main>';
+    const main = document.querySelector('main')!;
+    await renderEditPage('d1', main);
+    const box = main.querySelector<HTMLTextAreaElement>('#edit-content')!;
+    expect(box.getAttribute('aria-describedby')).toContain('edit-content-size');
+    expect(main.querySelector('#edit-content-size')!.textContent).toBe(
+      '5,100,000 of 5,242,880 bytes',
+    );
+  });
+});
+
 describe('edit page access', () => {
   afterEach(() => vi.restoreAllMocks());
 

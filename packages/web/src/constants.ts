@@ -55,13 +55,23 @@ export function utf8Bytes(text: string): number {
 const count = (n: number): string => n.toLocaleString('en-US');
 
 /**
- * The note under the comment box: nothing for a short comment, the size from
- * 90% of the limit, and how much to cut once the comment is over it.
+ * The note under a text box with a size limit: nothing well under the limit,
+ * the size from 90% of it, and how much to cut once over it.
  */
+function sizeNearLimit(bytes: number, limit: number, what: string, action: string): string {
+  if (bytes < limit * 0.9) return '';
+  const size = `${count(bytes)} of ${count(limit)} bytes`;
+  if (bytes <= limit) return size;
+  const over = bytes - limit;
+  return `${size}. Shorten the ${what} by ${count(over)} ${over === 1 ? 'byte' : 'bytes'} to ${action} it.`;
+}
+
+/** The note under the comment box. */
 export function commentSizeMessage(bytes: number): string {
-  if (bytes < MAX_COMMENT_BYTES * 0.9) return '';
-  const size = `${count(bytes)} of ${count(MAX_COMMENT_BYTES)} bytes`;
-  if (bytes <= MAX_COMMENT_BYTES) return size;
-  const over = bytes - MAX_COMMENT_BYTES;
-  return `${size}. Shorten the comment by ${count(over)} ${over === 1 ? 'byte' : 'bytes'} to post it.`;
+  return sizeNearLimit(bytes, MAX_COMMENT_BYTES, 'comment', 'post');
+}
+
+/** The note under a document's content box, on the create and edit forms. */
+export function contentSizeMessage(bytes: number): string {
+  return sizeNearLimit(bytes, MAX_CONTENT_BYTES, 'content', 'save');
 }

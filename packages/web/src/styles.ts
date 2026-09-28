@@ -464,6 +464,8 @@ textarea {
 }
 .comment-size:not(:empty) { margin-top: 6px; }
 .comment-size.over-limit { color: var(--danger); }
+.content-size:not(:empty) { margin-top: 6px; }
+.content-size.over-limit { color: var(--danger); }
 
 /* ===== Diff view ===== */
 .diff-container {
