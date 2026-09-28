@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "agentdocstore": {
+      "command": "npx",
+      "args": ["-y", "agentdocstore@0.3.1", "mcp"]
+    }
+  }
+}

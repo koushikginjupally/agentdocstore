@@ -8,6 +8,14 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+### Added
+
+- A Codex plugin: `.codex-plugin/plugin.json` and `.mcp.json` make the repo
+  installable in Codex, starting the 16 MCP tools with
+  `npx -y agentdocstore@<version> mcp`. `scripts/publish-packages.mjs` refuses
+  a release whose plugin version or pin does not match. Claude Code also reads
+  `.mcp.json` and asks before enabling the server.
+
 ### Changed
 
 - **Breaking:** Node.js 22 or newer is now required; Node 20 reached end of

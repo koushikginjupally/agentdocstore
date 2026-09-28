@@ -211,8 +211,9 @@ provenance to each version.
 
 1. Move every `package.json` to the new version, set the `@agentdocstore/core`
    range in `packages/cli` and `packages/provider-tests` to `^X.Y.Z`, update
-   the version in `packages/mcp/src/register.ts`, and give the release its own
-   section in `CHANGELOG.md`.
+   the version in `packages/mcp/src/register.ts`, set the Codex plugin's
+   `version` in `.codex-plugin/plugin.json` and its `agentdocstore@X.Y.Z` pin
+   in `.mcp.json`, and give the release its own section in `CHANGELOG.md`.
 2. Commit, push `main` and wait for CI.
 3. Tag and push: `git tag -a vX.Y.Z -m "AgentDocStore X.Y.Z"`, then
    `git push origin vX.Y.Z`.

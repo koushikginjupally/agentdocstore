@@ -1,0 +1,11 @@
+# Keep build output, local state and secrets out of the Codex plugin bundle.
+node_modules/
+dist/
+packages/cli/bundle/
+coverage/
+*.tsbuildinfo
+*.log
+.agentdocstore/
+.env
+.env.*
+tokens.json

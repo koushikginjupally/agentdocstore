@@ -1,0 +1,14 @@
+{
+  "name": "agentdocstore",
+  "version": "0.3.1",
+  "description": "Offline-first, self-hosted store for the documents AI agents write: 16 MCP tools over one versioned store that catches secrets before they are saved.",
+  "author": {
+    "name": "The AgentDocStore Authors",
+    "url": "https://github.com/koushikginjupally/agentdocstore"
+  },
+  "homepage": "https://github.com/koushikginjupally/agentdocstore#readme",
+  "repository": "https://github.com/koushikginjupally/agentdocstore",
+  "license": "Apache-2.0",
+  "keywords": ["mcp", "documents", "ai-agents", "markdown", "offline-first", "self-hosted"],
+  "mcpServers": "./.mcp.json"
+}

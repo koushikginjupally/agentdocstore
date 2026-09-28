@@ -11,8 +11,8 @@
  *
  * It refuses to publish unless the tag names the version every package has,
  * the CLI and provider-tests ask for exactly that core (`^X.Y.Z`), the MCP
- * server reports it, and the publishable packages are exactly the three
- * above. A version already on npm is skipped, so a failed run can be re-run.
+ * server and the Codex plugin (.codex-plugin/plugin.json, .mcp.json) report
+ * it, and the publishable packages are exactly the three above. A version already on npm is skipped, so a failed run can be re-run.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -70,6 +70,15 @@ for (const path of CORE_DEPENDENTS) {
 const register = readFileSync(join(root, 'packages/mcp/src/register.ts'), 'utf8');
 if (!register.includes(`version: '${version}'`)) {
   problems.push(`packages/mcp/src/register.ts does not report version '${version}'`);
+}
+// The Codex plugin names the release and pins the CLI it starts to it.
+const plugin = readJson('.codex-plugin/plugin.json');
+if (plugin.version !== version) {
+  problems.push(`.codex-plugin/plugin.json has version ${plugin.version}, not ${version}`);
+}
+const pluginArgs = readJson('.mcp.json').mcpServers?.agentdocstore?.args ?? [];
+if (!pluginArgs.includes(`agentdocstore@${version}`)) {
+  problems.push(`.mcp.json does not start agentdocstore@${version}`);
 }
 const npmVersion = execFileSync('npm', ['--version'], { encoding: 'utf8' }).trim();
 const npmParts = npmVersion.split('.').map(Number);

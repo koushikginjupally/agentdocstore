@@ -203,6 +203,9 @@ needs no network.
 | Cursor         | `.cursor/mcp.json`                                                |
 | Kiro           | `.kiro/settings/mcp.json`                                         |
 
+Codex can install the repo as a plugin: `.codex-plugin/plugin.json` points at
+`.mcp.json`, which starts the release-pinned `npx -y agentdocstore@<version> mcp`.
+
 A running server also exposes MCP at `/mcp` (streamable HTTP), authenticated
 exactly like the REST API. The 16 tools:
 
