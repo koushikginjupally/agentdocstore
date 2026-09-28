@@ -23,7 +23,7 @@
     "dompurify": "^3.1.7",
     "jsdom": "^25.0.0",
     "marked": "^14.1.0",
-    "zod": "^3.23.0"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
