@@ -31,6 +31,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { Provider } from '@agentdocstore/core';
+import { LIMITS } from '@agentdocstore/core';
 import { createMcpServer } from './register.js';
 
 // ---------------------------------------------------------------------------
@@ -48,6 +49,11 @@ export interface HttpHandlerOptions {
   getViewer: (req: IncomingMessage) => string | null | Promise<string | null>;
   /** Whether to enable session management. Defaults to true. */
   stateful?: boolean | undefined;
+  /**
+   * Largest POST body read, in bytes; a larger one gets 413. Defaults to
+   * `LIMITS.MAX_REQUEST_BYTES`, the REST API's cap.
+   */
+  maxBodyBytes?: number | undefined;
 }
 
 export type McpHttpHandler = (req: IncomingMessage, res: ServerResponse) => Promise<void>;
@@ -67,6 +73,55 @@ function sendError(res: ServerResponse, status: number, code: number, message: s
 }
 
 // ---------------------------------------------------------------------------
+// Request bodies
+// ---------------------------------------------------------------------------
+
+/**
+ * Read a request body of at most `limit` bytes. Resolves with the text, or with
+ * `null` as soon as the body is known to be larger — from a declared
+ * Content-Length before anything is read, or while counting a chunked body —
+ * without reading the rest of it.
+ */
+function readBody(req: IncomingMessage, limit: number): Promise<string | null> {
+  const declared = Number(req.headers['content-length']);
+  if (Number.isFinite(declared) && declared > limit) return Promise.resolve(null);
+
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    const done = (): void => {
+      req.off('data', onData);
+      req.off('end', onEnd);
+      req.off('error', onError);
+    };
+    const onData = (chunk: Buffer): void => {
+      size += chunk.length;
+      if (size > limit) {
+        done();
+        // Let the rest arrive and fall away unkept. Closing instead would reset
+        // a connection that still has unread data, and the client could lose
+        // the 413 before reading it.
+        req.resume();
+        resolve(null);
+        return;
+      }
+      chunks.push(chunk);
+    };
+    const onEnd = (): void => {
+      done();
+      resolve(Buffer.concat(chunks).toString('utf8'));
+    };
+    const onError = (err: Error): void => {
+      done();
+      reject(err);
+    };
+    req.on('data', onData);
+    req.on('end', onEnd);
+    req.on('error', onError);
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 
@@ -76,7 +131,7 @@ function sendError(res: ServerResponse, status: number, code: number, message: s
  * on the mounted path.
  */
 export function createHttpHandler(opts: HttpHandlerOptions): McpHttpHandler {
-  const { provider, getViewer, stateful = true } = opts;
+  const { provider, getViewer, stateful = true, maxBodyBytes = LIMITS.MAX_REQUEST_BYTES } = opts;
 
   // Per-session transports (stateful) or a fresh transport per call (stateless).
   const sessions = new Map<string, StreamableHTTPServerTransport>();
@@ -134,6 +189,25 @@ export function createHttpHandler(opts: HttpHandlerOptions): McpHttpHandler {
       const sessionId = req.headers['mcp-session-id'] as string | undefined;
       let transport: StreamableHTTPServerTransport;
 
+      // A POST body is read here, counted against the cap, rather than by the
+      // transport, whose reader takes any size: one request could otherwise
+      // fill the server's memory. Coming after the identity check, it is never
+      // read for an unauthenticated caller.
+      let body: unknown;
+      if (req.method === 'POST') {
+        const text = await readBody(req, maxBodyBytes);
+        if (text === null) {
+          sendError(res, 413, -32000, 'Request body too large');
+          return;
+        }
+        try {
+          body = JSON.parse(text);
+        } catch {
+          sendError(res, 400, -32700, 'Parse error: Invalid JSON');
+          return;
+        }
+      }
+
       if (sessionId !== undefined && sessions.has(sessionId)) {
         const owner = sessionViewers.get(sessionId);
         if (owner !== undefined && owner !== viewer) {
@@ -167,7 +241,7 @@ export function createHttpHandler(opts: HttpHandlerOptions): McpHttpHandler {
         await mcp.connect(transport as Parameters<typeof mcp.connect>[0]);
       }
 
-      await transport.handleRequest(req, res);
+      await transport.handleRequest(req, res, body);
     } catch {
       sendError(res, 500, -32603, 'Internal server error');
     }

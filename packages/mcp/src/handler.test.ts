@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createServer } from 'node:http';
+import { createServer, request } from 'node:http';
 import type { Server, IncomingMessage } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
@@ -22,9 +22,12 @@ let base: string;
 /** Mount the handler with the given viewer resolution and return its base URL. */
 async function mount(
   getViewer: (req: IncomingMessage) => string | null | Promise<string | null>,
+  options: { maxBodyBytes?: number } = {},
 ): Promise<void> {
-  const handler = createHttpHandler({ provider, getViewer });
+  const handler = createHttpHandler({ provider, getViewer, ...options });
   server = createServer((req, res) => {
+    // How much of the request the server had read when it answered.
+    res.on('finish', () => (lastBytesRead = req.socket.bytesRead));
     handler(req, res).catch(() => {
       if (!res.headersSent) res.writeHead(500).end();
     });
@@ -33,6 +36,8 @@ async function mount(
   const { port } = server.address() as AddressInfo;
   base = `http://127.0.0.1:${port}`;
 }
+
+let lastBytesRead = 0;
 
 const INITIALIZE = {
   jsonrpc: '2.0',
@@ -182,5 +187,97 @@ describe('MCP over HTTP — sessions it does not know', () => {
     const res = await post(INITIALIZE);
     expect(res.status).toBe(200);
     expect(res.headers.get('mcp-session-id')).toBeTruthy();
+  });
+});
+
+// The SDK transport reads a POST body with no size limit, so one request could
+// fill the server's memory: a 200 MB initialize was accepted (RSS 117 → 934 MB).
+describe('MCP over HTTP — request size', () => {
+  const LIMIT = 256 * 1024;
+  const CHUNK = 64 * 1024;
+  const HEAD =
+    '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05",' +
+    '"capabilities":{},"clientInfo":{"name":"test-client","version":"1.0.0"},"padding":"';
+  const TAIL = '"}}';
+
+  /**
+   * POST an initialize padded to about `bytes`, chunked (no Content-Length)
+   * unless `declareLength`. Resolves on the response, even if the server
+   * answers before the upload is finished.
+   */
+  function send(bytes: number, declareLength = false): Promise<{ status: number; body: string }> {
+    const url = new URL(base);
+    const padding = Math.max(0, bytes - HEAD.length - TAIL.length);
+    return new Promise((resolve, reject) => {
+      const req = request(
+        {
+          host: url.hostname,
+          port: url.port,
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            accept: 'application/json, text/event-stream',
+            ...(declareLength ? { 'content-length': HEAD.length + padding + TAIL.length } : {}),
+          },
+        },
+        (res) => {
+          let body = '';
+          res.on('data', (d: Buffer) => (body += d.toString()));
+          res.on('end', () => resolve({ status: res.statusCode ?? 0, body }));
+        },
+      );
+      req.on('error', reject);
+      req.write(HEAD);
+      let left = padding;
+      const pump = (): void => {
+        while (left > 0) {
+          const n = Math.min(CHUNK, left);
+          left -= n;
+          if (!req.write('x'.repeat(n))) return void req.once('drain', pump);
+        }
+        req.end(TAIL);
+      };
+      pump();
+    });
+  }
+
+  it('refuses a chunked body (413) as soon as it passes the limit', async () => {
+    await mount(() => 'alice', { maxBodyBytes: LIMIT });
+    const res = await send(40 * LIMIT);
+    expect(res.status).toBe(413);
+    expect(JSON.parse(res.body)).toEqual({
+      jsonrpc: '2.0',
+      id: null,
+      error: { code: -32000, message: 'Request body too large' },
+    });
+    expect(lastBytesRead).toBeLessThan(4 * LIMIT);
+  });
+
+  it('refuses a declared Content-Length over the limit before reading the body', async () => {
+    await mount(() => 'alice', { maxBodyBytes: LIMIT });
+    const res = await send(4 * LIMIT, true);
+    expect(res.status).toBe(413);
+    expect(lastBytesRead).toBeLessThan(LIMIT);
+  });
+
+  it('accepts a chunked body under the limit', async () => {
+    await mount(() => 'alice', { maxBodyBytes: LIMIT });
+    const res = await send(LIMIT / 2);
+    expect(res.status).toBe(200);
+    expect(res.body).toContain('"protocolVersion"');
+  });
+
+  it('still answers invalid JSON with a JSON-RPC parse error', async () => {
+    await mount(() => 'alice', { maxBodyBytes: LIMIT });
+    const res = await fetch(base, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json, text/event-stream',
+      },
+      body: '{"jsonrpc":',
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: { code: number } }).error.code).toBe(-32700);
   });
 });

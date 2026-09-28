@@ -71,6 +71,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- `/mcp` now refuses a request body over the 11 MB request cap with `413`,
+  counting it as it arrives. It had no limit at all: a 200 MB request was read
+  and accepted, taking the server from 117 MB to 934 MB of memory.
 - A REST request body sent without `Content-Length` (chunked) is now cut off
   at the request cap as it arrives. It used to be read in full and only then
   measured, so a single request could fill the server's memory: a 200 MB body
