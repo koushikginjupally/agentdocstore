@@ -7,6 +7,7 @@
  */
 
 import { Hono } from 'hono';
+import { bodyLimit as limitBody } from 'hono/body-limit';
 import { serve } from '@hono/node-server';
 import { ZodError, type ZodIssue } from 'zod';
 import type { AddressInfo } from 'node:net';
@@ -226,16 +227,17 @@ export function createServer(opts: CreateServerOptions): Hono {
   });
 
   // ------ Body size guard ------
-  app.use('*', async (c, next) => {
-    const cl = c.req.header('content-length');
-    if (cl !== undefined) {
-      const len = parseInt(cl, 10);
-      if (!Number.isNaN(len) && len > bodyLimit) {
-        return c.json({ error: 'Request body too large' }, 413);
-      }
-    }
-    await next();
-  });
+  // Counts the body as it arrives, so a chunked request (no Content-Length)
+  // is cut off at the cap instead of being read in full and measured after:
+  // one such request could otherwise fill the server's memory. A declared
+  // Content-Length over the cap is refused before anything is read.
+  app.use(
+    '*',
+    limitBody({
+      maxSize: bodyLimit,
+      onError: (c) => c.json({ error: 'Request body too large' }, 413),
+    }),
+  );
 
   // ------ Central error handler ------
   app.onError((err, c) => {

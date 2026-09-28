@@ -71,6 +71,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- A REST request body sent without `Content-Length` (chunked) is now cut off
+  at the request cap as it arrives. It used to be read in full and only then
+  measured, so a single request could fill the server's memory: a 200 MB body
+  took a running server from 373 MB to 959 MB before it was refused.
 - An unknown auth mode now stops startup with an error naming where it came
   from (`--auth`, `AGENTDOCSTORE_AUTH` or `auth` in the config file). It used
   to be skipped, so a misspelt `token` or `trusted-header` started the server

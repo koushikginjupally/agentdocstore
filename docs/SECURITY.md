@@ -290,6 +290,10 @@ The request cap leaves room for JSON escaping: a quote, backslash, newline or
 tab takes two bytes in the request, so a write carrying 5 MB of content can
 need up to 10 MB.
 
+The REST API counts a body as it arrives: a declared `Content-Length` over the
+cap is refused before anything is read, and a chunked body without one is cut
+off once it passes the cap, so no request is held in memory beyond it.
+
 Content is never stored then rejected on read — oversized writes are rejected
 at the API boundary.
 

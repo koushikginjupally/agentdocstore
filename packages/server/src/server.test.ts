@@ -409,6 +409,79 @@ describe('server', () => {
     });
   });
 
+  // A body sent without Content-Length (chunked) used to be read in full and
+  // only then measured, so one request could fill the server's memory: 200 MB
+  // took a running server from 373 MB to 959 MB before its 413.
+  describe('a streamed body over the limit', () => {
+    const LIMIT = 1024 * 1024;
+    const CHUNK = 64 * 1024;
+
+    /** A request body that yields `totalBytes` of JSON-ish text, counting what is read. */
+    function countingBody(totalBytes: number): {
+      body: ReadableStream<Uint8Array>;
+      read: () => number;
+    } {
+      let read = 0;
+      const chunk = new TextEncoder().encode('x'.repeat(CHUNK));
+      const head = new TextEncoder().encode('{"title":"t","language":"plaintext","content":"');
+      let sentHead = false;
+      const body = new ReadableStream<Uint8Array>({
+        pull(controller) {
+          if (!sentHead) {
+            sentHead = true;
+            read += head.length;
+            controller.enqueue(head);
+            return;
+          }
+          if (read >= totalBytes) {
+            controller.enqueue(new TextEncoder().encode('"}'));
+            controller.close();
+            return;
+          }
+          read += chunk.length;
+          controller.enqueue(chunk);
+        },
+      });
+      return { body, read: () => read };
+    }
+
+    it('is refused with 413 without reading the rest of it', async () => {
+      const small = createServer({
+        provider,
+        auth: { mode: 'single-user', user: 'alice' },
+        bodyLimit: LIMIT,
+      });
+      const stream = countingBody(50 * LIMIT);
+      const res = await small.request('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: stream.body,
+        duplex: 'half',
+      } as RequestInit);
+      expect(res.status).toBe(413);
+      expect(await res.json()).toEqual({ error: 'Request body too large' });
+      // Reading stops at the first chunk past the limit (the stream may run
+      // one chunk ahead of the reader).
+      expect(stream.read()).toBeLessThanOrEqual(LIMIT + 2 * CHUNK);
+    });
+
+    it('is accepted under the limit', async () => {
+      const small = createServer({
+        provider,
+        auth: { mode: 'single-user', user: 'alice' },
+        bodyLimit: LIMIT,
+      });
+      const stream = countingBody(LIMIT / 2);
+      const res = await small.request('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: stream.body,
+        duplex: 'half',
+      } as RequestInit);
+      expect(res.status).toBe(201);
+    });
+  });
+
   // ========================================================================
   // Size errors say how much is too much
   // ========================================================================
