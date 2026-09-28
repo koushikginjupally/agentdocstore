@@ -12,7 +12,7 @@ body:
     attributes:
       label: Version
       description: Release, commit, or container tag
-      placeholder: v0.3.0
+      placeholder: v0.3.1
     validations:
       required: true
   - type: dropdown

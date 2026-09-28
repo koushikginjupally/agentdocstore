@@ -1,6 +1,6 @@
 {
   "name": "@agentdocstore/provider-tests",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Reusable conformance suite for AgentDocStore storage providers. Run it against your own Provider implementation to prove SPI compliance.",
   "homepage": "https://github.com/koushikginjupally/agentdocstore/tree/main/packages/provider-tests#readme",
   "bugs": {
@@ -49,7 +49,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@agentdocstore/core": "^0.3.0"
+    "@agentdocstore/core": "^0.3.1"
   },
   "peerDependencies": {
     "vitest": ">=2.1.0"

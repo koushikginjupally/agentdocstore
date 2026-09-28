@@ -8,6 +8,8 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-28
+
 ### Added
 
 - Releases are published from GitHub Actions: pushing a `v*` tag runs
@@ -402,7 +404,8 @@ First public release.
 - `trusted-header` mode is tested with synthetic headers, not against a real
   reverse proxy.
 
-[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/koushikginjupally/agentdocstore/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/koushikginjupally/agentdocstore/compare/v0.1.0...v0.2.0

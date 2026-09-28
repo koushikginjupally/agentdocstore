@@ -115,7 +115,7 @@ if [[ "$S1_STATUS" == "PASS" ]]; then
   # The `agentdocstore` command comes from the CLI package, whose bin is the
   # bundle the build makes; `npx agentdocstore` in a clone must run it.
   CLI_BIN=$(node -e "const p=require('./packages/cli/package.json'); process.stdout.write(p.bin?.agentdocstore ?? '')")
-  if [[ "$CLI_BIN" != "./bundle/index.js" ]]; then
+  if [[ "$CLI_BIN" != "bundle/index.js" ]]; then
     S1_STATUS="FAIL"
     S1_DETAIL="$S1_DETAIL, agentdocstore bin mapping missing from packages/cli/package.json"
   elif [[ ! -x "$REPO_ROOT/packages/cli/${CLI_BIN#./}" ]]; then

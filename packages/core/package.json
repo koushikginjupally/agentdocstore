@@ -1,6 +1,6 @@
 {
   "name": "@agentdocstore/core",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "AgentDocStore core: domain model, storage provider SPI, authorization, credential scanner and diff engine.",
   "homepage": "https://github.com/koushikginjupally/agentdocstore/tree/main/packages/core#readme",
   "bugs": {
