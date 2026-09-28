@@ -573,7 +573,7 @@ describe('server', () => {
     it('names the field for a wrong type or out-of-range value', async () => {
       const res = await post('/api/documents', { title: 7, content: 'x' });
       expect(await res.json()).toEqual({
-        error: 'Invalid request body: title: Expected string, received number',
+        error: 'Invalid request body: title: Invalid input: expected string, received number',
       });
       const created = (await (
         await post('/api/documents', { title: 'T', content: 'v1' })
@@ -582,7 +582,7 @@ describe('server', () => {
       };
       const res2 = await put(`/api/documents/${created.id}`, { expiresInDays: -1 });
       expect(await res2.json()).toEqual({
-        error: 'Invalid request body: expiresInDays: Number must be greater than 0',
+        error: 'Invalid request body: expiresInDays: Too small: expected number to be >0',
       });
     });
 
@@ -595,7 +595,7 @@ describe('server', () => {
         });
         expect(res.status).toBe(400);
         expect(((await res.json()) as { error: string }).error).toBe(
-          `Invalid request body: expiresInDays: Number must be less than or equal to ${LIMITS.MAX_EXPIRY_DAYS}`,
+          `Invalid request body: expiresInDays: Too big: expected number to be <=${LIMITS.MAX_EXPIRY_DAYS}`,
         );
       }
       const created = (await (
@@ -623,7 +623,7 @@ describe('server', () => {
     it('explains a body that is not a JSON object', async () => {
       const res = await post('/api/documents', ['not', 'an', 'object']);
       expect(await res.json()).toEqual({
-        error: 'Invalid request body: Expected object, received array',
+        error: 'Invalid request body: Invalid input: expected object, received array',
       });
     });
 

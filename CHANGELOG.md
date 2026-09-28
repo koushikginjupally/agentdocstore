@@ -13,6 +13,14 @@ versions may contain breaking changes; they will be called out under
 - **Breaking:** Node.js 22 or newer is now required; Node 20 reached end of
   life on 2026-04-30. `engines` says `>=22` in every published package, CI
   tests Node 22 and 24, and the CLI bundle targets Node 22.
+- Upgraded zod from 3 to 4 in the server, MCP tools and CLI. MCP tool schemas
+  are unchanged. The REST API's 400 messages for a wrong type or an
+  out-of-range value now use zod 4's wording:
+
+  - `title: Invalid input: expected string, received number`
+  - `expiresInDays: Too big: expected number to be <=36500`
+
+  Enum errors are unchanged (`must be one of ...`).
 
 ## [0.3.1] - 2026-09-28
 
