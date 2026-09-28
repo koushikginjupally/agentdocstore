@@ -584,7 +584,7 @@ a change.
 
 ## Project status and roadmap
 
-AgentDocStore is **v0.2.0** — feature-complete for single-machine and small-team
+AgentDocStore is **v0.2.1** — feature-complete for single-machine and small-team
 use, with a stable provider SPI. See [CHANGELOG.md](CHANGELOG.md).
 
 Planned, and good first contributions:

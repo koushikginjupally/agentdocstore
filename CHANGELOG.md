@@ -8,6 +8,13 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-28
+
+### Fixed
+
+- The npm packages include the LICENSE and NOTICE files, which 0.2.0 shipped
+  without.
+
 ## [0.2.0] - 2026-09-28
 
 ### Added
@@ -353,6 +360,7 @@ First public release.
 - `trusted-header` mode is tested with synthetic headers, not against a real
   reverse proxy.
 
-[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/koushikginjupally/agentdocstore/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/koushikginjupally/agentdocstore/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/koushikginjupally/agentdocstore/releases/tag/v0.1.0
