@@ -91,9 +91,30 @@ async function renderMarkdown(content: string, container: HTMLElement): Promise<
     ADD_ATTR: ['target', 'rel'],
   });
   container.innerHTML = `<div class="markdown-body">${clean}</div>`;
+  isolateNewWindowLinks(container);
   addHeadingIds(container);
   addTableOfContents(container);
   container.addEventListener('click', followInDocumentLink);
+}
+
+/**
+ * A document may set `target` on its links, but the page such a link opens
+ * must not get `window.opener`: with it, that page can send this tab somewhere
+ * else (a fake sign-in page) while the reader looks at the new one. Browsers
+ * withhold it by default only for a plain target="_blank", not for
+ * rel="opener" or a named window, so every link with a target gets noopener
+ * and noreferrer; any other rel words the author gave are kept.
+ */
+function isolateNewWindowLinks(container: HTMLElement): void {
+  for (const link of container.querySelectorAll('a[target]')) {
+    const words = (link.getAttribute('rel') ?? '')
+      .split(/\s+/)
+      .filter((word) => word !== '' && word.toLowerCase() !== 'opener');
+    for (const word of ['noopener', 'noreferrer']) {
+      if (!words.includes(word)) words.push(word);
+    }
+    link.setAttribute('rel', words.join(' '));
+  }
 }
 
 /** How many h1–h3 headings a document needs before it gets a contents list. */

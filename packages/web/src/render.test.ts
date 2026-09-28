@@ -28,6 +28,43 @@ describe('markdown sanitizing', () => {
   });
 });
 
+// A link that opens another window hands that page `window.opener`, and with
+// it the power to send this tab somewhere else — to a fake sign-in page, say —
+// while the reader looks at the new one. Browsers withhold the opener only for
+// a plain target="_blank"; rel="opener" or a named window got it.
+describe('links that open another window', () => {
+  const rel = (page: HTMLElement, text: string): string[] =>
+    ([...page.querySelectorAll('a')].find((a) => a.textContent === text)?.getAttribute('rel') ?? '')
+      .split(/\s+/)
+      .filter(Boolean);
+
+  it('never get the opener, even when they ask for it', async () => {
+    const page = await renderMarkdown(
+      [
+        '<a href="https://example.com/a" target="_blank">new tab</a>',
+        '<a href="https://example.com/b" target="_blank" rel="opener">asks for opener</a>',
+        '<a href="https://example.com/c" target="notes">named window</a>',
+      ].join('\n\n'),
+    );
+    for (const text of ['new tab', 'asks for opener', 'named window']) {
+      expect(rel(page, text), text).toEqual(expect.arrayContaining(['noopener', 'noreferrer']));
+      expect(rel(page, text), text).not.toContain('opener');
+    }
+  });
+
+  it('keep the other rel words the author gave', async () => {
+    const page = await renderMarkdown(
+      '<a href="https://example.com/a" target="_blank" rel="nofollow opener">sponsored</a>',
+    );
+    expect(rel(page, 'sponsored').sort()).toEqual(['nofollow', 'noopener', 'noreferrer']);
+  });
+
+  it('leave links that open in the same tab alone', async () => {
+    const page = await renderMarkdown('[same tab](https://example.com/a)');
+    expect(page.querySelector('a')?.hasAttribute('rel')).toBe(false);
+  });
+});
+
 describe('in-document links', () => {
   /** Click the link with `text` inside `page`; return whether its navigation was cancelled. */
   function click(page: HTMLElement, text: string): boolean {

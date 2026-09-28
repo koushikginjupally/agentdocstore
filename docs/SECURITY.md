@@ -187,6 +187,11 @@ Markdown is rendered with `marked` and sanitized with `DOMPurify`
 (`USE_PROFILES: { html: true }`). This strips `<script>`, `<iframe>`, event
 handlers, and other XSS vectors while preserving safe HTML.
 
+A link may open in another window (`target`), but it always carries
+`rel="noopener noreferrer"`, whatever `rel` the document asked for. Without it
+the page it opens gets `window.opener` and can send the reader's AgentDocStore
+tab to another page, such as a fake sign-in.
+
 ## Runtime modes: offline is enforced, not documented
 
 Offline is the **default**, and you opt out of it. Two independent axes, because

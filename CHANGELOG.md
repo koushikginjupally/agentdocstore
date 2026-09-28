@@ -77,6 +77,11 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- A link in a markdown document that opens another window can no longer take
+  over the reader's AgentDocStore tab. With `target="_blank" rel="opener"` or a
+  named window as its `target`, the page it opened got `window.opener` and could
+  replace the tab with any page, such as a fake sign-in. Such links now always
+  carry `rel="noopener noreferrer"`.
 - `/mcp` now refuses a request body over the 11 MB request cap with `413`,
   counting it as it arrives. It had no limit at all: a 200 MB request was read
   and accepted, taking the server from 117 MB to 934 MB of memory.
