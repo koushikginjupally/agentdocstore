@@ -83,7 +83,9 @@ versions may contain breaking changes; they will be called out under
   the rest: 256 KB took 13 seconds and a 5 MB document about an hour and a half
   on the server's only thread, on every create, update and `POST /api/scan`.
   The name after the keyword is now read up to 64 characters, and 5 MB of such
-  text scans in under a second.
+  text scans in under a second. Text with a finding on every line was slow the
+  same way, since each finding's line was counted from the start of the text
+  (5 MB took about 23 minutes); it now takes a fifth of a second.
 - Comparing two versions can no longer stall the server. A diff took time that
   grows with the square of the lines that differ, on the server's only thread:
   two 200 KB versions that share no line held every other request for 30

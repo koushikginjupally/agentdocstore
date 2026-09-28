@@ -337,4 +337,17 @@ describe('scanner — edge cases', () => {
     expect(f).toBeDefined();
     expect(f!.line).toBe(3);
   });
+
+  // Regression: each finding's line was counted from the start of the
+  // content, so a finding on every line took time growing with the square of
+  // the content: 256 KB of them took 3.6 s, and 5 MB about 23 minutes.
+  it('numbers the lines of many findings in linear time', () => {
+    const lines = 16_384;
+    const content = 'token=k8Jd72hsQ\n'.repeat(lines);
+    const start = Date.now();
+    const findings = scan(content);
+    const elapsed = Date.now() - start;
+    expect(findings.map((x) => x.line)).toEqual(Array.from({ length: lines }, (_, i) => i + 1));
+    expect(elapsed).toBeLessThan(1000);
+  });
 });

@@ -172,15 +172,31 @@ const GENERIC_ASSIGNMENT_REGEX =
 // ---------------------------------------------------------------------------
 
 /**
- * Compute the 1-based line number for a given absolute offset.
- * Counts newlines in `content` up to (but not including) `offset`.
+ * The offset of every newline in `content`, in order. Found once per scan, so
+ * each finding's line is a binary search: counting from the start of the
+ * content for every finding made a finding on every line take time growing
+ * with the square of the content.
  */
-function lineNumberAt(content: string, offset: number): number {
-  let line = 1;
-  for (let i = 0; i < offset && i < content.length; i++) {
-    if (content[i] === '\n') line++;
+function newlineOffsets(content: string): number[] {
+  const offsets: number[] = [];
+  for (let i = content.indexOf('\n'); i !== -1; i = content.indexOf('\n', i + 1)) {
+    offsets.push(i);
   }
-  return line;
+  return offsets;
+}
+
+/**
+ * The 1-based line number of `offset`: one more than the newlines before it.
+ */
+function lineNumberAt(newlines: readonly number[], offset: number): number {
+  let lo = 0;
+  let hi = newlines.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if ((newlines[mid] ?? Infinity) < offset) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo + 1;
 }
 
 /**
@@ -195,6 +211,9 @@ function lineNumberAt(content: string, offset: number): number {
  */
 export function scan(content: string): readonly Finding[] {
   const raw: Finding[] = [];
+  let newlines: number[] | undefined;
+  const lineOf = (offset: number): number =>
+    lineNumberAt((newlines ??= newlineOffsets(content)), offset);
 
   // Run each fixed pattern.
   for (const pat of PATTERNS) {
@@ -223,7 +242,7 @@ export function scan(content: string): readonly Finding[] {
 
       raw.push({
         type: pat.type,
-        line: lineNumberAt(content, matchStart),
+        line: lineOf(matchStart),
         start: matchStart,
         end: matchStart + matchStr.length,
       });
@@ -238,7 +257,7 @@ export function scan(content: string): readonly Finding[] {
     if (isPlaceholder(value)) continue;
     raw.push({
       type: 'generic-secret',
-      line: lineNumberAt(content, gm.index),
+      line: lineOf(gm.index),
       start: gm.index,
       end: gm.index + gm[0].length,
     });
