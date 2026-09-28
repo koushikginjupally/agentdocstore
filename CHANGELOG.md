@@ -77,6 +77,13 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- Comparing two versions can no longer stall the server. A diff took time that
+  grows with the square of the lines that differ, on the server's only thread:
+  two 200 KB versions that share no line held every other request for 30
+  seconds, and two at the 2 MB diff limit would take about an hour. A diff that
+  would add or remove more than 5,000 lines is now refused with `413` (REST),
+  a "Content too large" error (MCP `diff_document`) or a notice on the Versions
+  page, after at most about 2 seconds of work.
 - A link in a markdown document that opens another window can no longer take
   over the reader's AgentDocStore tab. With `target="_blank" rel="opener"` or a
   named window as its `target`, the page it opened got `window.opener` and could

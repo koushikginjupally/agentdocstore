@@ -19,6 +19,13 @@ export const LIMITS = {
   MAX_REQUEST_BYTES: 2 * MAX_CONTENT_BYTES + 1024 * 1024,
   /** Max input size (per side) accepted by the diff engine in UTF-8 bytes. */
   MAX_DIFF_INPUT_BYTES: 2 * 1024 * 1024,
+  /**
+   * Max lines a diff may add or remove. Finding a diff costs time that grows
+   * with the square of the lines that differ, and it runs on the server's
+   * only thread, so versions that share few lines could stall every other
+   * request for minutes; past this the diff engine stops and refuses.
+   */
+  MAX_DIFF_CHANGED_LINES: 5_000,
   /** Max comment body length in UTF-8 bytes. */
   MAX_COMMENT_BYTES: 10_000,
   /** Max edit message length in characters, after trimming. */

@@ -2,7 +2,7 @@
 import { api, ApiError } from '../api.js';
 import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
 import { href } from '../router.js';
-import { buildTitle, MAX_DIFF_INPUT_BYTES } from '../constants.js';
+import { buildTitle, MAX_DIFF_CHANGED_LINES, MAX_DIFF_INPUT_BYTES } from '../constants.js';
 import { formatDate } from '../dom.js';
 import { showToast } from '../toast.js';
 
@@ -228,7 +228,8 @@ function diffFailure(err: unknown, documentId: string, from: number, to: number)
 
   if (err instanceof ApiError && err.status === 413) {
     const limit = MAX_DIFF_INPUT_BYTES / (1024 * 1024);
-    text.textContent = `These versions are too large to compare: each side of a comparison is limited to ${limit} MB. Open them in full instead.`;
+    const lines = MAX_DIFF_CHANGED_LINES.toLocaleString('en');
+    text.textContent = `These versions are too large to compare: a comparison takes up to ${limit} MB on each side and up to ${lines} changed lines. Open them in full instead.`;
     const links = document.createElement('p');
     links.className = 'flex-row mt-8';
     for (const version of [from, to].sort((a, b) => a - b)) {

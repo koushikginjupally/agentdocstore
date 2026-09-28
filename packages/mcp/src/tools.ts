@@ -524,6 +524,7 @@ export async function getHelp(
       `- Title: ${LIMITS.MAX_TITLE_BYTES} bytes`,
       `- Content: ${LIMITS.MAX_CONTENT_BYTES} bytes`,
       `- Diff input: ${LIMITS.MAX_DIFF_INPUT_BYTES} bytes per side`,
+      `- Diff changes: ${LIMITS.MAX_DIFF_CHANGED_LINES} lines added or removed`,
       `- Comment: ${LIMITS.MAX_COMMENT_BYTES} bytes`,
       `- Languages: ${LANGUAGES.join(', ')}`,
     ].join('\n'),

@@ -69,6 +69,37 @@ describe('unifiedDiff — size cap', () => {
   });
 });
 
+describe('unifiedDiff — changed-lines cap', () => {
+  const limit = LIMITS.MAX_DIFF_CHANGED_LINES;
+  // Versions that share no line: each line is removed and another added, so
+  // a diff of n lines each way changes 2n lines.
+  const numbered = (prefix: string, n: number): string =>
+    Array.from({ length: n }, (_, i) => `${prefix} ${i}`).join('\n') + '\n';
+
+  it('refuses versions that differ in more lines than the cap', () => {
+    const n = limit / 2 + 1;
+    let caught: unknown;
+    try {
+      unifiedDiff(numbered('old', n), numbered('new', n));
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(ContentTooLargeError);
+    const err = caught as ContentTooLargeError;
+    expect(err.message).toBe(`Too many changes to diff: more than ${limit} lines added or removed`);
+    expect(err.limit).toBe(limit);
+  });
+
+  it('still diffs versions that differ in exactly the cap', () => {
+    const n = limit / 2;
+    const result = unifiedDiff(numbered('old', n), numbered('new', n));
+    const changed = result
+      .split('\n')
+      .filter((line) => line.startsWith('-old ') || line.startsWith('+new '));
+    expect(changed).toHaveLength(limit);
+  });
+});
+
 describe('unifiedDiff — multi-byte content', () => {
   it('measures byte length correctly for multi-byte UTF-8', () => {
     // Each emoji is 4 bytes UTF-8. Create content just over the byte limit.

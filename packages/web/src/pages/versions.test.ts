@@ -139,6 +139,19 @@ describe('a comparison the server refuses', () => {
     ]);
   });
 
+  it('names the changed-lines limit too, for versions refused for too many changes', async () => {
+    const output = await refusedCompare(
+      new ApiError('Too many changes to diff: more than 5000 lines added or removed', 413),
+    );
+    const note = output.querySelector('[role="alert"]')!;
+    expect(note.textContent).toContain('too large to compare');
+    expect(note.textContent).toContain('5,000 changed lines');
+    expect([...note.querySelectorAll('a')].map((a) => a.textContent)).toEqual([
+      'Open version 1',
+      'Open version 2',
+    ]);
+  });
+
   it("shows any other failure's own message in the page", async () => {
     const output = await refusedCompare(new ApiError('Version 2 not found', 404));
     expect(output.querySelector('[role="alert"]')!.textContent).toContain('Version 2 not found');

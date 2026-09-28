@@ -34,7 +34,8 @@ export interface UnifiedDiffOptions {
  *
  * Returns an empty string when `oldContent` and `newContent` are identical
  * (byte-equal). Throws {@link ContentTooLargeError} if either input exceeds
- * {@link LIMITS.MAX_DIFF_INPUT_BYTES}.
+ * {@link LIMITS.MAX_DIFF_INPUT_BYTES}, or if the diff would add or remove
+ * more than {@link LIMITS.MAX_DIFF_CHANGED_LINES} lines.
  *
  * @param oldContent - The original content.
  * @param newContent - The updated content.
@@ -73,7 +74,19 @@ export function unifiedDiff(
   const newLabel = opts?.newLabel ?? 'b';
   const context = opts?.context ?? 3;
 
-  return createTwoFilesPatch(oldLabel, newLabel, oldContent, newContent, '', '', {
+  // The search grows with the square of the lines that differ and runs on
+  // the caller's thread, so stop it at the cap rather than let two versions
+  // that share few lines hold the server for minutes.
+  const maxEditLength = LIMITS.MAX_DIFF_CHANGED_LINES;
+  const patch = createTwoFilesPatch(oldLabel, newLabel, oldContent, newContent, '', '', {
     context,
+    maxEditLength,
   });
+  if (patch === undefined) {
+    throw new ContentTooLargeError(
+      `Too many changes to diff: more than ${maxEditLength} lines added or removed`,
+      maxEditLength,
+    );
+  }
+  return patch;
 }

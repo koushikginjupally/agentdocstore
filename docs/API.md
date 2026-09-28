@@ -36,6 +36,7 @@ Every route authenticates the caller with the server's auth mode — see
 | Title               | 300 bytes                         |
 | Comment body        | 10,000 bytes                      |
 | Each side of a diff | 2 MiB                             |
+| Changed diff lines  | 5,000 added or removed            |
 | `expiresInDays`     | 36,500 (about 100 years)          |
 
 ## The credential-scan handshake

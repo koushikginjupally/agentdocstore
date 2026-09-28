@@ -472,6 +472,32 @@ describe('diff_document', () => {
     expect(diffText).toContain('-line2');
     expect(diffText).toContain('+modified');
   });
+
+  it('refuses versions that differ in too many lines to diff', async () => {
+    const lines = (prefix: string): string =>
+      Array.from(
+        { length: LIMITS.MAX_DIFF_CHANGED_LINES / 2 + 1 },
+        (_, i) => `${prefix} ${i}`,
+      ).join('\n');
+    const created = jsonOf(
+      await callTool('create_document', { title: 'Rewrite', content: lines('old') }),
+    ) as { doc: { id: string; latestVersion: number } };
+    await callTool('update_document', {
+      id: created.doc.id,
+      content: lines('new'),
+      latestVersion: created.doc.latestVersion,
+    });
+
+    const diffResult = await callTool('diff_document', {
+      id: created.doc.id,
+      fromVersion: 1,
+      toVersion: 2,
+    });
+    expect(diffResult.isError).toBe(true);
+    expect(textOf(diffResult)).toBe(
+      `Content too large: Too many changes to diff: more than ${LIMITS.MAX_DIFF_CHANGED_LINES} lines added or removed`,
+    );
+  });
 });
 
 describe('extractId from URL in diff_document', () => {

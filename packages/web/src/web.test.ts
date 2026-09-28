@@ -14,6 +14,7 @@ import {
   commentSizeMessage,
   contentSizeMessage,
   MAX_COMMENT_BYTES,
+  MAX_DIFF_CHANGED_LINES,
   MAX_DIFF_INPUT_BYTES,
   MAX_TITLE_BYTES,
   utf8Bytes,
@@ -405,6 +406,10 @@ describe('comment size', () => {
 
   it('names the same diff limit as the server', () => {
     expect(MAX_DIFF_INPUT_BYTES).toBe(LIMITS.MAX_DIFF_INPUT_BYTES);
+  });
+
+  it('names the same changed-lines limit as the server', () => {
+    expect(MAX_DIFF_CHANGED_LINES).toBe(LIMITS.MAX_DIFF_CHANGED_LINES);
   });
 
   it('counts UTF-8 bytes, as the server does', () => {

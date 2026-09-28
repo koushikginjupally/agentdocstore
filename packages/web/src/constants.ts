@@ -45,6 +45,9 @@ export const MAX_TITLE_BYTES = 300;
 /** Matches LIMITS.MAX_DIFF_INPUT_BYTES on the server (a test keeps them equal). */
 export const MAX_DIFF_INPUT_BYTES = 2 * 1024 * 1024;
 
+/** Matches LIMITS.MAX_DIFF_CHANGED_LINES on the server (a test keeps them equal). */
+export const MAX_DIFF_CHANGED_LINES = 5_000;
+
 /** Matches LIMITS.MAX_CONTENT_BYTES on the server (a test keeps them equal). */
 export const MAX_CONTENT_BYTES = 5 * 1024 * 1024;
 

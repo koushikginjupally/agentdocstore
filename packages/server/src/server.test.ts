@@ -1075,6 +1075,27 @@ describe('server', () => {
       const res = await get(`/api/documents/${created.id}/diff`);
       expect(res.status).toBe(400);
     });
+
+    it('returns 413 when the versions differ in too many lines to diff', async () => {
+      // Finding such a diff could hold the server's only thread for minutes.
+      const lines = (prefix: string): string =>
+        Array.from(
+          { length: LIMITS.MAX_DIFF_CHANGED_LINES / 2 + 1 },
+          (_, i) => `${prefix} ${i}`,
+        ).join('\n');
+      const created = (await (
+        await post('/api/documents', { title: 'Rewrite', content: lines('old') })
+      ).json()) as { id: string };
+      expect((await put(`/api/documents/${created.id}`, { content: lines('new') })).status).toBe(
+        200,
+      );
+
+      const res = await get(`/api/documents/${created.id}/diff?from=1&to=2`);
+      expect(res.status).toBe(413);
+      expect(await res.json()).toEqual({
+        error: `Too many changes to diff: more than ${LIMITS.MAX_DIFF_CHANGED_LINES} lines added or removed`,
+      });
+    });
   });
 
   // ========================================================================

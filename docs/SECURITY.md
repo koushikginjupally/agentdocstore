@@ -288,8 +288,14 @@ Write-time enforcement prevents resource exhaustion:
 | Title                 | 300 bytes    | `ValidationError` (400)      |
 | Content per version   | 5 MB         | `ContentTooLargeError` (413) |
 | Diff input (per side) | 2 MB         | `ContentTooLargeError` (413) |
+| Diff changed lines    | 5,000 lines  | `ContentTooLargeError` (413) |
 | Comment body          | 10,000 bytes | `ValidationError` (400)      |
 | JSON request body     | 11 MB        | 413 (body-size guard)        |
+
+A diff also stops once it would add or remove more than 5,000 lines. Finding
+a diff takes time that grows with the square of the lines that differ, and it
+runs on the server's only thread: without the cap, two versions of 200 KB that
+share no line would hold every other request for about 30 seconds.
 
 The request cap leaves room for JSON escaping: a quote, backslash, newline or
 tab takes two bytes in the request, so a write carrying 5 MB of content can

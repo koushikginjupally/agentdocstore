@@ -314,4 +314,5 @@ MCP tool errors are returned as `{ isError: true, content: [{ type: "text", text
 | Title                 | 300 bytes    |
 | Content per version   | 5 MB         |
 | Diff input (per side) | 2 MB         |
+| Diff changed lines    | 5,000 lines  |
 | Comment body          | 10,000 bytes |
