@@ -1352,3 +1352,35 @@ describe('server', () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Errors from a provider with its own copy of @agentdocstore/core
+// ---------------------------------------------------------------------------
+
+describe('errors thrown by a provider with its own copy of core', () => {
+  // Under npx or a global install, a third-party provider imports a different
+  // copy of @agentdocstore/core from the server's, so its error classes are
+  // different objects. A "not found" from it must still be a 404, not a 500.
+  it.each([
+    ['NotFoundError', 404],
+    ['ValidationError', 400],
+    ['ContentTooLargeError', 413],
+    ['VersionConflictError', 409],
+  ] as const)('maps a %s from that copy to %i', async (kind, status) => {
+    const url = new URL('../../core/src/errors.ts?copy=provider', import.meta.url).href;
+    const copy = (await import(url)) as typeof import('@agentdocstore/core');
+    app = buildApp();
+    const created = await post('/api/documents', {
+      title: 'T',
+      content: 'v1',
+      language: 'plaintext',
+    });
+    const { id } = (await created.json()) as { id: string };
+    const error = new copy[kind]('from the provider');
+    provider.repository.getVersion = () => Promise.reject(error);
+
+    const res = await get(`/api/documents/${id}?version=1`);
+    expect(res.status).toBe(status);
+    expect(((await res.json()) as { error: string }).error).toBe('from the provider');
+  });
+});

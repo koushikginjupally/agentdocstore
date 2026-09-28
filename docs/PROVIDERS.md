@@ -198,6 +198,13 @@ callers must handle `null` gracefully.
 - `appendVersion`, `updateMeta`, `setVisibility`, and `delete` on an unknown
   id **must** throw `NotFoundError`.
 
+Throw the error classes exported by `@agentdocstore/core`: the server answers
+`NotFoundError` with 404, `ValidationError` with 400, `VersionConflictError`
+with 409 and `ContentTooLargeError` with 413. They are recognised even when
+your provider's copy of core is not the one the CLI loaded, as happens under
+`npx` or a global install. Errors from core 0.3.0 or older are the exception:
+those copies do not mark their errors, so they come back as 500s.
+
 ### 5. Content-before-pointer commit point
 
 The content of a new version must be durably written **before** the document's

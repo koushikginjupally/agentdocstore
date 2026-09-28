@@ -8,6 +8,16 @@ versions may contain breaking changes; they will be called out under
 
 ## [Unreleased]
 
+### Fixed
+
+- An error thrown by a provider with its own copy of `@agentdocstore/core`, as
+  a third-party provider has under npx or a global install, keeps its meaning:
+  a "not found" was answered with a 500 instead of a 404, and `doctor` failed
+  such providers. Core's error classes now recognise errors made by any copy of
+  core from this release on (copies from 0.3.0 or older do not mark their
+  errors). A subclass of a core error also keeps its own prototype; before,
+  its instances were not `instanceof` the subclass.
+
 ## [0.3.0] - 2026-09-28
 
 ### Added
