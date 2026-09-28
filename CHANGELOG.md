@@ -96,6 +96,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- `expiresInDays` above 36,500 (about 100 years) is refused with a `400` that
+  names the field and the limit. A much larger value made create and update
+  fail with `500 Internal server error`, because the date overflowed.
 - Saving from the edit page no longer overwrites a change that someone else,
   or an agent, saved while the page was open. The page now sends the version
   it loaded, and `PUT /api/documents/:id` takes it as `latestVersion`: a save

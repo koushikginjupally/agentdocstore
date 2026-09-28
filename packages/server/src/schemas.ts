@@ -5,16 +5,19 @@
  */
 
 import { z } from 'zod';
-import { LANGUAGES } from '@agentdocstore/core';
+import { LANGUAGES, LIMITS } from '@agentdocstore/core';
 
 const languageEnum = z.enum(LANGUAGES as unknown as [string, ...string[]]);
+
+/** Days from now. Bounded: much further than a century is not a date at all. */
+const expiryDays = z.number().int().positive().max(LIMITS.MAX_EXPIRY_DAYS);
 
 export const CreateDocumentSchema = z.object({
   title: z.string().min(1),
   content: z.string(),
   language: languageEnum.optional().default('plaintext'),
   visibility: z.enum(['PUBLIC', 'PRIVATE']).optional(),
-  expiresInDays: z.number().int().positive().optional(),
+  expiresInDays: expiryDays.optional(),
   redactionPolicy: z.enum(['redact', 'skip']).optional(),
 });
 export type CreateDocumentBody = z.infer<typeof CreateDocumentSchema>;
@@ -25,7 +28,7 @@ export const UpdateDocumentSchema = z.object({
   language: languageEnum.optional(),
   editMessage: z.string().optional(),
   visibility: z.enum(['PUBLIC', 'PRIVATE']).optional(),
-  expiresInDays: z.number().int().positive().nullish(),
+  expiresInDays: expiryDays.nullish(),
   redactionPolicy: z.enum(['redact', 'skip']).optional(),
   /** The version the caller last saw; a save from an older one is a conflict. */
   latestVersion: z.number().int().positive().optional(),

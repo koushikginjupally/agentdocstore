@@ -13,6 +13,8 @@ export const LIMITS = {
   MAX_COMMENT_BYTES: 10_000,
   /** Max edit message length in characters, after trimming. */
   MAX_EDIT_MESSAGE_CHARS: 500,
+  /** Longest expiry, in days from now (about 100 years). Much further is not a date. */
+  MAX_EXPIRY_DAYS: 36_500,
 } as const;
 
 /** The shape of {@link LIMITS}. */

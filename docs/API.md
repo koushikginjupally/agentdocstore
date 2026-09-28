@@ -29,12 +29,13 @@ Every route authenticates the caller with the server's auth mode — see
 
 ## Limits
 
-| Limit               | Value         |
-| ------------------- | ------------- |
-| Content per version | 5 MiB (UTF-8) |
-| Title               | 300 bytes     |
-| Comment body        | 10,000 bytes  |
-| Each side of a diff | 2 MiB         |
+| Limit               | Value                    |
+| ------------------- | ------------------------ |
+| Content per version | 5 MiB (UTF-8)            |
+| Title               | 300 bytes                |
+| Comment body        | 10,000 bytes             |
+| Each side of a diff | 2 MiB                    |
+| `expiresInDays`     | 36,500 (about 100 years) |
 
 ## The credential-scan handshake
 
@@ -76,7 +77,7 @@ Detected types: `pem-private-key`, `aws-access-key`, `aws-secret-key`, `jwt`,
 | `content`         | string                  |    ✅    |             |
 | `language`        | one of the 18 languages |          | `plaintext` |
 | `visibility`      | `PUBLIC` \| `PRIVATE`   |          | `PUBLIC`    |
-| `expiresInDays`   | positive integer        |          | never       |
+| `expiresInDays`   | integer, 1 to 36,500    |          | never       |
 | `redactionPolicy` | `redact` \| `skip`      |          | scan first  |
 
 `201` returns the document record:

@@ -435,6 +435,34 @@ describe('server', () => {
       });
     });
 
+    it('rejects an expiry too far away to be a date, instead of failing with a 500', async () => {
+      for (const days of [LIMITS.MAX_EXPIRY_DAYS + 1, 100_000_000, Number.MAX_SAFE_INTEGER]) {
+        const res = await post('/api/documents', {
+          title: 'T',
+          content: 'v1',
+          expiresInDays: days,
+        });
+        expect(res.status).toBe(400);
+        expect(((await res.json()) as { error: string }).error).toBe(
+          `Invalid request body: expiresInDays: Number must be less than or equal to ${LIMITS.MAX_EXPIRY_DAYS}`,
+        );
+      }
+      const created = (await (
+        await post('/api/documents', { title: 'T', content: 'v1' })
+      ).json()) as { id: string };
+      const res = await put(`/api/documents/${created.id}`, { expiresInDays: 100_000_000 });
+      expect(res.status).toBe(400);
+    });
+
+    it('accepts the longest expiry allowed', async () => {
+      const res = await post('/api/documents', {
+        title: 'T',
+        content: 'v1',
+        expiresInDays: LIMITS.MAX_EXPIRY_DAYS,
+      });
+      expect(res.status).toBe(201);
+    });
+
     it('does not repeat the rejected value back', async () => {
       const res = await post('/api/documents', { content: 'x', visibility: 'hunter2-SECRET' });
       expect(res.status).toBe(400);
