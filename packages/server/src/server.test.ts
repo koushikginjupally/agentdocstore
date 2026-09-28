@@ -375,6 +375,40 @@ describe('server', () => {
     });
   });
 
+  // JSON escaping writes a quote or backslash as two bytes, so content the
+  // content limit allows could make a request over a body cap sized just
+  // above that limit: 4.9 MB of minified JSON was refused as "too large".
+  describe('request size after JSON escaping', () => {
+    const escapesToDouble = '"\\'.repeat(LIMITS.MAX_CONTENT_BYTES / 2);
+
+    it('fits content at the limit even when every byte needs escaping', async () => {
+      expect(Buffer.byteLength(escapesToDouble)).toBe(LIMITS.MAX_CONTENT_BYTES);
+      const body = { title: 'Escapes', content: escapesToDouble, language: 'plaintext' };
+      expect(Buffer.byteLength(JSON.stringify(body))).toBeGreaterThan(2 * LIMITS.MAX_CONTENT_BYTES);
+
+      const res = await post('/api/documents', body);
+      expect(res.status).toBe(201);
+      const { id } = (await res.json()) as { id: string };
+      expect(await (await get(`/raw/${id}`)).text()).toBe(escapesToDouble);
+
+      const update = await put(`/api/documents/${id}`, {
+        content: escapesToDouble.slice(2),
+        latestVersion: 1,
+      });
+      expect(update.status).toBe(200);
+    });
+
+    it('still refuses a body over the request limit', async () => {
+      const res = await post('/api/documents', {
+        title: 'Too big',
+        content: 'x'.repeat(LIMITS.MAX_REQUEST_BYTES),
+        language: 'plaintext',
+      });
+      expect(res.status).toBe(413);
+      expect(await res.json()).toEqual({ error: 'Request body too large' });
+    });
+  });
+
   // ========================================================================
   // Size errors say how much is too much
   // ========================================================================

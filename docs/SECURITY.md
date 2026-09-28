@@ -284,7 +284,11 @@ Write-time enforcement prevents resource exhaustion:
 | Content per version   | 5 MB         | `ContentTooLargeError` (413) |
 | Diff input (per side) | 2 MB         | `ContentTooLargeError` (413) |
 | Comment body          | 10,000 bytes | `ValidationError` (400)      |
-| JSON request body     | 6 MB         | 413 (body-size guard)        |
+| JSON request body     | 11 MB        | 413 (body-size guard)        |
+
+The request cap leaves room for JSON escaping: a quote, backslash, newline or
+tab takes two bytes in the request, so a write carrying 5 MB of content can
+need up to 10 MB.
 
 Content is never stored then rejected on read — oversized writes are rejected
 at the API boundary.

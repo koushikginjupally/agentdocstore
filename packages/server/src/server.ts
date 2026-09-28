@@ -72,7 +72,10 @@ export type AuthMode =
 export interface CreateServerOptions {
   provider: Provider;
   auth?: AuthMode;
-  /** JSON body size limit in bytes. Default: 6 MB (slightly above MAX_CONTENT_BYTES). */
+  /**
+   * JSON body size limit in bytes. Default: `LIMITS.MAX_REQUEST_BYTES` (11 MiB),
+   * room for content at `MAX_CONTENT_BYTES` after JSON escaping.
+   */
   bodyLimit?: number;
   /**
    * The runtime mode this instance was started in. Reported on `/healthz` so an
@@ -103,8 +106,6 @@ export interface ServerHandle {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const MAX_BODY_BYTES = 6 * 1024 * 1024;
 
 /**
  * Build the {@link IdentityProvider} for an auth mode.
@@ -210,7 +211,7 @@ function issueReason(issue: ZodIssue): string | undefined {
 export function createServer(opts: CreateServerOptions): Hono {
   const { provider } = opts;
   const identity = resolveIdentityProvider(opts.auth);
-  const bodyLimit = opts.bodyLimit ?? MAX_BODY_BYTES;
+  const bodyLimit = opts.bodyLimit ?? LIMITS.MAX_REQUEST_BYTES;
 
   const app = new Hono();
 

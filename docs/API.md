@@ -29,13 +29,14 @@ Every route authenticates the caller with the server's auth mode — see
 
 ## Limits
 
-| Limit               | Value                    |
-| ------------------- | ------------------------ |
-| Content per version | 5 MiB (UTF-8)            |
-| Title               | 300 bytes                |
-| Comment body        | 10,000 bytes             |
-| Each side of a diff | 2 MiB                    |
-| `expiresInDays`     | 36,500 (about 100 years) |
+| Limit               | Value                             |
+| ------------------- | --------------------------------- |
+| Content per version | 5 MiB (UTF-8)                     |
+| JSON request body   | 11 MiB (room for escaped content) |
+| Title               | 300 bytes                         |
+| Comment body        | 10,000 bytes                      |
+| Each side of a diff | 2 MiB                             |
+| `expiresInDays`     | 36,500 (about 100 years)          |
 
 ## The credential-scan handshake
 

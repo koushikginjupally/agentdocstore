@@ -101,6 +101,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- Content within the 5 MB limit is no longer refused as "Request body too
+  large". The REST request cap was 6 MB, but JSON escaping writes a quote or
+  backslash as two bytes, so 4.9 MB of minified JSON made a 6.04 MB request.
+  The cap is now 11 MB (`LIMITS.MAX_REQUEST_BYTES`).
 - The "ready at" URL that `agentdocstore serve` prints now works: with
   `--port 0` it gives the port the system picked instead of `:0`, and an IPv6
   host is bracketed (`http://[::1]:8787`, not `http://::1:8787`).
