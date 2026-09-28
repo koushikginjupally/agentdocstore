@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "minisearch": "^7.1.0",
-    "nanoid": "^5.0.7",
+    "nanoid": "^6.0.1",
     "diff": "^9.0.0"
   },
   "devDependencies": {
