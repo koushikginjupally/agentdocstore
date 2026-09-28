@@ -130,6 +130,16 @@ function expiresAtFromDays(days: number | undefined | null): string | undefined 
   return d.toISOString();
 }
 
+/**
+ * A version number from the query string: digits only, at least 1, or NaN.
+ * parseInt alone read "1.5" and "2abc" as versions 1 and 2, so a mistyped
+ * version answered with a different one instead of an error.
+ */
+function parseVersion(value: string): number {
+  const v = /^\d+$/.test(value) ? Number(value) : NaN;
+  return Number.isSafeInteger(v) && v >= 1 ? v : NaN;
+}
+
 function validateId(id: string): void {
   if (!isValidId(id)) throw new NotFoundError('Document not found');
 }
@@ -473,8 +483,8 @@ export function createServer(opts: CreateServerOptions): Hono {
 
     const versionParam = c.req.query('version');
     if (versionParam !== undefined) {
-      const v = parseInt(versionParam, 10);
-      if (Number.isNaN(v) || v < 1) throw new ValidationError('Invalid version number');
+      const v = parseVersion(versionParam);
+      if (Number.isNaN(v)) throw new ValidationError('Invalid version number');
       const version = await provider.repository.getVersion(id, v);
       if (version === null) throw new NotFoundError('Version not found');
       return c.json({ ...doc, content: version.content, version: version.version });
@@ -643,9 +653,9 @@ export function createServer(opts: CreateServerOptions): Hono {
     if (fromStr === undefined || toStr === undefined) {
       throw new ValidationError("'from' and 'to' query parameters are required");
     }
-    const from = parseInt(fromStr, 10);
-    const to = parseInt(toStr, 10);
-    if (Number.isNaN(from) || Number.isNaN(to) || from < 1 || to < 1) {
+    const from = parseVersion(fromStr);
+    const to = parseVersion(toStr);
+    if (Number.isNaN(from) || Number.isNaN(to)) {
       throw new ValidationError('Invalid version numbers');
     }
 
@@ -677,8 +687,8 @@ export function createServer(opts: CreateServerOptions): Hono {
     const versionParam = c.req.query('version');
     let version = doc.latestVersion;
     if (versionParam !== undefined) {
-      const v = parseInt(versionParam, 10);
-      if (Number.isNaN(v) || v < 1) throw new ValidationError('Invalid version number');
+      const v = parseVersion(versionParam);
+      if (Number.isNaN(v)) throw new ValidationError('Invalid version number');
       version = v;
     }
 

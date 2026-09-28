@@ -176,6 +176,40 @@ describe('server', () => {
     });
   });
 
+  describe('version numbers in the query', () => {
+    // parseInt read "1.5" and "2abc" as versions 1 and 2, so a mistyped
+    // version silently answered with a different one.
+    const loose = ['1.5', '2abc', '1e1', ' 1', '0x1'];
+
+    async function twoVersions(): Promise<string> {
+      const { id } = (await (
+        await post('/api/documents', { title: 'V', content: 'v1', language: 'plaintext' })
+      ).json()) as { id: string };
+      await put(`/api/documents/${id}`, { content: 'v2', latestVersion: 1 });
+      return id;
+    }
+
+    it('must be whole numbers for a version of the document or its raw text', async () => {
+      const id = await twoVersions();
+      for (const v of loose) {
+        for (const path of [`/api/documents/${id}`, `/raw/${id}`]) {
+          const res = await get(`${path}?version=${encodeURIComponent(v)}`);
+          expect(res.status, `${path} ?version=${v}`).toBe(400);
+        }
+      }
+      expect((await get(`/api/documents/${id}?version=2`)).status).toBe(200);
+    });
+
+    it('must be whole numbers for a diff', async () => {
+      const id = await twoVersions();
+      for (const v of loose) {
+        const res = await get(`/api/documents/${id}/diff?from=${encodeURIComponent(v)}&to=2`);
+        expect(res.status, `from=${v}`).toBe(400);
+        expect(await res.json()).toEqual({ error: 'Invalid version numbers' });
+      }
+    });
+  });
+
   // ========================================================================
   // Credential scan flow (409 -> redact)
   // ========================================================================

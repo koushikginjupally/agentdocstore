@@ -96,6 +96,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- A version number in `?version=`, or a diff's `from` and `to`, must be a
+  whole number: `1.5` or `2abc` get `400` instead of quietly answering with
+  version 1 or 2.
 - MCP `create_document` and `update_document` store `expiresAt` as ISO-8601
   and refuse one that is not a date-time, is in the past, or is more than
   36,500 days away. Before, any text (`"tomorrow"`, `""`) was stored as the
