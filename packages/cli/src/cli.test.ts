@@ -104,9 +104,19 @@ describe('parseCli', () => {
     expect(result.flags).toEqual({});
   });
 
-  it('ignores invalid auth mode', () => {
-    const result = parseCli(['serve', '--auth', 'bogus']);
-    expect(result.flags.auth).toBeUndefined();
+  // An unknown auth mode used to be dropped, so the server fell back to
+  // single-user — no authentication at all — on a misspelt `token`.
+  it('refuses an unknown --auth value, naming the flag', () => {
+    expect(() => parseCli(['serve', '--auth', 'bogus'])).toThrow(
+      'Unknown auth mode "bogus" from --auth: use single-user, trusted-header or token.',
+    );
+    expect(() => parseCli(['serve', '--auth', ''])).toThrow(/Unknown auth mode "" from --auth/);
+  });
+
+  it('refuses --auth without a value', () => {
+    expect(() => parseCli(['serve', '--auth'])).toThrow(
+      '--auth needs a value: use single-user, trusted-header or token.',
+    );
   });
 
   it('uses short flags', () => {
@@ -265,10 +275,29 @@ describe('resolveConfig', () => {
     expect(config.dataDir).toBe('/custom/path');
   });
 
-  it('invalid AGENTDOCSTORE_AUTH is ignored', () => {
-    const env: EnvVars = { AGENTDOCSTORE_AUTH: 'invalid' };
-    const config = resolveConfig({}, env, DEFAULT_DATA_DIR);
-    expect(config.auth).toBe('single-user');
+  it('refuses an unknown AGENTDOCSTORE_AUTH, naming the variable', () => {
+    const env: EnvVars = { AGENTDOCSTORE_AUTH: 'trusted_header' };
+    expect(() => resolveConfig({}, env, DEFAULT_DATA_DIR)).toThrow(
+      'Unknown auth mode "trusted_header" from AGENTDOCSTORE_AUTH: use single-user, trusted-header or token.',
+    );
+  });
+
+  it('refuses an unknown auth mode in the config file, naming the file', () => {
+    const dir = tmpDir();
+    const cfgPath = join(dir, 'config.json');
+    writeFileSync(cfgPath, JSON.stringify({ auth: 'tokens' }));
+    try {
+      expect(() => resolveConfig({}, {}, DEFAULT_DATA_DIR)).not.toThrow();
+      expect(() => resolveConfig({ configFile: cfgPath }, {}, DEFAULT_DATA_DIR)).toThrow(
+        `Unknown auth mode "tokens" from "auth" in ${cfgPath}: use single-user, trusted-header or token.`,
+      );
+      // Still refused when a flag overrides it: the file is wrong either way.
+      expect(() =>
+        resolveConfig({ configFile: cfgPath, auth: 'token' }, {}, DEFAULT_DATA_DIR),
+      ).toThrow(/Unknown auth mode "tokens"/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('invalid AGENTDOCSTORE_PORT is ignored', () => {

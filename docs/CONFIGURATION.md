@@ -26,8 +26,10 @@ flowchart LR
 | In-memory store  | `--ephemeral`               | `AGENTDOCSTORE_EPHEMERAL`        | `ephemeral`        | `false`                 |
 | Config file      | `--config`                  | `AGENTDOCSTORE_CONFIG`           | —                  | —                       |
 
-Boolean environment variables accept `1` or `true`. An unrecognised value for
-`AGENTDOCSTORE_AUTH` or `AGENTDOCSTORE_MODE` is ignored and the next layer applies,
+Boolean environment variables accept `1` or `true`. An unknown auth mode, from
+any layer, stops startup with an error naming where it came from: falling back
+to the default would leave the instance unauthenticated. An unrecognised
+`AGENTDOCSTORE_MODE` is ignored and the next layer applies (at worst, offline),
 so check the boot banner to confirm what you got.
 
 ## Config file

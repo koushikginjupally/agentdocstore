@@ -44,6 +44,9 @@ is that user. This is safe when the server binds `127.0.0.1` (the default).
 **Risk:** If `--host 0.0.0.0` is used without a firewall, any host on the
 network can read, write, and delete all documents as the single user.
 
+An unknown auth mode from `--auth`, `AGENTDOCSTORE_AUTH` or the config file (a
+misspelt `token`, say) stops startup; it never falls back to single-user.
+
 ### trusted-header mode
 
 Identity is read from a request header set by a reverse proxy (e.g.

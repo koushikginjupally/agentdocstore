@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
 import { DEFAULT_DATA_DIR } from '@agentdocstore/provider-fs';
 import { OfflineViolationError } from '@agentdocstore/core';
 
-import { resolveConfig, parseProviderOptions } from './config.js';
+import { authModeFrom, resolveConfig, parseProviderOptions } from './config.js';
 import type { CliFlags } from './config.js';
 
 // ---------------------------------------------------------------------------
@@ -235,10 +235,10 @@ export function parseCli(argv: string[]): ParsedArgs {
   if (values.host !== undefined) flags.host = values.host as string;
   if (values.data !== undefined) flags.dataDir = values.data as string;
   if (values.auth !== undefined) {
-    const a = values.auth as string;
-    if (a === 'single-user' || a === 'trusted-header' || a === 'token') {
-      flags.auth = a;
+    if (typeof values.auth !== 'string') {
+      throw new Error('--auth needs a value: use single-user, trusted-header or token.');
     }
+    flags.auth = authModeFrom(values.auth, '--auth');
   }
   if (values.ephemeral === true) flags.ephemeral = true;
   if (values.config !== undefined) flags.configFile = values.config as string;

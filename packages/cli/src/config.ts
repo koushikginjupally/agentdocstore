@@ -187,7 +187,7 @@ export function extractEnvConfig(env: EnvVars): Partial<ResolvedConfig> {
   if (env.AGENTDOCSTORE_HOST !== undefined) result.host = env.AGENTDOCSTORE_HOST;
   if (env.AGENTDOCSTORE_DATA_DIR !== undefined) result.dataDir = env.AGENTDOCSTORE_DATA_DIR;
   if (env.AGENTDOCSTORE_AUTH !== undefined) {
-    if (isValidAuthMode(env.AGENTDOCSTORE_AUTH)) result.auth = env.AGENTDOCSTORE_AUTH;
+    result.auth = authModeFrom(env.AGENTDOCSTORE_AUTH, 'AGENTDOCSTORE_AUTH');
   }
   if (env.AGENTDOCSTORE_EPHEMERAL !== undefined) {
     result.ephemeral =
@@ -264,16 +264,18 @@ export function resolveConfig(
   const defaults: ResolvedConfig = { ...DEFAULTS, dataDir: defaultDataDir };
 
   const ephemeral = flags.ephemeral ?? envCfg.ephemeral ?? fileCfg.ephemeral ?? defaults.ephemeral;
+  // Checked even when a flag or variable overrides it, as the environment is:
+  // a misspelt auth mode is an error wherever it is written.
+  const fileAuth =
+    fileCfg.auth !== undefined
+      ? authModeFrom(fileCfg.auth, `"auth" in ${configPath ?? 'the config file'}`)
+      : undefined;
 
   return {
     port: flags.port ?? envCfg.port ?? fileCfg.port ?? defaults.port,
     host: flags.host ?? envCfg.host ?? fileCfg.host ?? defaults.host,
     dataDir: flags.dataDir ?? envCfg.dataDir ?? fileCfg.dataDir ?? defaults.dataDir,
-    auth:
-      flags.auth ??
-      envCfg.auth ??
-      (isValidAuthMode(fileCfg.auth) ? fileCfg.auth : undefined) ??
-      defaults.auth,
+    auth: flags.auth ?? envCfg.auth ?? fileAuth ?? defaults.auth,
     ephemeral,
     configFile: configPath,
     mode:
@@ -335,6 +337,20 @@ function resolveProvider(
 
 function isValidAuthMode(v: string | undefined): v is AuthMode {
   return v === 'single-user' || v === 'trusted-header' || v === 'token';
+}
+
+/**
+ * Check an auth mode from `source` (a flag, variable or config file). An
+ * unknown value is refused rather than skipped: skipping fell through to the
+ * default, single-user, which authenticates no one, so a misspelt `token`
+ * silently left the instance open.
+ */
+export function authModeFrom(value: unknown, source: string): AuthMode {
+  if (typeof value === 'string' && isValidAuthMode(value)) return value;
+  throw new Error(
+    `Unknown auth mode ${JSON.stringify(value)} from ${source}: ` +
+      'use single-user, trusted-header or token.',
+  );
 }
 
 /**

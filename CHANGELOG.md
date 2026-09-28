@@ -71,6 +71,11 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- An unknown auth mode now stops startup with an error naming where it came
+  from (`--auth`, `AGENTDOCSTORE_AUTH` or `auth` in the config file). It used
+  to be skipped, so a misspelt `token` or `trusted-header` started the server
+  in single-user mode, where every request is accepted as the local user
+  without any credentials.
 - Markdown documents can no longer embed `<iframe>` elements. The sanitizer
   was configured to keep them, although docs/SECURITY.md says they are
   stripped, so a PUBLIC document could show another site (for example a fake
