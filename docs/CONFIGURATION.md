@@ -29,7 +29,8 @@ flowchart LR
 Boolean environment variables accept `1` or `true`. An unknown auth mode, from
 any layer, stops startup with an error naming where it came from: falling back
 to the default would leave the instance unauthenticated. So does a port that is
-not a whole number from 0 to 65535 (`0` picks any free port). An unrecognised
+not a whole number from 0 to 65535 (`0` picks any free port, and the ready line
+says which). An unrecognised
 `AGENTDOCSTORE_MODE` is ignored and the next layer applies (at worst, offline),
 so check the boot banner to confirm what you got.
 

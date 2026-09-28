@@ -207,8 +207,11 @@ export async function runServe(config: ResolvedConfig): Promise<ServerHandle> {
     throw err;
   }
 
+  // Report the port actually bound: with --port 0 the system picks it.
+  const address = handle.server.address();
+  const port = typeof address === 'object' && address !== null ? address.port : config.port;
   console.log(describeMode(config, loaded.name));
-  console.log(`AgentDocStore ready at http://${config.host}:${config.port}`);
+  console.log(`AgentDocStore ready at ${httpUrl(config.host, port)}`);
 
   // Graceful shutdown.
   //
@@ -239,6 +242,15 @@ export async function runServe(config: ResolvedConfig): Promise<ServerHandle> {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * The URL for `host:port`. An IPv6 address needs brackets to be a URL:
+ * "http://::1:8787" is rejected by browsers and fetch alike.
+ */
+export function httpUrl(host: string, port: number): string {
+  const bracketed = host.includes(':') && !host.startsWith('[') ? `[${host}]` : host;
+  return `http://${bracketed}:${port}`;
+}
 
 /**
  * Resolve once `server` is listening; reject with a plain message when it

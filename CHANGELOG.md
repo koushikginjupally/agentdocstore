@@ -101,6 +101,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- The "ready at" URL that `agentdocstore serve` prints now works: with
+  `--port 0` it gives the port the system picked instead of `:0`, and an IPv6
+  host is bracketed (`http://[::1]:8787`, not `http://::1:8787`).
 - A port that is not a whole number from 0 to 65535 (`--port`,
   `AGENTDOCSTORE_PORT` or `port` in the config file) now stops startup with an
   error naming where it came from. `--port abc` was dropped, so the server

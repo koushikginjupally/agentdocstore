@@ -17,7 +17,7 @@ import { BOOT_LOCK_DIR } from '@agentdocstore/provider-fs';
 
 import { resolveConfig } from './config.js';
 import type { ResolvedConfig } from './config.js';
-import { runServe } from './serve.js';
+import { httpUrl, runServe } from './serve.js';
 
 const dirs: string[] = [];
 const signalListeners = {
@@ -104,5 +104,32 @@ describe('runServe', () => {
       await handle.close();
     }
     expect(locked(dir)).toBe(false);
+  });
+
+  // "ready at http://127.0.0.1:0" gave a URL that refused every connection.
+  it('with --port 0, gives the port it actually got', async () => {
+    const handle = await runServe(configFor(tempDataDir(), { port: 0 }));
+    try {
+      const { port } = handle.server.address() as AddressInfo;
+      expect(port).toBeGreaterThan(0);
+      expect(logged).toContain(`AgentDocStore ready at http://127.0.0.1:${port}`);
+    } finally {
+      await handle.close();
+    }
+  });
+});
+
+describe('httpUrl', () => {
+  // "http://::1:8787" is not a URL; a browser or fetch needs the brackets.
+  it('brackets an IPv6 address', () => {
+    expect(httpUrl('::1', 8787)).toBe('http://[::1]:8787');
+    expect(httpUrl('fe80::1', 80)).toBe('http://[fe80::1]:80');
+    expect(new URL(httpUrl('::', 8787)).port).toBe('8787');
+  });
+
+  it('leaves names, IPv4 addresses and already-bracketed hosts as they are', () => {
+    expect(httpUrl('127.0.0.1', 8787)).toBe('http://127.0.0.1:8787');
+    expect(httpUrl('localhost', 3000)).toBe('http://localhost:3000');
+    expect(httpUrl('[::1]', 8787)).toBe('http://[::1]:8787');
   });
 });
