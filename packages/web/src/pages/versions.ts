@@ -2,7 +2,7 @@
 import { api, ApiError } from '../api.js';
 import { ICON_ERROR, ICON_SEARCH } from '../icons.js';
 import { href } from '../router.js';
-import { buildTitle } from '../constants.js';
+import { buildTitle, MAX_DIFF_INPUT_BYTES } from '../constants.js';
 import { formatDate } from '../dom.js';
 import { showToast } from '../toast.js';
 
@@ -210,11 +210,37 @@ async function showDiff(
 
     container.appendChild(diffDiv);
   } catch (err) {
-    container.innerHTML = '';
-    showToast(
-      `Failed to compute diff: ${err instanceof Error ? err.message : 'Unknown error'}`,
-      'error',
-    );
-    container.innerHTML = '<p class="text-muted">Failed to compute diff.</p>';
+    container.replaceChildren(diffFailure(err, documentId, from, to));
   }
+}
+
+/**
+ * Why two versions could not be compared, said in the page: a toast is gone
+ * before it is read, and "Failed to compute diff." gave no reason. Versions
+ * over the diff size limit can still be read in full, so each gets a link.
+ */
+function diffFailure(err: unknown, documentId: string, from: number, to: number): HTMLElement {
+  const note = document.createElement('div');
+  note.className = 'version-notice';
+  note.setAttribute('role', 'alert');
+  const text = document.createElement('p');
+  note.append(text);
+
+  if (err instanceof ApiError && err.status === 413) {
+    const limit = MAX_DIFF_INPUT_BYTES / (1024 * 1024);
+    text.textContent = `These versions are too large to compare: each side of a comparison is limited to ${limit} MB. Open them in full instead.`;
+    const links = document.createElement('p');
+    links.className = 'flex-row mt-8';
+    for (const version of [from, to].sort((a, b) => a - b)) {
+      const link = document.createElement('a');
+      link.className = 'btn btn-sm';
+      link.href = href(`/d/${documentId}/v/${version}`);
+      link.textContent = `Open version ${version}`;
+      links.append(link);
+    }
+    note.append(links);
+  } else {
+    text.textContent = `Could not compare these versions: ${err instanceof Error ? err.message : 'unknown error'}`;
+  }
+  return note;
 }

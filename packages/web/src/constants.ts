@@ -42,6 +42,9 @@ export const MAX_COMMENT_BYTES = 10_000;
 /** Matches LIMITS.MAX_TITLE_BYTES on the server (a test keeps them equal). */
 export const MAX_TITLE_BYTES = 300;
 
+/** Matches LIMITS.MAX_DIFF_INPUT_BYTES on the server (a test keeps them equal). */
+export const MAX_DIFF_INPUT_BYTES = 2 * 1024 * 1024;
+
 /** Matches LIMITS.MAX_CONTENT_BYTES on the server (a test keeps them equal). */
 export const MAX_CONTENT_BYTES = 5 * 1024 * 1024;
 

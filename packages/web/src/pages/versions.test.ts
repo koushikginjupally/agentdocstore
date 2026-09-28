@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { api } from '../api.js';
+import { api, ApiError } from '../api.js';
 import { renderVersionsPage } from './versions.js';
 
 const doc = {
@@ -100,5 +100,47 @@ describe('comparing two versions', () => {
     const output = await compare('');
     expect(output.querySelector('.diff-container')).toBeNull();
     expect(output.textContent).toContain('These versions have the same content.');
+  });
+});
+
+// Two versions over the diff size limit got only "Failed to compute diff."
+// under the list; the server's reason flashed by in a toast.
+describe('a comparison the server refuses', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  async function refusedCompare(error: Error): Promise<HTMLElement> {
+    vi.spyOn(api, 'getDocument').mockResolvedValue(doc);
+    vi.spyOn(api, 'getVersions').mockResolvedValue([version(1), version(2)]);
+    vi.spyOn(api, 'getDiff').mockRejectedValue(error);
+    document.body.innerHTML = '';
+    await renderVersionsPage('d1', document.body);
+    for (const box of document.querySelectorAll<HTMLInputElement>('.version-checkbox')) box.click();
+    [...document.querySelectorAll('button')]
+      .find((b) => b.textContent === 'Compare Selected')!
+      .click();
+    const output = document.querySelector<HTMLElement>('#diff-output')!;
+    await vi.waitFor(() => expect(output.querySelector('.loading-state')).toBeNull());
+    return output;
+  }
+
+  it('says in the page that the versions are too large to compare, and links each in full', async () => {
+    const output = await refusedCompare(
+      new ApiError('Old content exceeds diff size limit (3080000 > 2097152 bytes)', 413),
+    );
+    expect(output.getAttribute('role')).toBeNull();
+    const note = output.querySelector('[role="alert"]')!;
+    expect(note.textContent).toContain('too large to compare');
+    expect(note.textContent).toContain('2 MB');
+    expect(
+      [...note.querySelectorAll('a')].map((a) => [a.textContent, a.getAttribute('href')]),
+    ).toEqual([
+      ['Open version 1', '#/d/d1/v/1'],
+      ['Open version 2', '#/d/d1/v/2'],
+    ]);
+  });
+
+  it("shows any other failure's own message in the page", async () => {
+    const output = await refusedCompare(new ApiError('Version 2 not found', 404));
+    expect(output.querySelector('[role="alert"]')!.textContent).toContain('Version 2 not found');
   });
 });

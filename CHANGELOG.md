@@ -119,6 +119,9 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- Comparing two versions that are too large to compare now says so on the
+  Versions page, with links to open each version in full. The page only said
+  "Failed to compute diff.", and the reason flashed by in a toast.
 - Content within the 5 MB limit is no longer refused as "Request body too
   large". The REST request cap was 6 MB, but JSON escaping writes a quote or
   backslash as two bytes, so 4.9 MB of minified JSON made a 6.04 MB request.
