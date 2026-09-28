@@ -96,6 +96,10 @@ versions may contain breaking changes; they will be called out under
 
 ### Fixed
 
+- MCP `create_document` and `update_document` store `expiresAt` as ISO-8601
+  and refuse one that is not a date-time, is in the past, or is more than
+  36,500 days away. Before, any text (`"tomorrow"`, `""`) was stored as the
+  expiry, and the document never expired.
 - `expiresInDays` above 36,500 (about 100 years) is refused with a `400` that
   names the field and the limit. A much larger value made create and update
   fail with `500 Internal server error`, because the date overflowed.

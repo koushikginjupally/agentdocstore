@@ -498,6 +498,65 @@ describe('extractId from URL in diff_document', () => {
   });
 });
 
+describe('expiresAt', () => {
+  const day = 24 * 60 * 60 * 1000;
+  const iso = (ms: number): string => new Date(ms).toISOString();
+
+  it('must be a date-time: other text is refused, and nothing is created', async () => {
+    for (const expiresAt of ['tomorrow', '2026-13-45', '']) {
+      const result = await callTool('create_document', { title: 'T', content: 'x', expiresAt });
+      expect(result.isError, expiresAt).toBe(true);
+      expect(textOf(result)).toContain("'expiresAt' must be an ISO-8601 date-time");
+    }
+    const list = jsonOf(await callTool('list_documents', {})) as { items: unknown[] };
+    expect(list.items).toHaveLength(0);
+  });
+
+  it('is stored as ISO-8601, so the document does expire', async () => {
+    const tomorrow = iso(Date.now() + day).slice(0, 10); // a date without a time
+    const created = jsonOf(
+      await callTool('create_document', { title: 'T', content: 'x', expiresAt: tomorrow }),
+    ) as { doc: { expiresAt: string } };
+    expect(created.doc.expiresAt).toBe(`${tomorrow}T00:00:00.000Z`);
+  });
+
+  it('must be in the future, and at most the REST limit away', async () => {
+    const tooFar = iso(Date.now() + (LIMITS.MAX_EXPIRY_DAYS + 1) * day);
+    for (const expiresAt of [iso(Date.now() - 1000), tooFar]) {
+      const result = await callTool('create_document', { title: 'T', content: 'x', expiresAt });
+      expect(result.isError, expiresAt).toBe(true);
+      expect(textOf(result)).toMatch(/'expiresAt' must be (in the future|at most 36500 days away)/);
+    }
+  });
+
+  it('is checked on update too, before anything is saved; null still clears it', async () => {
+    const created = jsonOf(
+      await callTool('create_document', {
+        title: 'T',
+        content: 'x',
+        expiresAt: iso(Date.now() + day),
+      }),
+    ) as { doc: { id: string } };
+    const id = created.doc.id;
+    const bad = await callTool('update_document', {
+      id,
+      content: 'y',
+      latestVersion: 1,
+      expiresAt: 'next week',
+    });
+    expect(bad.isError).toBe(true);
+    const read = jsonOf(await callTool('read_document', { id })) as {
+      doc: { latestVersion: number };
+    };
+    expect(read.doc.latestVersion).toBe(1);
+
+    const cleared = jsonOf(await callTool('update_document', { id, expiresAt: null })) as {
+      doc: { expiresAt?: string };
+    };
+    expect(cleared.doc.expiresAt).toBeUndefined();
+  });
+});
+
 describe('expired documents', () => {
   it('are not found and not listed, but can still be deleted', async () => {
     const created = jsonOf(

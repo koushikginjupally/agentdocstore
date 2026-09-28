@@ -119,14 +119,14 @@ automatically.
 
 Create a new document with content.
 
-| Parameter         | Type                  | Required | Description                             |
-| ----------------- | --------------------- | -------- | --------------------------------------- |
-| `title`           | string                | yes      | Human-readable title                    |
-| `content`         | string                | yes      | Initial content                         |
-| `language`        | string                | no       | Content language (default: `plaintext`) |
-| `visibility`      | `PUBLIC` \| `PRIVATE` | no       | Access visibility (default: `PUBLIC`)   |
-| `expiresAt`       | string                | no       | ISO-8601 expiry timestamp               |
-| `redactionPolicy` | `redact` \| `skip`    | no       | Credential handling (see below)         |
+| Parameter         | Type                  | Required | Description                                                           |
+| ----------------- | --------------------- | -------- | --------------------------------------------------------------------- |
+| `title`           | string                | yes      | Human-readable title                                                  |
+| `content`         | string                | yes      | Initial content                                                       |
+| `language`        | string                | no       | Content language (default: `plaintext`)                               |
+| `visibility`      | `PUBLIC` \| `PRIVATE` | no       | Access visibility (default: `PUBLIC`)                                 |
+| `expiresAt`       | string                | no       | Expiry: an ISO-8601 date-time in the future, at most 36,500 days away |
+| `redactionPolicy` | `redact` \| `skip`    | no       | Credential handling (see below)                                       |
 
 **Credential detection flow:** If `redactionPolicy` is omitted, the content is
 scanned first. If credentials are detected, the tool returns a
@@ -153,7 +153,7 @@ Update content (creates a new version) and/or metadata.
 | `content`         | string             | no          | New content (creates a new version)                 |
 | `title`           | string             | no          | New title                                           |
 | `language`        | string             | no          | New language                                        |
-| `expiresAt`       | string \| null     | no          | New expiry (`null` clears)                          |
+| `expiresAt`       | string \| null     | no          | New expiry, as on create (`null` clears)            |
 | `latestVersion`   | number             | conditional | **Required** when `content` is provided (CAS guard) |
 | `editMessage`     | string             | no          | Note stored on the new version (max 500 characters) |
 | `redactionPolicy` | `redact` \| `skip` | no          | Credential handling for new content                 |

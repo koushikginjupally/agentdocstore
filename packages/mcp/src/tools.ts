@@ -34,6 +34,28 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 // Helpers
 // ---------------------------------------------------------------------------
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * An `expiresAt` from a caller, as it is stored: a date-time in the future and
+ * at most LIMITS.MAX_EXPIRY_DAYS away (the range of REST's `expiresInDays`),
+ * normalized to ISO-8601. Other text would be kept as-is and never expire.
+ */
+function toExpiry(value: string): string {
+  const ms = Date.parse(value);
+  if (value.trim() === '' || Number.isNaN(ms)) {
+    throw new ValidationError(
+      "'expiresAt' must be an ISO-8601 date-time, like YYYY-MM-DDTHH:mm:ssZ",
+    );
+  }
+  const now = Date.now();
+  if (ms <= now) throw new ValidationError("'expiresAt' must be in the future");
+  if (ms > now + LIMITS.MAX_EXPIRY_DAYS * DAY_MS) {
+    throw new ValidationError(`'expiresAt' must be at most ${LIMITS.MAX_EXPIRY_DAYS} days away`);
+  }
+  return new Date(ms).toISOString();
+}
+
 /** Extract a doc id from a bare id string or a URL whose path contains one. */
 export function extractId(input: string): string {
   const trimmed = input.trim();
@@ -96,6 +118,7 @@ export async function createDocument(
 ): Promise<CallToolResult> {
   const language = (args.language ?? 'plaintext') as Language;
   const visibility = (args.visibility ?? 'PUBLIC') as Visibility;
+  const expiresAt = args.expiresAt !== undefined ? toExpiry(args.expiresAt) : undefined;
 
   // Credential detection flow: scan first.
   const findings = scan(args.content);
@@ -124,7 +147,7 @@ export async function createDocument(
     language,
     visibility,
     createdBy: viewer,
-    ...(args.expiresAt !== undefined ? { expiresAt: args.expiresAt } : {}),
+    ...(expiresAt !== undefined ? { expiresAt } : {}),
   });
 
   return jsonResult({ doc, message: `Created doc ${doc.id}` });
@@ -167,6 +190,10 @@ export async function updateDocument(
   // Before the version append: a bad title must fail the call with nothing
   // saved, not after the new version is already stored.
   if (args.title !== undefined) validateTitle(args.title);
+  const expiresAt =
+    args.expiresAt === undefined || args.expiresAt === null
+      ? args.expiresAt
+      : toExpiry(args.expiresAt);
 
   let updatedDocument = doc;
 
@@ -209,7 +236,7 @@ export async function updateDocument(
     updatedDocument = await provider.repository.updateMeta(doc.id, {
       ...(args.title !== undefined ? { title: args.title } : {}),
       ...(args.language !== undefined ? { language: args.language as Language } : {}),
-      ...(args.expiresAt !== undefined ? { expiresAt: args.expiresAt } : {}),
+      ...(expiresAt !== undefined ? { expiresAt } : {}),
     });
   }
 
@@ -511,7 +538,7 @@ export async function getHelp(
       '- content (required): Initial content',
       '- language: Content language (default: plaintext)',
       '- visibility: PUBLIC (default) or PRIVATE',
-      '- expiresAt: Optional ISO-8601 expiry',
+      '- expiresAt: Optional ISO-8601 expiry, in the future and at most 36500 days away',
       '- redactionPolicy: "redact" or "skip" (only needed if credentials detected)',
       '',
       '## Example',
