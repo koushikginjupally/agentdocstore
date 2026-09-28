@@ -223,6 +223,21 @@ describe('scanner — generic secret assignment', () => {
     expectOne('client_secret_id: s3cr3tv4lue1234567890', 'generic-secret');
   });
 
+  it('detects a keyword with a 64-character suffix', () => {
+    expectOne(`token_${'x'.repeat(63)}=s3cr3tv4lue1234567890`, 'generic-secret');
+  });
+
+  // Regression: the identifier after the keyword was unbounded, so each of
+  // the keywords in "tokentoken…" re-read the whole run to its end: 256 KB
+  // took 13 s and the 5 MB content limit about 1.5 hours, on the server's
+  // only thread.
+  it('scans a long run of repeated keywords in linear time', () => {
+    const content = 'token'.repeat((256 * 1024) / 5);
+    const t0 = performance.now();
+    expect(scan(content)).toEqual([]);
+    expect(performance.now() - t0).toBeLessThan(1000);
+  });
+
   it('still skips placeholders on suffixed identifiers', () => {
     expectNone('db_password_v2 = ${DB_PASSWORD}', 'generic-secret');
     expectNone('api_key_v2 = changeme', 'generic-secret');

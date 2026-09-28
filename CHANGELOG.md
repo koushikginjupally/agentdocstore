@@ -77,6 +77,13 @@ versions may contain breaking changes; they will be called out under
 
 ### Security
 
+- The credential scan no longer takes time growing with the square of the
+  content. Its generic `password=` / `token=` pattern read an unbounded name
+  after each keyword, so text such as `tokentoken…` made every repeat re-read
+  the rest: 256 KB took 13 seconds and a 5 MB document about an hour and a half
+  on the server's only thread, on every create, update and `POST /api/scan`.
+  The name after the keyword is now read up to 64 characters, and 5 MB of such
+  text scans in under a second.
 - Comparing two versions can no longer stall the server. A diff took time that
   grows with the square of the lines that differ, on the server's only thread:
   two 200 KB versions that share no line held every other request for 30

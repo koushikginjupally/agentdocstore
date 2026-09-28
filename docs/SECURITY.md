@@ -151,6 +151,11 @@ The scanner is **defence-in-depth, not a guarantee**:
   obfuscated secret will not be caught.
 - Generic-assignment detection skips placeholders (`TODO`, `${VAR}`, `<your-password>`),
   which means a real secret that looks like a placeholder passes through.
+- Generic-assignment detection reads at most 64 characters of the name after
+  its keyword (`AUTH_TOKEN_V2=` is caught), so a longer name is missed. The
+  bound keeps the scan's time in step with the content's size: unbounded, a
+  long run of repeated keywords took time growing with the square of its
+  length.
 - The scanner runs on the content as submitted. A secret encoded in base64
   inside a larger payload is not detected unless the encoded form matches a
   known pattern (e.g. JWT).

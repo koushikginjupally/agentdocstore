@@ -150,17 +150,22 @@ const PATTERNS: readonly PatternDef[] = [
  * Matches: password = "value", api_key: 'value', token=value, and forms where
  * the keyword is embedded in a longer identifier such as
  * `aws_secret_access_key = ...`, `client_secret_id: ...` or `AUTH_TOKEN_V2=...`.
- * The trailing `[A-Za-z0-9_.-]*` is what admits those: without it the keyword
- * had to sit immediately before the separator, which missed the most common
- * real-world config naming conventions. For a credential scanner a false
- * negative is worse than a false positive, and the placeholder filter below
- * absorbs the extra noise.
+ * The trailing `[A-Za-z0-9_.-]{0,64}` is what admits those: without it the
+ * keyword had to sit immediately before the separator, which missed the most
+ * common real-world config naming conventions. For a credential scanner a
+ * false negative is worse than a false positive, and the placeholder filter
+ * below absorbs the extra noise.
+ *
+ * That identifier tail is bounded because each keyword starts a match of its
+ * own: unbounded, every "token" in "tokentoken…" re-read the rest of the run,
+ * so the scan took time growing with the square of the input (256 KB took
+ * 13 s).
  *
  * The keywords and the value are captured so the placeholder filter can
  * inspect the value group.
  */
 const GENERIC_ASSIGNMENT_REGEX =
-  /(?:password|passwd|secret|api_key|apikey|token)[A-Za-z0-9_.-]*\s*[=:]\s*["'`]?([^\s"'`]{1,512})["'`]?/gi;
+  /(?:password|passwd|secret|api_key|apikey|token)[A-Za-z0-9_.-]{0,64}\s*[=:]\s*["'`]?([^\s"'`]{1,512})["'`]?/gi;
 
 // ---------------------------------------------------------------------------
 // Implementation
