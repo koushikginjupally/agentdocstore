@@ -20,7 +20,7 @@
     "@agentdocstore/core": "*",
     "@hono/node-server": "^2.1.1",
     "dompurify": "^3.4.16",
-    "hono": "^4.13.9",
+    "hono": "^4.13.12",
     "jsdom": "^30.1.1",
     "marked": "^18.0.14",
     "zod": "^4.6.5"
