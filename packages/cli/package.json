@@ -49,7 +49,7 @@
     "@hono/node-server": "^2.1.1",
     "@modelcontextprotocol/sdk": "^1.30.1",
     "hono": "^4.13.9",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@agentdocstore/mcp": "*",
