@@ -57,6 +57,6 @@
     "@agentdocstore/provider-memory": "*",
     "@agentdocstore/server": "*",
     "esbuild": "^0.28.0",
-    "typescript": "^5.6.0"
+    "typescript": "^7.0.2"
   }
 }
